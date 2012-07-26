@@ -114,7 +114,6 @@ var campStaff = function($, D) {
       }
     }).addClass('sorted');
 
-
     // When clicking on the sticky header, trigger a click on the tablesorter
     $("table.sticky-header:not('.n-sync') th").click(function() {
       var sticky = $(this).parents("table");

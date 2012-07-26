@@ -9,7 +9,7 @@ function _ws_apply_report($arg) {
   drupal_add_css(drupal_get_path('module', 'woolman_semester') . '/css/ws_apply_staff.css', 'module', 'all', FALSE);
   drupal_add_css('sites/all/libraries/jquery.ui/themes/default/ui.all.css', 'module', 'all', FALSE);
   drupal_add_js('sites/all/libraries/tablesorter/jquery.tablesorter.min.js');
-  drupal_add_js('sites/all/libraries/ckeditor/ckeditor_basic.js');
+  drupal_add_js('sites/all/libraries/ckeditor/ckeditor_basic.js', 'module', 'header', TRUE, FALSE);
   jquery_ui_add(array('ui.dialog', 'ui.datepicker'));
   drupal_add_js(drupal_get_path('module', 'woolman_semester') . '/js/ws_apply_staff.js');
   drupal_add_js('misc/autocomplete.js');
