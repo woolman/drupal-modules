@@ -1,0 +1,467 @@
+form#ws-admissions-prospective-controls{
+  padding: 7px;
+  background-color: #E8F2E0;
+  font-size: .85em;
+  border-radius: 0px 0px 5px 5px;
+  -moz-border-radius: 0px 0px 5px 5px;
+  -webkit-border-radius: 0px 0px 5px 5px;
+}
+
+form#ws-admissions-prospective-controls div.form-item{
+  display: inline-block;
+  margin: 0 .5em 0 0;
+}
+
+form#ws-admissions-prospective-controls div.form-checkboxes{
+  font-size: .86em;
+  color: #2A391E;
+  margin: 0;
+  display: inline-block;
+  width: 23.3em;
+}
+
+form#ws-admissions-prospective-controls div.form-checkboxes div.form-item{
+  margin-right: 0;
+  padding-right:3px;
+}
+
+form#ws-admissions-prospective-controls div.form-checkboxes #edit-status-1-wrapper,
+form#ws-admissions-prospective-controls div.form-checkboxes #edit-status-3-wrapper{
+}
+
+form#ws-admissions-prospective-controls div.form-checkboxes #edit-status-2-wrapper,
+form#ws-admissions-prospective-controls div.form-checkboxes #edit-status-4-wrapper{
+
+}
+
+form#ws-admissions-prospective-controls .form-checkboxes .form-item span{
+  margin-left:-2px;
+  width:16px;
+  height: 12px;
+  display: inline-block;
+  background: url("../images/case-icons.png") no-repeat 0 0;
+}
+
+form#ws-admissions-prospective-controls .form-checkboxes #edit-status-1-wrapper span{
+  background-position: -51px -1px;
+}
+
+form#ws-admissions-prospective-controls .form-checkboxes #edit-status-2-wrapper span{
+  background-position: -162px -1px;
+}
+
+form#ws-admissions-prospective-controls .form-checkboxes #edit-status-4-wrapper span{
+  background-position: -103px -1px;
+}
+
+#ws-admissions-prospective-form,
+#bulk-actions {
+  clear: both;
+  margin-top: .4em;
+}
+
+#bulk-actions{
+  position: relative;
+}
+
+#bulk-actions div.form-item{
+  float: left;
+  margin: 0 1em 0 0;
+}
+
+#ws-admissions-prospective-controls select option:first-child,
+#bulk-actions select#edit-actions option:first-child{
+  font-weight: bold;
+}
+
+#bulk-actions div.form-item div{
+  float: none;
+  margin: 0;
+}
+
+#bulk-actions #edit-details-wrapper,
+#bulk-actions #edit-subject-wrapper{
+  clear: left;
+}
+
+#bulk-actions #edit-details{
+  font-size: .9em;
+}
+
+#bulk-actions div.form-checkboxes div.form-item{
+  display: inline-block;
+  margin-right: .5em;
+}
+
+#bulk-actions div.form-checkboxes div.form-item input{
+  margin-right: 0;
+}
+
+#bulk-actions div.form-item label{
+  padding-top: .5em;
+}
+
+#make-changes-wrapper{
+  clear: both;
+  padding-top: .5em;
+}
+
+#message-tokens{
+  margin:0.5em;
+  max-width:40%;
+  position:absolute;
+  right:0;
+  top:0;
+}
+
+#ws-admissions-prospective-form thead tr{
+  cursor: pointer;
+}
+
+#ws-admissions-prospective-form th.checkbox span{
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-image: url("../images/case-icons.png");
+  background-repeat: no-repeat;
+  background-position: -401px -1px;
+}
+
+#ws-admissions-prospective-form th:hover{
+  background-color: #D8E7E7;
+}
+
+#ws-admissions-prospective-form th.headerSortDown:hover,
+#ws-admissions-prospective-form th.headerSortUp:hover{
+  background-color: #7DB2CF;
+}
+
+#ws-admissions-prospective-form th.s span{
+  background:url("../images/case-icons.png") no-repeat scroll -213px -2px transparent;
+  display:inline-block;
+  height:12px;
+  position:relative;
+  top:-6px;
+  left: -1px;
+  width:12px;
+}
+
+a.new-note {
+  float: right;
+  background-position: 0px -193px;
+  margin-left: 4px;
+  height: 14px;
+}
+
+/* Hover Links */
+#ws-admissions-prospective-form tbody td div.nm{
+  position:relative;
+}
+
+#ws-admissions-prospective-form tbody div.h-l{
+  display:none;
+  position: absolute;
+  top: 0px;
+  right: -130px;
+  background-color:#FFFFF5;
+  border:2px solid #FFFF77;
+  width: 130px;
+  height: 20px;
+}
+
+#ws-admissions-prospective-form tbody tr:hover div.h-l,
+#ws-admissions-prospective-form tbody div.h-l:hover{
+  display:block;
+}
+
+#ws-admissions-prospective-form div.h-i{
+  display:none;
+}
+
+#ws-admissions-prospective-form div.h-l a,
+#ws-admissions-prospective-form div.h-l span{
+  position: relative;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin: 3px;
+  background-image: url("../images/case-icons.png");
+  background-repeat: no-repeat;
+  background-color: #D3DDFF;
+}
+
+#ws-admissions-prospective-form div.h-l a:hover,
+#ws-admissions-prospective-form div.h-l span:hover{
+  background-color: #C5E9FF;
+}
+
+#ws-admissions-prospective-form div.h-l span{
+  cursor:default;
+}
+
+#ws-admissions-prospective-form div.h-l .v-c{
+  background-position: -253px 0;
+}
+
+#ws-admissions-prospective-form div.h-l .v-s{
+  background-position: -357px 0;
+}
+
+#ws-admissions-prospective-form div.h-l .e-s{
+  background-position: -278px 0;
+}
+
+#ws-admissions-prospective-form div.h-l .p-n{
+  background-position: -381px 0;
+}
+
+#ws-admissions-prospective-form div.h-l .e-m{
+  background-position: -304px 0;
+}
+
+#ws-admissions-prospective-form div.h-l .a-d{
+  background-position: -331px 0;
+}
+
+#ws-admissions-prospective-form div.h-l .v-c:hover{
+  background-position: -253px -13;
+}
+
+#ws-admissions-prospective-form div.h-l .v-s:hover{
+  background-position: -357px -13;
+}
+
+#ws-admissions-prospective-form div.h-l .e-s:hover{
+  background-position: -278px -13;
+}
+
+#ws-admissions-prospective-form div.h-l .p-n:hover{
+  background-position: -381px -13;
+}
+
+#ws-admissions-prospective-form div.h-l .e-m:hover{
+  background-position: -304px -13;
+}
+
+#ws-admissions-prospective-form div.h-l .a-d:hover{
+  background-position: -331px -13;
+}
+
+#ws-admissions-prospective-form div.h-l div:hover div.h-i,
+#ws-admissions-prospective-form div.h-l div div.h-i:hover{
+  display:block;
+}
+
+
+#ws-admissions-prospective-form td.s{
+  width: 20px;
+  background: url("../images/case-icons.png") no-repeat -43px 8px;
+}
+
+#ws-admissions-prospective-form td.s span{
+  display: none;
+}
+
+#ws-admissions-prospective-form #prospectives td.s1,
+#edit-status-3-wrapper.checked {
+  background-position: 8px 8px;
+  background-color: #FFF5A3;
+}
+
+#ws-admissions-prospective-form #prospectives td.s2,
+#edit-status-1-wrapper.checked {
+  background-color: #C2E7E0;
+}
+
+#ws-admissions-prospective-form #prospectives td.s3,
+#edit-status-2-wrapper.checked {
+  background-position:-154px 8px;
+  background-color: #C8FFC3;
+}
+
+#ws-admissions-prospective-form #prospectives td.s4,
+#edit-status-4-wrapper.checked {
+  background-position: -95px 11px;
+  background-color: #F4C8C8;
+}
+
+#tableinfo{
+  clear: both;
+  text-align: right;
+  font-size: .7em;
+}
+
+#prospectives{
+  margin-top: 1px;
+}
+
+#progresscontainer{
+  height: 1px;
+  text-align: center;
+  clear: both;
+}
+
+#progressbar {
+  background-color:#FFFFCC;
+  font-size:0.85em;
+  font-weight:bold;
+  padding:0.2em 0.4em;
+  position:relative;
+  top:-6px;
+}
+
+#prospectives tr.odd.checked td{
+  background-color:#FBF8B2;
+}
+
+#prospectives tr.even.checked td{
+  background-color:#FFFFCC;
+}
+
+#ws-admissions-prospective-form a.o-d,
+#ws-admissions-prospective-form a.o-d:link,
+#ws-admissions-prospective-form a.o-d:visited{
+  color: #9A261E;
+}
+
+#ws-admissions-prospective-form a.o-d:hover,
+#ws-admissions-prospective-form a.o-d:focus{
+  color: #D53D33;
+}
+
+#ws-admissions-prospective-form a.o-k,
+#ws-admissions-prospective-form a.o-k:link,
+#ws-admissions-prospective-form a.o-k:visited{
+  color: #1E5B9A;
+}
+
+#ws-admissions-prospective-form a.o-k:hover,
+#ws-admissions-prospective-form a.o-k:focus{
+  color: #2F88E6;
+}
+
+/* Sticky Header */
+
+#ws-admissions-prospective-form .sticky-header{
+  z-index: 99;
+}
+
+/* tablesorter */
+table.tablesorter {
+  font-family:arial;
+  background-color: #CDCDCD;
+  margin:10px 0pt 15px;
+  font-size: 8pt;
+  width: 100%;
+  text-align: left;
+}
+table.tablesorter thead tr th, table.tablesorter tfoot tr th,
+#ws-admissions-prospective-form .sticky-header th {
+  background-color: #e6EEEE;
+  border: 1px solid #FFF;
+  font-size: 8pt;
+  padding: 4px;
+}
+table.tablesorter thead tr .header,
+#ws-admissions-prospective-form .sticky-header th {
+  background-image: url("../images/bg.gif");
+  background-repeat: no-repeat;
+  background-position: center right;
+  cursor: pointer;
+}
+table.tablesorter tbody td {
+  color: #3D3D3D;
+  padding: 4px;
+  background-color: #FFF;
+  vertical-align: top;
+}
+table.tablesorter tbody tr.odd td {
+  background-color:#F0F0F6;
+}
+table.tablesorter thead tr .headerSortUp,
+#ws-admissions-prospective-form .sticky-header th.headerSortUp {
+  background-image: url("../images/asc.gif");
+  background-color: #8dbdd8;
+}
+table.tablesorter thead tr .headerSortDown,
+#ws-admissions-prospective-form .sticky-header th.headerSortDown {
+  background-image: url("../images/desc.gif");
+  background-color: #8dbdd8;
+}
+
+/* Jquery Popup */
+
+#view-activity div.loading{
+  background:url("../images/spinner.gif") no-repeat scroll center center transparent;
+  height:100%;
+  width:100%;
+}
+
+#view-activity.ui-dialog-content,
+#email-confirm-box{
+  padding:0;
+}
+
+#activity-content,
+#email-confirm-box-inner{
+  overflow: auto;
+  height: 439px;
+  padding:1em;
+  font-size: .8em;
+}
+
+#email-confirm-box em {
+  font-size: 1.2em;
+}
+
+/* Dashboard */
+
+#admissions-dashboard{
+  padding: 0px;
+  margin: 10px auto;
+  height:560px;
+  width:920px;
+  border: 3px solid #717A34;
+  background-color: #F5F9DB;
+  border-radius: 6px;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+}
+
+#admissions-dashboard h2{
+  font-family:serif;
+  margin:0 0 10px 0;
+  padding: 2px;
+  text-align:center;
+  background-color: #CCDDA8;
+  border-radius: 5px 5px 0px 0px;
+  -moz-border-radius: 5px 5px 0px 0px;
+  -webkit-border-radius: 5px 5px 0px 0px;
+  -moz-box-shadow: 0 1px 4px #A29F68;
+  -webkit-box-shadow: 0 1px 4px #A29F68;
+  box-shadow: 0 1px 4px #A29F68;
+  /* For IE 8 */
+  -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=180, Color='#A29F68')";
+  /* For IE 5.5 - 7 */
+  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=180, Color='#A29F68');
+}
+
+#admissions-dashboard div.db-graph{
+  float: left;
+}
+
+#admissions-dashboard div.db-stack{
+  float: left;
+}
+
+#admissions-dashboard img{
+  margin: 10px;
+  display: block;
+  -moz-box-shadow: 2px 2px 4px #A29F68;
+  -webkit-box-shadow: 2px 2px 4px #A29F68;
+  box-shadow: 2px 2px 4px #A29F68;
+  /* For IE 8 */
+  -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=3, Direction=135, Color='#A29F68')";
+  /* For IE 5.5 - 7 */
+  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=3, Direction=135, Color='#A29F68');
+}

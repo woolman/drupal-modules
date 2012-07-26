@@ -1,0 +1,28 @@
+#view-confirmation{
+  padding:0;
+}
+
+#confirmation-inner{
+  overflow: auto;
+  height: 439px;
+  padding:1em;
+  font-size: .8em;
+}
+
+#edit-essay-wrapper+fieldset{
+  display: none;
+}
+
+.wysiwyg-toggle-wrapper{
+  float: right;
+}
+
+#edit-essay{
+  width: 100%;
+}
+
+.loading{
+  background:url("../images/spinner.gif") no-repeat scroll center center transparent;
+  height:100%;
+  width:100%;
+}

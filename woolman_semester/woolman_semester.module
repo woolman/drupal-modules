@@ -1,0 +1,166 @@
+<?php
+// $Id$ ws_apply_online.module
+
+/**
+ * Implementation of hook_menu()
+ */
+
+function woolman_semester_menu() {
+  $items['~semester/admissions/apply'] = array(
+    'title' => 'Applying to Woolman',
+    'page callback' => '_ws_apply_page_one',
+    'access arguments' => array('access content'),
+    'file' => 'ws_apply_online_pages.inc'
+  );
+  $items['~semester/admissions/apply/%'] = array(
+    'title' => 'Application Form',
+    'page callback' => '_ws_apply_forms_request',
+    'access callback' => 'user_is_logged_in',
+    'page arguments' => array(3),
+    'type' => MENU_CALLBACK,
+    'file' => 'ws_apply_online_pages.inc'
+  );
+  $items['~semester/admissions/reference'] = array(
+    'title' => 'Student Reference',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'page callback' => '_ws_apply_reference_handler',
+    'file' => 'ws_apply_online_pages.inc'
+  );
+  $items['~semester/admissions/reference/thank-you'] = array(
+    'title' => 'Thank You',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'page callback' => '_ws_apply_reference_handler',
+    'file' => 'ws_apply_online_pages.inc'
+  );
+  $items['staff/admissions/applications'] = array(
+    'title' => 'Woolman Semester Applications',
+    'page callback' => '_ws_apply_report',
+    'access arguments' => array('access CiviCRM'),
+    'file' => 'ws_apply_online_staff.inc',
+    'page arguments' => array(3)
+  );
+  $items['~semester/admissions/apply/'] = array(
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'title' => 'Apply Online',
+    'weight' => 1,
+    'file' => 'ws_apply_online_pages.inc'
+  );
+  $items['~semester/admissions/apply/settings'] = array(
+    'title' => 'Edit Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_ws_apply_form_admin'),
+    'access arguments' => array('access CiviCRM'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'ws_apply_admin.inc',
+    'weight' => 2
+  );
+  $items['staff/admissions/dates'] = array(
+    'title' => 'Semester Dates',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ws_apply_staff_dates'),
+    'access arguments' => array('access CiviCRM'),
+    'file' => 'ws_apply_admin.inc',
+  );
+  $items['staff/admissions/outreach-trip'] = array(
+    'title' => 'Admissions Outreach',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ws_outreach_form'),
+    'access arguments' => array('access CiviCRM'),
+    'file' => 'ws_outreach_trip.inc',
+  );
+  $items['staff/admissions/prospectives'] = array(
+    'title' => 'Prospective Students',
+    'page callback' => 'ws_prospectives',
+    'access arguments' => array('access CiviCRM'),
+    'file' => 'ws_prospectives.inc',
+  );
+  // AJAX Callbacks
+  $items['~semester/admissions/apply/js'] = array(
+    'title' => 'Form',
+    'access callback' => 'user_is_logged_in',
+    'type' => MENU_CALLBACK,
+    'page callback' => '_ws_apply_school_js',
+    'file' => 'ws_apply_online_form_submit.inc'
+  );
+  $items['staff/admissions/js'] = array(
+    'title' => 'Callback',
+    'page callback' => 'ws_admissions_js',
+    'access arguments' => array('access CiviCRM'),
+    'file' => 'ws_apply_online_staff.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_civicrm_post().
+ * Create relationship when case is closed
+ */
+function woolman_semester_civicrm_post($op, $type, $id, $obj) {
+  if ($op == 'edit' && $type == 'Case' && !empty($obj->status_id)) {
+    $case = woolman_civicrm_api('case', 'get', array('case_id' => $id), 'single');
+    if ($case['case_type_id'] == 2) {
+      foreach (woolman_aval($case, 'contacts', array()) as $contact) {
+        if ($contact['role'] == 'Client') {
+          $cid = $contact['contact_id'];
+          break;
+        }
+      }
+      if (!empty($cid)) {
+        module_load_include('inc', 'woolman_semester', 'ws_apply_online_utils');
+        woolman_student_relationship($cid, $obj->status_id == 2 ? 'create' : 'delete');
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function woolman_semester_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'user_register' && woolman_aval($_GET, 'destination') == 'semester/admissions/apply') {
+    $form['user_registration_help']['#value'] = '<h3>Woolman Semester Application</h3>
+    <p>The first step in the online application is to give yourself a username and password, which will allow you to save your application and come back to it later.</p><p><strong>Important:</strong> Application forms should be completed <em>by the student.</em><br /><strong>Parents, please ask your child to do this part.</strong></p>';
+  }
+}
+
+/**
+ * Implementation of hook_user().
+ * Show link to student application forms
+ */
+function woolman_semester_user($type, &$edit, &$account) {
+  if ($type == 'view') {
+    global $user;
+    if ($user->uid == $account->uid) {
+      civicrm_initialize();
+      if ($cases = woolman_civicrm_api('case', 'get', array('client_id' => woolman_user_cid()), 'values')) {
+        // Don't show this link for accepted students -- they're done
+        foreach ($cases as $case) {
+          if ($case['case_type_id'] == 2 && $case['status_id'] == 2) {
+            return;
+          }
+        }
+        $account->content['summary']['ws_apply'] = array(
+          '#type' => 'user_profile_item',
+          '#title' => 'Woolman Semester Application',
+          '#value' => '<ul><li>' . l('>> Admissions Application Forms', '~semester/admissions/apply') . '</li></ul>',
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function woolman_semester_theme() {
+  return array(
+    'ws_apply_online_status' => array(
+      'arguments' => array('table' => NULL, 'caption' => NULL),
+    ),
+    'ws_admissions_prospective_form' => array(
+      'arguments' => array('form' => NULL)
+    ),
+  );
+}

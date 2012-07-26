@@ -1,0 +1,161 @@
+/* Staff Pages */
+
+form#-ws-apply-form-report div.subset{
+  padding: 7px;
+  background-color: #E8F2E0;
+  height: 2.7em;
+  border-radius: 0px 0px 4px 4px;
+  -moz-border-radius: 0px 0px 4px 4px;
+  -webkit-border-radius: 0px 0px 4px 4px;
+}
+
+form#-ws-apply-form-report .subset div.form-checkboxes{
+  font-size: .8em;
+  color: #2A391E;
+  margin: 0;
+}
+
+.app-report-container{
+  clear: both;
+}
+
+.app-report-table tbody{
+  border: 3px ridge #2F5947;
+}
+
+.app-report-container h3,
+.app-report-table caption{
+  font-weight: bold;
+  text-decoration: underline;
+  font-size: 1.2em;
+  width: 768px;
+  text-align: center;
+}
+
+div div.app-report-container table {
+  background: url("/sites/all/modules/ws_apply_online/images/report-header.png") no-repeat scroll top left #fff;
+}
+
+.app-report-container thead {
+  height: 82px;
+}
+
+.app-report-table tr{
+  height: 38px;
+}
+
+.app-report-table tr.successfully-complete{
+  background-color: #B8FFB3;
+}
+
+.app-report-table tr.needs-follow-up{
+  background-color: #F9FFA0;
+}
+
+.app-report-table tr.withdrawn{
+  background-color: #C2C2C2;
+}
+
+.app-report-table td{
+  border: 1px solid #9C7323;
+  padding: 0;
+}
+
+.app-report-table td.name{
+  padding: 0 5px;
+  width: 155px;
+}
+
+.app-report-table td.notes{
+  padding: 2px 5px;
+  min-width: 150px;
+  vertical-align: top;
+  font-size: .7em;
+  line-height: 1.4em;
+}
+
+.app-report-table .case-status{
+  font-size: .72em;
+}
+
+.app-report-table td.cell{
+  width: 47px;
+}
+
+.app-report-table td.cell a.fill{
+  width: 45px;
+  height: 34px;
+  display: block;
+}
+
+.app-report-table span.icon{
+  height: 12px;
+}
+
+.app-report-table a.new-note{
+  float: right;
+  background-position: 0px -193px;
+  margin-left: 4px;
+  height: 14px;
+}
+
+.app-report-table td.completed{
+  background: url("/sites/all/modules/ws_apply_online/images/report-complete.png") no-repeat 12px 6px;
+}
+
+.app-report-table td.waiting{
+  background: url("/sites/all/modules/ws_apply_online/images/report-sent.png") no-repeat 12px 10px;
+}
+
+.app-report-table td.in-progress{
+  background: url("/sites/all/modules/ws_apply_online/images/report-draft.png") no-repeat 15px 7px;
+}
+
+.app-report-table td.scheduled{
+  background: url("/sites/all/modules/ws_apply_online/images/report-scheduled.png") no-repeat 13px 8px;
+}
+
+.app-report-table td.ready{
+  background: url("/sites/all/modules/ws_apply_online/images/unchecked.png") no-repeat 17px 12px;
+}
+
+#application-pager{
+  width: 723px;
+  padding: 10px;
+  clear: both;
+}
+
+#application-pager a#pager-left{
+  display: block;
+  float: left;
+  padding: 2px 0px 2px 25px;
+  background: url("/sites/all/modules/ws_apply_online/images/page-left.png") no-repeat 0px 0px;
+}
+
+#application-pager a#pager-right{
+  display: block;
+  float: right;
+  text-align: right;
+  padding: 2px 25px 2px 0px;
+  width: 100px;
+  background: url("/sites/all/modules/ws_apply_online/images/page-right.png") no-repeat 105px 0px;
+}
+
+/* Jquery Popup */
+
+#view-activity div.loading{
+  background:url("/sites/all/modules/ws_admissions/spinner.gif") no-repeat scroll center center transparent;
+  height:100%;
+  width:100%;
+}
+
+#view-activity.ui-dialog-content{
+  padding:0;
+}
+
+#activity-content{
+  overflow: auto;
+  height: 439px;
+  padding:1em;
+  font-size: .8em;
+}

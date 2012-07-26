@@ -1,0 +1,332 @@
+#woolman-camp-years-nav{
+padding:7px;
+background-color:#E8F2E0;
+font-size:.85em;
+border-radius:0px 0px 6px 6px;
+margin-bottom:2em;
+min-height:21px;
+}
+
+#woolman-camp-years-nav #edit-year-select-wrapper{
+position:relative;
+top:-5px;
+}
+
+#camp-staff {
+position:relative;
+}
+
+#camp-staff .session{
+float:left;
+margin-left:0.8%;
+border:1px solid #DEDEDE;
+background-color:#EEF5F7;
+border-radius:8px;
+max-width: 24.2%;
+font-size: .9em;
+}
+
+#camp-staff .session:first-child{
+margin-left:0px;
+}
+
+#camp-staff .session-inner{
+padding:5px;
+}
+
+#camp-staff .session h4,
+.shuttles-outer .shuttles h4{
+margin:0;
+padding:0.3em 0.5em;
+background-color:#C4CAE4;
+border-top-left-radius:8px;
+border-top-right-radius:8px;
+}
+
+#camp-staff .session img{
+margin-top:0.3em;
+max-width: 100%;
+}
+
+#registration-graph {
+position:absolute;
+top:-111px;
+right:0;
+border: 2px solid #597A6C;
+border-radius: 4px;
+height: 140px;
+overflow: hidden;
+}
+
+#registration-graph img{
+border-radius: 4px;
+display:block;
+}
+
+#camp-staff tr.odd.checked td{
+background-color:#FBF8B2;
+}
+
+#camp-staff tr.even.checked td{
+background-color:#FFFFCC;
+}
+
+#camp-staff table.tablesorter tbody tr.negative td,
+#camp-staff table.tablesorter tbody tr.negative td a{
+color:#919191;
+}
+
+#camp-staff .needs-approval,
+#camp-staff a.needs-approval:link,
+#camp-staff a.needs-approval:visited{
+color:#D5000E;
+}
+
+#camp-staff a.needs-approval:hover,
+#camp-staff a.needs-approval:focus{
+color:#D53D33;
+}
+
+span.negative{
+color:#919191;
+text-decoration: line-through;
+}
+
+span.pending{
+color:#5F003F;
+}
+
+span.waiting{
+color:blue;
+}
+
+span.p-s.r {
+border: 1px solid white;
+border-radius: 2px;
+}
+
+span.p-s.r:hover {
+cursor:pointer;
+border: 1px solid green;
+}
+
+span.p-s select {
+font-size:.9em;
+text-decoration: none;
+}
+
+#camp-staff a.a-p{
+border-radius:2px;
+background:none repeat scroll 0 0 #E6E6FF;
+border:1px solid gray;
+color:blue;
+display:block;
+float:right;
+height:9px;
+line-height:9px;
+margin-left:10px;
+padding:0;
+text-align:center;
+text-decoration:none;
+width:9px;
+}
+
+#camp-staff a.a-p:hover{
+background:none repeat scroll 0 0 #BECEFF;
+}
+
+#edit-year-select-wrapper label{
+display:inline;
+}
+
+.js #woolman-camp-years-nav #edit-submit{
+display:none;
+}
+
+.popups-box div.form-item{
+margin:0px;
+}
+
+#staff-form table{
+min-width:75%;
+}
+
+#staff-form tr.even{
+background-color:#FBFBFB;
+}
+
+#staff-form td,
+#staff-form th{
+padding-left:7px;
+padding-right:7px;
+}
+
+#session-payments-table td.mismatch{
+color:red;
+}
+
+#woolman-camp-add-payment #edit-email-wrapper{
+margin-bottom:0.5em;
+}
+
+#woolman-camp-add-payment #edit-email-wrapper label{
+display:inline;
+}
+
+table tbody tr td.gender-1 {
+font-weight:bold;
+color:#E40B9B;
+}
+table tbody tr td.gender-2 {
+font-weight:bold;
+color:#007AC5;
+}
+
+/* Shuttle */
+
+.shuttles-outer {
+margin-top:1em;
+}
+
+.shuttles-outer .shuttles {
+float:left;
+width: 300px;
+margin-right:2em;
+border:1px solid #DEDEDE;
+background-color:#F8FBFC;
+border-radius:8px;
+}
+
+.shuttles-outer .shuttles h5 {
+padding-left: 12px;
+margin-left: 10px;
+}
+
+.shuttles-outer .shuttles .closed h5 {
+background: url("/misc/menu-collapsed.png") no-repeat left center;
+}
+
+.shuttles-outer .shuttles .open h5 {
+background: url("/misc/menu-expanded.png") no-repeat left center;
+}
+
+.shuttles-outer .shuttles .open h5:hover,
+.shuttles-outer .shuttles .closed h5:hover {
+cursor: pointer;
+color: #599A1E;
+}
+
+.shuttles-outer .shuttles .empty h5:hover {
+cursor: default;
+}
+
+/* Sticky Header */
+
+#camp-staff .sticky-header{
+z-index:7;
+}
+
+/* tablesorter */
+table.tablesorter {
+font-family:arial;
+background-color:#CDCDCD;
+margin:10px 0pt 15px;
+font-size:8pt;
+min-width:900px;
+text-align:left;
+}
+table.tablesorter thead tr th, table.tablesorter tfoot tr th,
+#camp-staff .sticky-header th {
+background-color:#e6EEEE;
+border:1px solid #FFF;
+font-size:8pt;
+padding:4px;
+}
+table.tablesorter thead tr .header,
+#camp-staff .sticky-header th {
+background-image:url(bg.gif);
+background-repeat:no-repeat;
+background-position:center right;
+cursor:pointer;
+}
+table.tablesorter tbody td{
+color:#3D3D3D;
+padding:4px;
+vertical-align:top;
+}
+table.tablesorter tbody tr{
+background-color:#FFF;
+}
+table.tablesorter tbody tr.odd{
+background-color:#F0F0F6;
+}
+table.tablesorter tbody tr.even:hover{
+background-color:#FBFBFF;
+}
+table.tablesorter tbody tr.odd:hover{
+background-color:#EEEEFF;
+}
+table.tablesorter thead tr .headerSortUp,
+#camp-staff .sticky-header th.headerSortUp {
+background-image:url(asc.gif);
+background-color:#8dbdd8;
+}
+table.tablesorter thead tr .headerSortDown,
+#camp-staff .sticky-header th.headerSortDown {
+background-image:url(desc.gif);
+background-color:#8dbdd8;
+}
+#camp-staff .tablesorter th:hover,
+#camp-staff .sticky-header th:hover{
+background-color:#D8E7E7;
+}
+#camp-staff .tablesorter th.headerSortDown:hover,
+#camp-staff .tablesorter th.headerSortUp:hover,
+#camp-staff .sticky-header th.headerSortDown:hover,
+#camp-staff .sticky-header th.headerSortUp:hover{
+background-color:#7DB2CF;
+}
+
+/* Popups */
+form a.cancel-link{
+-moz-appearance:button;
+color:#700000;
+font-size:0.8em;
+font-weight:normal;
+padding:0.2em;
+text-decoration:none;
+}
+.popups-box h5{
+font-size:1em;
+}
+#staff-form{
+min-heignt: 300px;
+}
+
+/* Dates-Rates Form */
+#woolman-camp-rates .session-selection{
+clear:both;
+}
+
+#woolman-camp-rates .session-dates{
+float:left;
+width:250px;
+padding:0.5em;
+margin-right:0.5em;
+border:1px solid green;
+background-color:#FFFFF2;
+}
+
+#woolman-camp-rates .subset .container-inline div.form-item{
+float:none;
+margin-right:0px;
+}
+
+#woolman-camp-rates .shuttle-selection {
+width:47%;
+float:left;
+}
+
+#woolman-camp-rates .shuttle-selection.going {
+float:right;
+}

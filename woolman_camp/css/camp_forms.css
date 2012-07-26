@@ -1,0 +1,447 @@
+#woolman-camp-nav-form input.form-submit{
+width: 12em;
+height: 2.5em;
+border: 2px solid gray;
+margin-right: 2em;
+text-align: center;
+background-color: #C5F8F5;
+color: #3D3C9C;
+border-radius: 6px;
+-moz-border-radius: 6px;
+-webkit-border-radius: 6px;
+}
+
+#woolman-camp-nav-form input.past-step{
+cursor: pointer;
+background-color: #ADF7AD;
+color: #076709;
+font-weight: bold;
+}
+
+#woolman-camp-nav-form input.past-step:hover{
+background-color: #7FEB7D;
+color: #003301;
+border: 2px solid blue;
+}
+
+#woolman-camp-nav-form input.current-step{
+background-color: #DCF14F;
+border: 2px solid black;
+color: black;
+font-weight: bold;
+}
+
+#edit-ahahbox-yes, #edit-ahahbox-no{
+padding: 1em 0.5em;
+float: none;
+cursor: pointer;
+}
+
+#woolman-camp-family-form{
+font-size: .8em;
+}
+
+div.form-wrapper{
+padding: .8em;
+background-color: white;
+border: 3px solid #54638F;
+border-radius: 6px;
+-moz-border-radius: 6px;
+-webkit-border-radius: 6px;
+margin-bottom: 1em;
+}
+
+#woolman-camp-family-form fieldset{
+background: none repeat scroll 0 0 #F5F4DD;
+padding: 0.5em 1.5em;
+}
+
+#woolman-camp-family-form fieldset legend{
+background-color: #F5F4DD;
+border-style: solid solid none;
+border-width: 1px;
+border-color: #ADAB8D;
+margin-bottom: 1.5em;
+padding: 0.1em 0.8em 0;
+-webkit-border-top-left-radius: 5px;
+-webkit-border-top-right-radius: 5px;
+-moz-border-radius-topleft: 5px;
+-moz-border-radius-topright: 5px;
+border-top-left-radius: 5px;
+border-top-right-radius: 5px;
+}
+
+#woolman-camp-family-form fieldset .description p{
+margin-top: 0;
+}
+
+#woolman-camp-family-form fieldset fieldset{
+clear:both;
+background: none repeat scroll 0 0 #FFFFF9;
+}
+
+#woolman-camp-family-form fieldset fieldset legend{
+background-color: #FFFFF9;
+}
+
+#woolman-camp-family-form fieldset fieldset .subset{
+clear:none;
+}
+
+span.primary{
+font-size: 0.8em;
+font-style: italic;
+color: #151AFF;;
+}
+
+#edit-not-spouse-select-wrapper{
+display:inline-block;
+margin:0 1em;
+}
+
+#edit-not-spouse-select-wrapper label span{
+background-color:#FDFFBF;
+}
+
+#spouse-instructions-wrapper p, #spouse-instructions-wrapper div{
+margin: 0em 1em 1em 0em;
+float: left;
+}
+
+#edit-e-contact-same-wrapper, #edit-spouse-same-wrapper{
+margin-top:-.5em;
+margin-bottom: 1em;
+}
+
+#edit-not-e-contact-checkbox-wrapper, #edit-not-spouse-checkbox-wrapper{
+display:inline-block;
+margin-top:0;
+}
+
+#edit-not-e-contact-checkbox-wrapper label, #edit-not-spouse-checkbox-wrapper label{
+border: 1px solid #763838;
+background-color: #FFE8E8;
+padding: 7px;
+font-weight: bold;
+cursor: pointer;
+}
+
+#edit-not-e-contact-checkbox-wrapper label:hover, #edit-not-spouse-checkbox-wrapper label:hover{
+background-color: #FFD5D5;
+}
+
+#edit-not-e-contact-checkbox-wrapper.selected label, #edit-not-spouse-checkbox-wrapper.selected label{
+background-color: #FFD5D5;
+cursor: default;
+}
+
+#woolman-camp-family-form div.change-msg{
+color: red;
+float: none;
+clear: both;
+margin-bottom: 0.8em;
+display: none;
+}
+
+#woolman-camp-registration-form {
+padding: 0;
+width: 920px;
+}
+
+#tab-nav {
+float: left;
+width: 198px;
+border-width: 0 !important;
+margin-top: 10px;
+}
+
+#tab-nav li {
+clear: left;
+border-bottom-width: 1px !important;
+border-right-width: 0 !important;
+}
+
+#tab-nav li a {
+display:block;
+padding: 6px 10px;
+width: 177px;
+color: #434288;
+}
+
+#tab-nav li.ui-tabs-selected a {
+background: none repeat scroll #FFFE9F;
+width: 178px;
+color: #02009F;
+cursor: default;
+}
+
+#woolman-camp-registration-form .child-wrapper {
+background-color: #FFFE9F;
+padding: 10px;
+float: right;
+width: 700px;
+clear: none;
+font-size: 0.8em;
+min-height: 250px;
+}
+
+#woolman-camp-registration-form span.child-name{
+display:block;
+font-weight: bold;
+}
+
+#woolman-camp-registration-form .registered-for{
+font-size: .8em;
+}
+
+#woolman-camp-registration-form .ui-tabs-selected .unselected-text,
+#woolman-camp-registration-form .selected-text{
+display:none;
+}
+
+#woolman-camp-registration-form .ui-tabs-selected .selected-text{
+display:inline;
+}
+
+#woolman-camp-registration-form .weeks{
+font-weight: bold;
+}
+
+#woolman-camp-registration-form .register-wrapper{
+background-color: #FFFFD5;
+padding: 8px;
+margin-top: 1em;
+}
+
+#woolman-camp-registration-form .no-register-wrapper{
+margin-top: 3em;
+font-size: 1.4em;
+text-align: center;
+}
+
+#woolman-camp-registration-form .register-wrapper h4{
+text-align: center;
+font-size: 1.2em;
+margin-top: 0;
+}
+
+#woolman-camp-registration-form .register-button{
+background-color: #D0E6CC;
+float: left;
+margin-left: 24px;
+margin-bottom:10px;
+padding: 8px;
+width: 165px;
+}
+
+#woolman-camp-registration-form .register-button.selected{
+background-color: #A8F59B;
+}
+
+#woolman-camp-registration-form .register-button.selected label,
+#woolman-camp-registration-form .register-button:hover label{
+background-color: #A8F59B;
+}
+
+#woolman-camp-registration-form div.register-button.ended label {
+color:gray;
+background-color:transparent;
+}
+
+#woolman-camp-registration-form .register-button .session-status{
+background-color: #7AFF63;
+text-align: center;
+padding: 2px;
+}
+
+#woolman-camp-registration-form .register-button.closed .session-status{
+background-color: #FFAD7E;
+}
+
+#woolman-camp-registration-form .register-button.ended .session-status{
+background-color: #C5C5C5;
+}
+
+h5.session-title{
+font-size: 1.2em;
+margin: 0;
+}
+
+div.child-name{
+text-align: right;
+font-size: 1.2em;
+font-weight: bold;
+}
+
+div.child-age{
+text-align: right;
+font-style: italic;
+}
+
+.questions-wrapper h4{
+background: url("/sites/all/themes/woolman/images/bullets/star-bullet.png") no-repeat scroll 0.5em 0.3em #F8FF00;
+padding-left: 1.5em;
+font-size: 1.2em;
+}
+
+#submit-reg-form{
+background-color: #FBFF6F;
+border: 1px solid #8F8F8F;
+color: black;
+float: left;
+clear: left;
+margin-top: 1em;
+padding: 8px 20px 20px;
+width: 156px;
+}
+
+#submit-reg-form p{
+font-size: 0.9em;
+}
+
+#submit-reg-form #total {
+color: #02009F;
+}
+
+#camper-tab-tip{
+color: #810000;
+background: url("arrow_red_up2.gif") left center no-repeat;
+padding-left: 38px;
+}
+
+#reg-status-page{
+font-size: 0.9em;
+}
+
+#reg-status-page #campers{
+width: 52%;
+float: left;
+}
+
+#reg-status-page .camper-info{
+background-color: #E4F8C5;
+border: 2px solid #8F8F8F;
+margin-top: 1em;
+padding: 0px 12px 12px;
+}
+
+#reg-status-page .session{
+background-color: #FCFF9A;
+border: 1px solid #8F8F8F;
+float:left;
+font-size: 0.9em;
+padding: 6px 10px 10px;
+width: 28%;
+margin-left:1em;
+}
+
+#reg-status-page .session.shuttle{
+background-color: #E5FFBC;
+}
+
+#reg-status-page .session:first-child{
+margin-left:0;
+}
+
+#reg-status-page #payment-info{
+width: 40%;
+float: right;
+padding: 8px 20px 20px;
+margin-top: 1em;
+background-color: #A2FF96;
+border: 2px solid #8F8F8F;
+color: #000534;
+}
+
+#submit-reg-form, #reg-status-page #payment-info, #reg-status-page .session, #reg-status-page .camper-info, .questions-wrapper h4, #edit-not-e-contact-checkbox-wrapper label, #edit-not-spouse-checkbox-wrapper label, #woolman-camp-registration-form .child-wrapper, #woolman-camp-registration-form .register-wrapper, #woolman-camp-registration-form .register-button{
+border-radius: 8px;
+-moz-border-radius: 8px;
+-webkit-border-radius: 8px;
+}
+
+#reg-status-page .session div{
+margin-top: 0.2em;
+}
+
+#reg-status-page table{
+background-color:#C1FFBA;
+width:80%;
+margin:0;
+}
+
+#reg-status-page table+table{
+margin-top:1em;
+}
+
+#reg-status-page h3{
+margin:4px 0;
+}
+
+#reg-status-page .medform{
+float:right;
+font-size:.9em;
+}
+
+#reg-status-page .medform.incomplete a{
+color:#F40000;
+background: url("/sites/all/themes/woolman/images/bullets/star-bullet.png") no-repeat scroll 0.3em 0.1em #F3FFB5;
+padding-left: 1.5em;
+}
+
+#reg-status-page table tr{
+border: 1px solid #E5FFE1;
+}
+
+#reg-status-page td.p{
+text-align:right;
+}
+
+#reg-status-page table td{
+padding: 4px;
+}
+
+#reg-status-page .sessions ul{
+padding-left: 1em;
+}
+
+#woolman-camp-med-form {
+font-size:.88em;
+}
+
+#woolman-camp-med-form .form-radios {
+margin:0;
+}
+
+#woolman-camp-med-form .form-item {
+clear:both;
+}
+
+#woolman-camp-med-form .form-radios .form-item {
+float:left;
+margin-right:1em;
+clear:none;
+}
+
+#woolman-camp-contribution table {
+width:auto;
+background: url("/sites/all/themes/woolman/images/background-light.jpg") repeat scroll 0 0 transparent;
+}
+
+#woolman-camp-contribution table td+td{
+padding-left:2em;
+}
+
+div a.button-style {
+border: 4px outset;
+padding: 2px 4px;
+text-decoration: none;
+background-color: #F8FFFF;
+text-decoration: none !important;
+border-radius: 6px;
+-moz-border-radius: 6px;
+-webkit-border-radius: 6px;
+}
+div a.button-style:active,
+div a.button-style:hover, {
+border: 4px inset;
+}

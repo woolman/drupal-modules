@@ -1,0 +1,89 @@
+/* $Id$ */
+
+#ws-admissions-form fieldset {
+  background: none #E4E4F4;
+  border: 5px ridge #A7C2DC;
+}
+
+#ws-admissions-form fieldset.odd {
+  background-color: #CAD6E1;
+}
+
+#ws-admissions-form #edit-create-activity-wrapper,
+#ws-admissions-form #edit-contact-to-case-wrapper {
+  clear: both;
+}
+
+#ws-admissions-form #edit-contact-name-wrapper,
+#ws-admissions-form #edit-contact-name-wrapper{
+  float: left;
+  margin-right: -4em;
+}
+
+#ws-admissions-form #edit-homebody-name-wrapper,
+#ws-admissions-form #edit-homebody-last-wrapper{
+  float: left;
+  margin-right: 1em;
+  margin-top: 0px;
+}
+
+.page-two #ws-admissions-form fieldset {
+  float: left;
+  margin: 0.5em 0 0.5em 2%;
+  width: 34em;
+}
+
+.page-two #ws-admissions-form fieldset.odd {
+  margin-right: 0px;
+}
+
+#ws-admissions-form fieldset.collapsed {
+  background-color: transparent;
+  border-bottom: none;
+  border-left: none;
+  border-right: none;
+}
+
+#ws-admissions-form fieldset legend {
+  background-color: #E4E4F4;
+  border: 2px outset #A7C2DC;
+  font-weight: bold;
+  font-family: seriff;
+  font-size: .9em;
+  color: #00003D;
+}
+
+#ws-admissions-form fieldset.collapsible legend a {
+  color: #00003D;
+}
+
+#ws-admissions-form fieldset.collapsible legend:hover {
+  background-color: #CAD6E1;
+  border: 2px inset #A7C2DC;
+}
+
+#ws-admissions-form .collapsible .description {
+  margin-bottom: .8em;
+  font-style: italic;
+}
+
+#ws-admissions-form #edit-number-of-students-wrapper .description {
+  display: inline;
+  margin-left: 1em;
+}
+
+#ws-admissions-form #edit-submit,
+#addfield,
+#killfield {
+clear:both;
+display:block;
+margin: 5px;
+}
+
+#ws-admissions-form #edit-body{
+  font-size: .9em;
+}
+
+#ws-admissions-form .form-checkboxes{
+  margin: 0px;
+}

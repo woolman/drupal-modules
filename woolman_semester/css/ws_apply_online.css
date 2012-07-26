@@ -1,0 +1,124 @@
+div.instructions{
+  background: url("../images/application.jpg") no-repeat 0px 0px transparent;
+  padding: 0.5em 1.3em;
+  width: 690px;
+}
+
+.description{
+  font-size: 0.92em;
+}
+
+.yourname{
+  text-decoration: underline;
+  font-style: italic;
+}
+
+#app-status-container{
+  width:732px;
+  margin:0 auto;
+  padding:0;
+  font-size: 0.95em;
+}
+
+#app-status-content{
+  background:url("../images/application.jpg") no-repeat 0px 0px transparent;
+  padding:10px 0px;
+  width:732px;
+}
+
+#semester-pref-form {
+  margin-left:20px;
+}
+
+#semester-pref-form .form-checkboxes{
+  margin:0;
+}
+
+#semester-pref-form #edit-edit {
+  margin-left:10px;
+}
+
+#app-status-bottom,
+.instruction-bottom{
+  background:url("../images/application.jpg") no-repeat 0px -610px transparent;
+  width:732px;
+  height:19px;
+}
+
+#app-status-table{
+  border-collapse: collapse;
+  width: 690px;
+  margin: 0 auto;
+}
+
+#app-status-content h3{
+  text-align: center;
+}
+
+#app-status-table tr{
+  height: 35px;
+  vertical-align: center;
+  background-image:url("../images/app-bars.jpg");
+  background-repeat:repeat-x;
+}
+
+#app-status-table tr.spacer{
+  height: 10px;
+  background-image:none;
+}
+
+#app-status-table tr.draft{
+  background-position:0px -40px;
+}
+
+#app-status-table tr.ready,
+#app-status-table tr.scheduled{
+  background-position:0px -80px;
+}
+
+#app-status-table tr.waiting{
+  background-position:0px -120px;
+}
+
+#app-status-table tr.none{
+  background-position:0px -160px;
+  font-style: italic;
+}
+
+#app-status-table td{
+  padding: 0 6px;
+}
+
+#app-status-table td.name {
+  width: 25%;
+}
+
+#app-status-table td.box div{
+  width: 18px;
+  height: 23px;
+  margin-left:6px;
+  background-image:url("../images/app-icons.png");
+  background-repeat:no-repeat;
+  background-position:-37px 0px
+}
+
+#app-status-table tr.complete td.box div{
+  background-position:-19px 0px;
+}
+
+#app-status-table tr.draft td.box div{
+  background-position:0px 0px;
+}
+
+#app-status-table tr.none td.box div{
+  opacity: 0.6;
+}
+
+#edit-graduation-date-day-wrapper{
+  display: none;
+}
+
+/* hide the next button when not degrading to non-javascript browser */
+html.js .next-button {
+  display: none;
+}

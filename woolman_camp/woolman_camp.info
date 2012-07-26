@@ -1,0 +1,8 @@
+; $Id$ woolman_camp
+name = Woolman Camp
+description = CiviCRM-based registration system for Summer Camp.
+core = 6.x
+package = Woolman
+dependencies[] = civicrm
+dependencies[] = woolman_website
+dependencies[] = popups

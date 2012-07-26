@@ -1,0 +1,171 @@
+<?php
+
+/**
+ * Implementation of hook_menu()
+ */
+function woolman_camp_menu() {
+  $items = array();
+
+  $items['~camp/register'] = array(
+    'title' => 'Camp Registration',
+    'page callback' => 'woolman_camp_landing',
+    'access arguments' => array('access content'),
+    'file' => 'woolman_camp_pages.inc'
+  );
+  $items['~camp/register/form'] = array(
+    'title' => 'Camp Registration Forms',
+    'page callback' => 'woolman_camp_page',
+    'access arguments' => array('access content'),
+    'file' => 'woolman_camp_pages.inc'
+  );
+  $items['~camp/register/status'] = array(
+    'title' => 'Camp Registration Status',
+    'page callback' => 'woolman_camp_page',
+    'access arguments' => array('access content'),
+    'file' => 'woolman_camp_pages.inc'
+  );
+  $items['~camp/register/medical'] = array(
+    'title' => 'Emergency Medical Form',
+    'page callback' => 'drupal_get_form',
+    'access callback' => 'user_is_logged_in',
+    'file' => 'woolman_camp_forms.inc',
+    'page arguments' => array('woolman_camp_med_form'),
+    'type' => MENU_CALLBACK
+  );
+  $items['~camp/register/shuttle'] = array(
+    'title' => 'Shuttle Rides',
+    'page callback' => 'drupal_get_form',
+    'access callback' => 'user_is_logged_in',
+    'file' => 'woolman_camp_forms.inc',
+    'page arguments' => array('woolman_camp_shuttle_form'),
+    'type' => MENU_CALLBACK
+  );
+  $items['staff/camp/rates'] = array(
+    'title' => 'Camp Dates & Rates',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('woolman_camp_rates'),
+    'access arguments' => array('access CiviCRM'),
+    'file' => 'woolman_camp_staff.inc',
+  );
+  $items['staff/camp/registration'] = array(
+    'title' => 'Camp Registration',
+    'page callback' => 'woolman_camp_staff',
+    'access arguments' => array('access CiviCRM'),
+    'file' => 'woolman_camp_staff.inc',
+  );
+  $items['staff/camp/viewform'] = array(
+    'title' => 'View Form',
+    'page callback' => 'woolman_camp_viewform',
+    'access arguments' => array('access CiviCRM'),
+    'file' => 'woolman_camp_staff.inc',
+  );
+  $items['staff/camp/js'] = array(
+    'title' => 'Callback',
+    'page callback' => 'woolman_camp_js',
+    'access arguments' => array('access CiviCRM'),
+    'file' => 'woolman_camp_staff.inc',
+  );
+  return $items;
+}
+
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function woolman_camp_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'user_register' && $_GET['q'] == '~camp/register/form') {
+    unset($form['user_registration_help']);
+    $form['#redirect'] = '~camp/register/form';
+  }
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function woolman_camp_user($type, &$edit, &$account) {
+  if ($type == 'view') {
+    global $user;
+    if ($user->uid == $account->uid) {
+      civicrm_initialize();
+      if ($date = db_result(db_query('SELECT YEAR(activity_date_time + INTERVAL 4 month) FROM {civicrm_activity} WHERE source_contact_id = %d AND activity_type_id = 56 ORDER BY activity_date_time DESC LIMIT 1', woolman_user_cid()))) {
+        if ($date == woolman_camp_next_year()) {
+          $val = l('>> Camp Registration Forms', '~camp/register/form') . '</li>
+          <li>' . l('>> Pay Camp Tuition', 'civicrm/contribute/transact', array('query' => array('reset' => 1, 'id' => 7)));
+        }
+        else {
+          $val = l('>> Camp Registration Forms', '~camp/register');
+        }
+        $account->content['summary']['woolman_camp'] = array(
+          '#type' => 'user_profile_item',
+          '#title' => 'Summer Camp',
+          '#value' => '<ul><li>' . $val . '</li></ul>',
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_civicrm_merge().
+ * Update data to reflect new cid when contacts are merged.
+ */
+function woolman_camp_civicrm_merge($type, $data, $new_id = NULL, $old_id = NULL, $tables = NULL) {
+  if ($new_id && $old_id && $type == 'sqls') {
+    db_query('UPDATE {woolman_camp_discounts} SET cid = %d WHERE cid = %d', $new_id, $old_id);
+    db_query('UPDATE {woolman_camp_age_exception} SET cid = %d WHERE cid = %d', $new_id, $old_id);
+  }
+}
+
+/**
+ * Implementation of hook_civicrm_buildForm().
+ */
+function woolman_camp_civicrm_buildForm($formName, &$form) {
+  // Add camp payment info
+  if ($formName == 'CRM_Contribute_Form_Contribution_Main' && woolman_aval($_GET, 'id') == 7) {
+    module_load_include('inc', 'woolman_camp', 'woolman_camp_forms');
+    woolman_camp_contribution_form($formName, $form);
+  }
+}
+
+/**
+ * Implementation of hook_civicrm_pre().
+ * Reset source when editing an unprocessed payment
+ */
+function woolman_camp_civicrm_pre($op, $type, $id, &$c) {
+  if (($op == 'update' || $op == 'edit') && $type == 'Contribution'
+  && isset($c['source']) && isset($c['contribution_type_id'])
+  && $c['source'] == '20??' && $c['contribution_type_id'] == 5) {
+    $c['source'] = 'Unprocessed';
+  }
+}
+
+/**
+ * Implementation of hook_civicrm_post().
+ * Trigger processing of a camp payment
+ */
+function woolman_camp_civicrm_post($op, $type, $id, $c) {
+  if (($op == 'create' || $op == 'update' || $op == 'edit') && $type == 'Contribution'
+  && isset($c->contribution_status_id) && isset($c->contribution_type_id)
+  && $c->contribution_status_id == 1 && $c->contribution_type_id == 5) {
+    if (empty($c->source) || substr($c->source, 0, 2) != '20') {
+      module_load_include('inc', 'woolman_camp', 'woolman_camp_utils');
+      woolman_camp_process_payments(FALSE);
+    }
+  }
+}
+
+/**
+ * Implementation of hook_cron().
+ */
+function woolman_camp_cron() {
+  module_load_include('inc', 'woolman_camp', 'woolman_camp_utils');
+  woolman_camp_process_payments(TRUE);
+}
+
+/**
+ * Returns the year of next year's camp
+ * The camp year starts September 1st
+ */
+function woolman_camp_next_year() {
+  return date('n') > 8 ? date('Y') + 1 : date('Y');
+}

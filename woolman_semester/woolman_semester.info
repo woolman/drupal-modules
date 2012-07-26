@@ -1,0 +1,6 @@
+name = Woolman Semester
+description = Online application system and prospective student tracking system for the Woolman Semester.
+core = 6.x
+package = Woolman
+dependencies[] = civicrm
+dependencies[] = woolman_website

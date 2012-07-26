@@ -1,0 +1,254 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * woolman_camp module's install and uninstall code.
+ */
+
+/**
+ * Implementation of hook_schema().
+ */
+function woolman_camp_schema() {
+  $schema['woolman_camp_rates'] = array(
+    'description' => 'Annual rates for camp.',
+    'fields' => array(
+      'year' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Summer of:',
+      ),
+      'sfc_price' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Price per week of sierra friends camp',
+      ),
+      'tlc_price' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Price per week of teen camp',
+      ),
+      'sfc_multi_week_discount' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Discount for attending 2+ weeks at sfc (per week)',
+      ),
+      'deposit' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Deposit amount',
+      ),
+      'early_discount' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Amount of early-registration discount (per camper)',
+      ),
+      'early_date' => array(
+        'type' => 'datetime',
+        'not null' => TRUE,
+        'description' => 'Last day to get early discount',
+      ),
+      'family_discount' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Family discount (per camper)',
+      ),
+      'shuttle_price' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Cost of one-way trip on the shuttle',
+      ),
+      'gender_balance' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 100,
+        'description' => 'Max percent of one gender in a session (must be between 50 and 100)',
+      ),
+    ),
+    'primary key' => array('year'),
+  );
+  $schema['woolman_camp_discounts'] = array(
+    'description' => 'Discounts given to families.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Unique ID of discount',
+      ),
+      'cid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Contact ID of parent',
+      ),
+      'amount' => array(
+        'type' => 'numeric',
+        'not null' => TRUE,
+        'default' => 0,
+        'precision' => 10,
+        'scale' => 2
+      ),
+      'date' => array(
+        'type' => 'datetime',
+        'not null' => TRUE,
+        'description' => 'The date this discount was given',
+      ),
+      'year' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Discount is for the summer of:',
+      ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => 24,
+        'description' => 'Type of discount',
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['woolman_camp_age_exception'] = array(
+    'description' => 'Allows campers to attend an older or younger program.',
+    'fields' => array(
+      'cid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Contact ID of camper',
+      ),
+      'year' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'For the summer of:',
+      ),
+      'delta' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Add this amount to the camper age',
+      ),
+    ),
+    'primary key' => array('cid', 'year'),
+  );
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function woolman_camp_install() {
+  drupal_install_schema('woolman_camp');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function woolman_camp_uninstall() {
+  drupal_uninstall_schema('woolman_camp');
+}
+
+/**
+ * Add column for shuttle_price.
+ */
+function woolman_camp_update_6100() {
+  $field = array(
+    'type' => 'int',
+    'size' => 'small',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+    'description' => 'Cost of one-way trip on the shuttle',
+  );
+  $ret = array();
+  db_add_field($ret, 'woolman_camp_rates', 'shuttle_price', $field);
+  return $ret;
+}
+
+/**
+ * Add column for gender_balance.
+ */
+function woolman_camp_update_6101() {
+  $field = array(
+    'type' => 'int',
+    'size' => 'small',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 100,
+    'description' => 'Max percent of one gender in a session (must be between 50 and 100)',
+  );
+  $ret = array();
+  db_add_field($ret, 'woolman_camp_rates', 'gender_balance', $field);
+  return $ret;
+}
+
+/**
+ * Add table for age_exception.
+ */
+function woolman_camp_update_6102() {
+  $schema = array(
+    'description' => 'Allows campers to attend an older or younger program.',
+    'fields' => array(
+      'cid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Contact ID of camper',
+      ),
+      'year' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'For the summer of:',
+      ),
+      'delta' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Add this amount to the camper age',
+      ),
+    ),
+    'primary key' => array('cid', 'year'),
+  );
+  $ret = array();
+  db_create_table($ret, 'woolman_camp_age_exception', $schema);
+  return $ret;
+}

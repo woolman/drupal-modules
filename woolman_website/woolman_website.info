@@ -1,0 +1,4 @@
+name = Woolman Website
+description = Custom code for the Woolman website; provides an API for other Woolman modules.
+core = 6.x
+package = Woolman

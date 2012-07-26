@@ -1,0 +1,355 @@
+/* Staff Pages */
+
+form#-ws-apply-form-report div.subset {
+  padding: 7px;
+  background-color: #E8F2E0;
+  height: 2.7em;
+  border-radius: 0px 0px 4px 4px;
+}
+
+form#-ws-apply-form-report .subset div.form-checkboxes {
+  font-size: .8em;
+  color: #2A391E;
+  margin: 0;
+}
+
+.app-report-container {
+  clear: both;
+}
+
+.app-report-table a:link,
+.app-report-table a:visited {
+  font-weight: normal;
+  color: #111955;
+}
+
+.app-report-table a:hover,
+.app-report-table a:focus {
+  color: #1C1C8D;
+}
+
+.app-report-table caption {
+  font-weight: bold;
+  font-size: 1.5em;
+  text-align: center;
+  margin: .5em;
+}
+
+.app-report-container table.app-report-table tbody tr.needs-attn {
+  background-color: #FAEBC8;
+}
+
+.app-report-container table.app-report-table tbody tr.withdrawn {
+  background-color: #E3E3E3;
+  color: #C5C5C5;
+  text-decoration: line-through;
+}
+
+.app-report-container table.app-report-table tbody tr.withdrawn:hover {
+  background-color: #F5F5F5;
+}
+
+.app-report-container thead th,
+.app-report-table td {
+  border: 1px solid #A9B1D3;
+  padding: 0;
+}
+
+.app-report-table td.cell {
+  width: 26px;
+  font-size: .8em;
+  text-align: center;
+  line-height: .9em;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.app-report-table td.cell a {
+  width: 100%;
+  height: 100%;
+  min-height: 30px;
+  display: block;
+}
+
+.app-report-table td.cell span.icn {
+  width: 16px;
+  height: 16px;
+  margin: 4px auto;
+  display: block;
+  background: url("../images/staff-icons.png") no-repeat 16px 16px;
+}
+
+.app-report-table tr td.completed span.icn {
+  background-position: 0 0;
+}
+
+.app-report-table tr td.waiting span.icn,
+.app-report-table tr td.left-message span.icn {
+  background-position: -48px 0;
+}
+
+.app-report-table tr td.in-progress span.icn {
+  background-position: -16px 0;
+}
+
+.app-report-table tr td.scheduled span.icn {
+  background-position: -32px 0;
+}
+
+.app-report-table tr td.ready span.icn {
+  background-position: -64px 0;
+}
+
+.app-report-table span.icon {
+  height: 12px;
+}
+
+.js .abs-dt {
+  display:none;
+}
+
+.notes .rel-dt {
+  font-weight:bold;
+}
+
+/* Messages */
+
+#staff-msg {
+  position: fixed;
+  top: 20px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  z-index: 9998;
+}
+
+#staff-msg p {
+  background-color:#FFFFCC;
+  border: 1px solid #FFE846;
+  font-weight:bold;
+  color: black;
+  padding:0.6em 0.8em;
+  display: inline-block;
+  margin: 0px 0px 4px;
+  box-shadow: 0 1px 2px #666336;
+  font-size: .95em;
+}
+
+#page.busy {
+  cursor:progress;
+}
+
+#page p#busy-msg {
+  display: none;
+}
+
+#page.busy p#busy-msg {
+  display: inline-block;
+}
+
+/* Pager */
+
+#application-pager {
+  width: 60%;
+  margin: 15px auto;
+  clear: both;
+}
+
+#application-pager #pager-left,
+#application-pager #pager-right {
+  width: 45%;
+  float: left;
+}
+
+#application-pager span {
+  width: 21px;
+  height: 16px;
+  margin: 0 4px;
+  display: inline-block;
+  background: url("../images/staff-icons.png") no-repeat -80px 0;
+}
+
+#application-pager #pager-left span {
+  background-position: -101px 0;
+}
+
+#application-pager div#pager-right {
+  float: right;
+  text-align: right;
+}
+
+/* JS Select */
+
+.app-report-table div.sel.ready {
+  border: 1px solid #E6E6E6;
+  border-radius: 2px;
+  padding: 2px;
+}
+
+.app-report-table div.sel.ready:hover {
+  cursor:pointer;
+  border: 1px solid blue;
+}
+
+.app-report-table td select {
+  font-size:.9em;
+  text-decoration: none;
+}
+
+/* Sticky Header */
+
+.app-report-container .sticky-header {
+  z-index:7;
+}
+
+/* Add Notes Menu */
+
+.app-report-container td .notes {
+  min-height: 34px;
+  position: relative;
+  width: 100%;
+}
+
+.app-report-container a.new-note {
+  background-position: 0px -193px;
+  height: 14px;
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+}
+
+#action-menu {
+  background: #F2F2F9;
+  box-shadow: 0 0 12px rgba( 0, 0, 0, .3 );
+  border: 1px solid #ccc;
+  display: none;
+  position: absolute;
+  top: 1em;
+  right: 15px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 100px;
+  z-index: 9999;
+}
+
+#action-menu li {
+  position: relative;
+  border-bottom: 1px solid #D8DAE1;
+  border-left: 1px solid #FAFAFA;
+  border-top: 1px solid #FAFAFA;
+}
+
+#action-menu li:hover {
+  background: #7D8BB3;
+  border-left: 1px solid #CBD7FA;
+  border-top: 1px solid #CBD7FA;
+}
+
+#action-menu a {
+  color: #383838;
+  display: inline-block;
+  padding: 6px;
+  text-decoration: none;
+  width: 85%;
+}
+
+#action-menu li:hover a {
+  color: #f9f9f9;
+}
+
+#action-menu li:last-child {
+  border-bottom: none;
+}
+
+/* Tablesorter */
+
+table.tablesorter {
+  font-family:arial;
+  background-color:#CDCDCD;
+  margin:10px 0pt 15px;
+  font-size:8pt;
+  min-width:900px;
+  text-align:left;
+}
+table.tablesorter thead tr th, table.tablesorter tfoot tr th,
+.app-report-container .sticky-header th {
+  background-color:#e6EEEE;
+  font-size:8pt;
+  padding:4px;
+}
+table.tablesorter thead tr .header,
+.app-report-container .sticky-header tr .header {
+  background-repeat:no-repeat;
+  background-position:center right;
+  cursor:pointer;
+}
+table.tablesorter thead:hover tr .header,
+.app-report-container .sticky-header:hover tr .header {
+  background-image:url("../images/bg.gif");
+}
+table.tablesorter tbody td {
+  color:#262626;
+  padding:4px;
+  vertical-align:top;
+}
+table.tablesorter tbody tr {
+  background-color:#FDFDFF;
+}
+table.tablesorter tbody tr.odd {
+  background-color:#F5F5FF;
+}
+table.tablesorter tbody tr.even:hover {
+  background-color:#FEFFE1
+}
+table.tablesorter tbody tr.odd:hover {
+  background-color:#FEFFD9;
+}
+table.tablesorter thead tr th.headerSortUp,
+.app-report-container .sticky-header th.headerSortUp {
+  background-image:url("../images/asc.gif") !important;
+  background-color:#8dbdd8;
+}
+table.tablesorter thead tr th.headerSortDown,
+.app-report-container .sticky-header th.headerSortDown {
+  background-image:url("../images/desc.gif") !important;
+  background-color:#8dbdd8;
+}
+.app-report-container .tablesorter th:hover,
+.app-report-container .sticky-header th:hover {
+  background-color:#D8E7E7;
+}
+.app-report-container .tablesorter th.headerSortDown:hover,
+.app-report-container .tablesorter th.headerSortUp:hover,
+.app-report-container .sticky-header th.headerSortDown:hover,
+.app-report-container .sticky-header th.headerSortUp:hover {
+  background-color:#7DB2CF;
+}
+
+/* Jquery Popup */
+
+#view-activity div.loading {
+  background:url("../images/spinner.gif") no-repeat scroll center center transparent;
+  height:100%;
+  width:100%;
+  cursor:progress;
+}
+
+#view-activity.ui-dialog-content {
+  padding:0;
+}
+
+#activity-content {
+  overflow: auto;
+  height: 479px;
+  padding: 4px 10px;
+  font-size: .73em;
+  position: relative;
+}
+
+#activity-content input,
+#activity-content select,
+#activity-content button,
+#activity-content textarea {
+  font-size: .92em;
+}

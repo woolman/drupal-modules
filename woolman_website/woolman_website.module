@@ -1,0 +1,1562 @@
+<?php
+
+// TODO: Remove for D7 version
+define('DRUPAL_ROOT', getcwd());
+
+// CiviCRM contact_id of Woolman
+define('WOOLMAN', 243);
+
+// Country ID of United States
+define('USA', 1228);
+
+/**
+ * Implements hook_menu()
+ */
+function woolman_website_menu() {
+  $items = array();
+  $items['staff/js/autocomplete'] = array(
+    'title' => 'Contacts',
+    'page callback' => 'woolman_website_autocomplete',
+    'access arguments' => array('access CiviCRM'),
+    'file' => 'woolman_website_utils.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['~blog/submissions'] = array(
+    'title' => 'Blog Submissions',
+    'page callback' => 'cust_wool_blog_submission',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'file' => 'woolman_blog.inc',
+  );
+  $items['staff/directory'] = array(
+    'title' => 'Woolman Directory',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('woolman_directory'),
+    'access arguments' => array('access CiviCRM'),
+    'type' => MENU_CALLBACK,
+    'file' => 'woolman_directory.inc',
+  );
+  $items['phone'] = array(
+    'title' => 'Phonathon',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('woolman_phonathon'),
+    'access arguments' => array('use phonathon form'),
+    'type' => MENU_CALLBACK,
+    'file' => 'woolman_phonathon.inc',
+  );
+  $items['staff/js/directory'] = array(
+    'page callback' => 'woolman_directory_reload',
+    'access arguments' => array('access CiviCRM'),
+    'type' => MENU_CALLBACK,
+    'file' => 'woolman_directory.inc',
+  );
+  $items['~semester/about/sending-schools'] = array(
+    'title' => 'Sending Schools',
+    'page callback' => 'woolman_sending_schools',
+    'access arguments' => array('access content'),
+    'file' => 'woolman_sending_schools.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_theme()
+ */
+function woolman_website_theme() {
+  return array(
+    'multicolumn_options' => array(
+      'arguments' => array('element' => NULL),
+      'file' => 'woolman_utils.inc',
+    ),
+    'woolman_sending_schools' => array(
+      'arguments' => array('schools' => NULL),
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_perm().
+ * Define the permissions this module uses.
+ */
+function woolman_website_perm() {
+  return array('use phonathon form');
+}
+
+/**
+ * hook_mail callback
+ * @param $key: Any value will send a simple message. Pass "create_activity" to log an activity in civicrm
+ */
+function woolman_website_mail($key, &$msg, $params) {
+  $msg['subject'] = $params['subject'];
+  $msg['body'][] = $params['body'];
+  // $msg['headers']['Errors-To'] = $msg['headers']['Return-Path'] = $msg['headers']['Sender'] = $msg['headers']['From'];
+  if (!empty($params['cc'])) {
+    $msg['headers']['Cc'] = $params['cc'];
+  }
+  if (!empty($params['bcc'])) {
+    $msg['headers']['Bcc'] = $params['bcc'];
+  }
+  // Create activity
+  if ($key==='create_activity') {
+    civicrm_initialize();
+    woolman_civicrm_api('activity', 'create', array(
+      'activity_type_id' => woolman_aval($params, 'activity_type_id', 3),
+      'source_contact_id' => !empty($params['from_cid']) ? $params['from_cid'] : woolman_user_cid(),
+      'target_contact_id' => is_array($params['to_cid']) ? $params['to_cid'] : array($params['to_cid']),
+      'subject' => $params['subject'],
+      'status_id' => 2,
+      'activity_date_time' => date('YmdHis'),
+      'details' => nl2br($params['body']),
+    ));
+  }
+}
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function woolman_website_form_alter(&$form, $form_state, $form_id) {
+
+  //change search button text in various views
+  $view_name = isset($form_state['view']) && isset($form_state['view']->name) ? $form_state['view']->name : '';
+  if ($view_name == 'blog' || $view_name == 'songbook') {
+    if (!empty($form['submit']['#value'])) {
+      $form['submit']['#value'] = t('Search');
+    }
+  }
+  elseif ($view_name == 'admin_content') {
+    if (!empty($form['submit']['#value'])) {
+      $form['submit']['#value'] = t('Filter');
+    }
+  }
+  //admissions activity view
+  elseif ($view_name == 'admissions_activities' && !empty($form['mine'])) {
+    $form['mine']['#options'] = array(
+      'All' => 'Any outreach person',
+      1 => 'Only my trips'
+    );
+  }
+
+  //customize text in comment form
+  if ($form_id == 'comment_form') {
+    if (!empty($form['name']['#default_value'])) {
+      $form['name']['#default_value'] = '';
+    }
+
+    $form['mail']['#description'] = t('For verification purposes only. We promise not to spam you.');
+
+    $form['homepage']['#title'] = t('Your Website or Blog');
+    $form['homepage']['#attributes']['onblur'] = "if (this.value == 'http://') {this.value = '';}";
+    $form['homepage']['#attributes']['onfocus'] = "if (this.value == '') {this.value = 'http://';}";
+    $form['homepage']['#description'] = t('OPTIONAL: If you want to include a link (i.e. to your facebook page), enter the url.');
+  }
+
+  // Custom search box
+  if ($form_id == 'search_theme_form') {
+    unset($form['search_theme_form']['#title']);
+  }
+
+  // Hide Event ID field
+  if ($form_id == 'event_node_form' && isset($form['field_civicrm_event_id'])) {
+    $form['field_civicrm_event_id']['#access'] = FALSE;
+  }
+
+  // Contact form -- set default category from url
+  if ($form_id == 'contact_mail_page') {
+    if (!empty($_GET['c']) && is_numeric($_GET['c'])) {
+      $form['cid']['#default_value'] = (int) $_GET['c'];
+    }
+  }
+}
+
+/**
+ * Implements hook_nodeapi().
+ */
+function woolman_website_nodeapi(&$node, $op, $teaser, $page) {
+
+  if (isset($node->type) && $node->type == 'event'
+  && isset($node->field_event_type[0]['value']) && $node->field_event_type[0]['value'] == 'Woolman Semester') {
+    switch ($op) {
+      case 'presave':
+        civicrm_initialize();
+        $params = array(
+          'event_type_id' => 3,
+          'start_date' => $node->field_event_date[0]['value'],
+          'end_date' => $node->field_event_date[0]['value2'],
+          'is_public' => 1,
+          'is_active' => 1,
+          'title' => $node->title,
+          'description' => $node->body,
+        );
+        if (!empty($node->field_civicrm_event_id[0]['value'])) {
+          $params['id'] = $node->field_civicrm_event_id[0]['value'];
+        }
+        else {
+          $node->body .= '<p><a href="/events/rsvp">Click Here to RSVP</a></p>';
+        }
+        $result = woolman_civicrm_api('event', 'create', $params);
+        $node->field_civicrm_event_id[0]['value'] = $result['id'];
+        break;
+
+      case 'delete':
+        civicrm_initialize();
+        if (!empty($node->field_civicrm_event_id[0]['value'])) {
+          woolman_civicrm_api('event', 'delete', array('id' => $node->field_civicrm_event_id[0]['value']));
+        }
+        break;
+    }
+    woolman_website_cron(TRUE);
+  }
+}
+
+/**
+ * Implements hook_cron().
+ * Refresh events list in RSVP form once a day (or manually during event crud)
+ */
+function woolman_website_cron($force = FALSE) {
+  if ($force || date('G') < 2) {
+    $node = node_load(1394);
+    civicrm_initialize();
+    module_load_include('inc', 'webform_civicrm', 'webform_civicrm_utils');
+    $event_field = $node->webform['components'][98];
+    $events = webform_civicrm_field_options($event_field, 'component_insert', $node->webform_civicrm['data']);
+    if ($events != $event_field['extra']['items']) {
+      module_load_include('inc', 'webform', 'includes/webform.components');
+      $event_field['extra']['items'] = $events;
+      webform_component_update($event_field);
+    }
+  }
+}
+
+/**
+ * Implements hook_civicrm_buildForm().
+ */
+function woolman_website_civicrm_buildForm($formName, &$form) {
+  // Alter contribution forms
+  if ($formName == 'CRM_Contribute_Form_Contribution_Main'
+  && !empty($form->_values['contribution_type_id'])) {
+    // Limit options of donation Payment Forms
+    if ($form->_values['contribution_type_id'] == 1) {
+      $allowed = array('annual fund', 'ws scholarship', 'campership', 'seeds of peace');
+      foreach ($form->_elements as &$e) {
+        if (!empty($e->_attributes['name']) && $e->_attributes['name'] == 'custom_18') {
+          foreach ($e->_options as $oid => $o) {
+            if (!in_array(woolman_aval($o, 'attr:value'), $allowed)) {
+              unset($e->_options[$oid]);
+            }
+          }
+        }
+        if (!empty($e->_name) && $e->_name == 'preferred_communication_method') {
+          unset($e->_elements[0], $e->_elements[3], $e->_elements[4]);
+        }
+      }
+    }
+    // Change language of non-donation Payment Forms
+    else {
+      foreach ($form->_elements as &$e) {
+        if (!empty($e->_label) && $e->_label == 'Contribution Amount') {
+          $e->_label = 'Payment Amount';
+        }
+        elseif (!empty($e->_name) && $e->_name == 'is_recur') {
+          foreach ($e->_elements as &$f) {
+            if (!empty($f->_text)) {
+              $f->_text = str_replace(array('contribution', 'contribute'), array('payment', 'pay'), $f->_text);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_civicrm_pre().
+ */
+function woolman_website_civicrm_pre($op, $type, $id, &$p) {
+  $access = user_access('access CiviCRM');
+  // Clean up user-entered data
+  if (($op == 'create' || $op == 'edit')
+  && ($type == 'Individual' || $type == 'Organization' || $type == 'Address')) {
+
+    if ($type == 'Address') {
+      // Don't mess with shared addresses
+      if (!empty($p['master_id']) && is_numeric($p['master_id'])) {
+        return;
+      }
+      $cleanup = array('street_address', 'city');
+      // Move zip+4 to correct field
+      if (empty($p['postal_code_suffix']) && woolman_aval($p, 'country_id', USA) == USA
+      && strpos(woolman_aval($p, 'postal_code', ''), '-')) {
+        list($p['postal_code'], $p['postal_code_suffix']) = explode('-', $p['postal_code'], 2);
+      }
+    }
+    else {
+      $cleanup = array('first_name', 'nick_name', 'last_name', 'middle_name', 'organization_name');
+    }
+
+    $sep = array('', ' ', "'", '-', '.');
+    foreach ($cleanup as $fid) {
+      if (!empty($p[$fid]) && is_string($par = &$p[$fid])) {
+        $par = trim($par);
+        if (($op == 'create' || !$access)
+        && ($par == strtolower($par) || ($par == strtoupper($par) && !strpos($par, '.') && strlen($par) > 3))) {
+          // Iterate through string and capitalize words (an improved version of ucwords())
+          $parray = str_split(strtolower($par));
+          $par = $l = '';
+          foreach ($parray as $c) {
+            if (in_array($l, $sep)) {
+              if ($c == $l) {
+                // Strip excess punctuation
+                continue;
+              }
+              $c = strtoupper($c);
+            }
+            $par .= $l = $c;
+          }
+        }
+      }
+    }
+
+    if ($type == 'Individual' && (isset($p['last_name']) || isset($p['first_name']) || isset($p['nick_name']))) {
+      $first = strtolower(woolman_aval($p, 'first_name', ''));
+      $nick = strtolower(woolman_aval($p, 'nick_name', ''));
+      $last = strtolower(woolman_aval($p, 'last_name', ''));
+
+      if ($op == 'edit' && (arg(0) != 'civicrm' || !$access) && woolman_name('last', $id)) {
+        $existing_first = strtolower(woolman_name('first', $id));
+        $existing_last = strtolower(woolman_name('last', $id));
+        $existing_nick = strtolower(woolman_name('nick', $id));
+
+        // Send a warning to the site admin if the name gets totally changed
+        if (isset($p['last_name']) && $last != $existing_last
+        && ($first != $existing_first || $nick != $existing_nick)) {
+          $old = woolman_name('display', $id);
+          $new = ucwords($first . ' ' . ($nick ? "($nick) " : '') . $last);
+          $args = $_GET;
+          unset($args['q']);
+          $link = url($_GET['q'], array('absolute' => TRUE, 'query' => $args));
+          $message = array(
+            'subject' => "Contact \"$old\" changed to \"$new\"",
+            'body' => "A contact's name has been altered, possibly in error. This is often caused by a user filling out a form which was intended for a specific person (i.e. while logged-in or via a hashed link), but instead erasing the name and entering a different person.\n\n" .
+            "  Old name: $old\n" .
+            "  New name: $new\n  " .
+            woolman_contact_url($id) .
+            "\n\nThis change was made by " . woolman_name('full') . " (cid " . woolman_user_cid() . ")\n" .
+            "from IP " . ip_address() . "\n" .
+            "on " . date('M j Y, g:i a') . "\n" .
+            "on the page: \"" . drupal_get_title() . "\" $link\n\n" .
+            "-This message brought to you by the Woolman Website module.",
+          );
+          drupal_mail('woolman_website', 0, 'webmaster@woolman.org', language_default(), $message, 'info@woolman.org');
+        }
+
+        $existing_nick = $existing_nick == $existing_first ? '' : $existing_nick;
+        // Prevent accidental deletion of nick names
+        if ($existing_nick == $first && !empty($first) && empty($nick)) {
+          $p['nick_name'] = $p['first_name'];
+          $p['first_name'] = woolman_name('first', $id);
+        }
+      }
+
+      // Get rid of redundant nick names
+      if ($nick
+      && ($first == $nick || $last == $nick || ($first . ' ' . $last) == $nick)) {
+        $p['nick_name'] = '';
+      }
+    }
+  }
+}
+
+
+/**
+ * Implements hook_civicrm_post().
+ * Ignore $object because this hook is often passed an incomplete object
+ * Instead we use $object to prevent recursion when updating spouse
+ */
+function woolman_website_civicrm_post($op, $type, $id, $object) {
+  // Build a "smart" name & greeting
+  if (($op == 'create' || $op == 'edit') && $type == 'Individual' && !empty($id)) {
+    $db = db_query("
+      SELECT con.first_name, con.middle_name, con.last_name, con.nick_name, con.display_name, con.sort_name, con.postal_greeting_display, con.email_greeting_display, con.addressee_display, con.postal_greeting_id, con.email_greeting_id, con.addressee_id, s.label as suffix, spouse.first_name AS spouse_first, spouse.nick_name AS spouse_nick, spouse.last_name AS spouse_last, spouse.id AS spouse_id
+      FROM {civicrm_contact} con
+      LEFT JOIN {civicrm_option_value} s ON s.value = con.suffix_id AND s.option_group_id = (SELECT id FROM {civicrm_option_group} WHERE name = 'individual_suffix')
+      LEFT JOIN {civicrm_contact} spouse ON (spouse.id IN (SELECT contact_id_a FROM {civicrm_relationship} WHERE contact_id_b = con.id AND relationship_type_id = 2 AND is_active = 1 AND end_date IS NULL) OR spouse.id IN (SELECT contact_id_b FROM {civicrm_relationship} WHERE contact_id_a = con.id AND relationship_type_id = 2 AND is_active = 1 AND end_date IS NULL)) AND spouse.is_deceased = 0 AND spouse.is_deleted = 0
+      WHERE con.id = $id
+      LIMIT 0, 1");
+    $c = db_fetch_object($db);
+    if (strtolower($c->first_name) == strtolower($c->nick_name) && $c->nick_name) {
+      $samename = TRUE;
+      $c->nick_name = NULL;
+    }
+    else {
+      $samename = FALSE;
+    }
+    $display_name = $addressee_display = $c->first_name . ' ';
+    $postal_greeting_display = $email_greeting_display = ($c->nick_name ? $c->nick_name : $c->first_name);
+    $sort_name = $c->last_name . ', ' . $c->first_name;
+    if ($c->nick_name) {
+      $display_name .= '(' . $c->nick_name . ') ';
+    }
+    if ($c->middle_name) {
+      $middle = str_replace('.', ' ', $c->middle_name);
+      $middle = str_replace('  ', ' ', $middle);
+      $mi = '';
+      foreach (explode(' ', $middle) as $m) {
+        if ($m) {
+          $mi .= ($mi ? ' ' : '') . strtoupper($m[0]) . '.';
+        }
+      }
+      $sort_name .= ' ' . $mi;
+      if ($c->nick_name !== $c->middle_name) {
+        $display_name .= $mi . ' ';
+      }
+    }
+    $display_name .= $c->last_name;
+    if ($c->suffix) {
+      $display_name .= ' ' . $c->suffix;
+    }
+    if ($c->spouse_first && $c->spouse_last) {
+      $postal_greeting_display .= ' and ' . ($c->spouse_nick ? $c->spouse_nick : $c->spouse_first);
+      if ($c->spouse_last == $c->last_name) {
+        $addressee_display .= 'and ' . $c->spouse_first . ' ' . $c->last_name;
+      }
+      else {
+        $addressee_display .= $c->last_name . ' and ' . $c->spouse_first . ' ' . $c->spouse_last;
+      }
+    }
+    else {
+      $addressee_display .= $c->last_name;
+      if ($c->suffix) {
+        $addressee_display .= ' '. $c->suffix;
+      }
+    }
+    // Use email if no name
+    if (!trim($display_name)) {
+      $postal_greeting_display = $email_greeting_display = 'friend';
+      $edb = db_query('SELECT email FROM {civicrm_email} WHERE is_primary = 1 AND contact_id =' . $id);
+      if ($e = db_fetch_object($edb)) {
+        $sort_name = $display_name = $addressee_display = $e->email;
+      }
+    }
+    if ($display_name !== $c->display_name || $sort_name !== $c->sort_name || $addressee_display !== $c->addressee_display || $postal_greeting_display !== $c->postal_greeting_display || !$c->addressee_id || !$c->postal_greeting_id || !$c->email_greeting_id || $samename) {
+      $q = "UPDATE {civicrm_contact} SET display_name = '%s', sort_name = '%s'";
+      $a = array($display_name, $sort_name);
+      foreach (array('addressee', 'postal_greeting', 'email_greeting') as $n) {
+        if ((${$n . '_display'} !== $c->{$n . '_display'} && $c->{$n . '_id'} == 1) || !$c->{$n . '_id'}) {
+          $q .= ", {$n}_id = 1, {$n}_display = '%s'";
+          $a[] = ${$n . '_display'};
+        }
+      }
+      if ($samename) {
+        $q .= ", nick_name = NULL";
+      }
+      $q .= ' WHERE id = %d';
+      $a[] = $id;
+      db_query($q, $a);
+    }
+    // Clear cache if user changes own name
+    if ($id === woolman_aval($_SESSION, 'CiviCRM:userID')) {
+      unset($_SESSION['woolman_name']);
+    }
+    // Update spouse record, prevent recursion
+    if ($c->spouse_id && $object !== 'called_from_spouse') {
+      woolman_website_civicrm_post('edit', 'Individual', $c->spouse_id, 'called_from_spouse');
+    }
+  }
+  elseif ($type === 'Relationship' && isset($object->relationship_type_id) && $object->relationship_type_id == 2) {
+    // Also call the above code when creating/updating spouse relationship
+    woolman_website_civicrm_post('edit', 'Individual', $object->contact_id_a, 'called_from_spouse');
+    woolman_website_civicrm_post('edit', 'Individual', $object->contact_id_b, 'called_from_spouse');
+  }
+}
+
+
+/**
+ * Implements hook_civicrm_searchColumns().
+ */
+function woolman_website_civicrm_searchColumns($type, &$headers, &$rows, &$selector) {
+
+  switch (strtolower($type)) {
+    case 'contribution':
+      // Overwrite 'Premium' column with 'Campaign', and append account info to donations
+      foreach ($headers as &$h) {
+        if ($h['sort'] == 'product_name' || $h['name'] == 'Premium') {
+          unset($h['sort']);
+          $h['name'] = 'Campaign';
+        }
+      }
+      $acct = array();
+      foreach ($rows as $n => &$r) {
+        if ($r['contribution_type'] == 'Donation') {
+          $acct[$r['contribution_id']] = $n;
+        }
+        $r['product_name'] = $r['campaign'];
+      }
+      // Fetch account data from custom field
+      if ($acct) {
+        $sql = "
+          SELECT entity_id AS eid, account_18 AS acct, designation_60 AS des
+          FROM civicrm_value_contribution_accounts_10
+          WHERE account_18 <> '' AND entity_id IN (" . implode(',', array_keys($acct)) . ')';
+        $dao = &CRM_Core_DAO::executeQuery($sql);
+        while ($dao->fetch()) {
+          $d = $dao->des ? $dao->des : ucwords($dao->acct);
+          $rows[$acct[$dao->eid]]['contribution_type'] .= ' (<em>' . $d . '</em>)';
+        }
+      }
+    break;
+  }
+}
+
+
+/**
+ * Implmentation of hook_civicrm_postProcess
+ */
+function woolman_website_civicrm_postProcess($formName, &$form) {
+  // Record contribution submissions by IP address for flood control, set to expire in 2 hours
+  if ($formName == 'CRM_Contribute_Form_Contribution_Confirm') {
+    $ip = ip_address();
+    $n = 1;
+    if (($c1 = cache_get('civicontribute_flood_1_' . $ip)) && time() < $c1->expire) {
+      ++$n;
+    }
+    cache_set('civicontribute_flood_' . $n . '_' . $ip, 1, 'cache', strtotime('+2 hours'));
+  }
+}
+
+
+/**
+ * Implmentation of hook_civicrm_validate
+ */
+function woolman_website_civicrm_validate($formName, &$fields, &$files, &$form) {
+  // Validate contribution pages for flood control
+  // If 2 entries from this IP address exist, reject the form submission
+  if ($formName == 'CRM_Contribute_Form_Contribution_Main') {
+    $ip = ip_address();
+    if ((($c1 = cache_get('civicontribute_flood_1_' . $ip)) && ($c2 = cache_get('civicontribute_flood_2_' . $ip)))
+      && time() < $c1->expire && time() < $c2->expire) {
+      watchdog('civicontribute_flood', 'Prevented contribution form submission from ip: ' . $ip);
+      return array('qfKey' => 'Sorry, for security reasons we do not allow more than two credit card transactions at a time. If you feel you have received this message in error, please contact us at 530-273-3183.');
+    }
+  }
+  return TRUE;
+}
+
+
+/**
+ * Implements hook_civicrm_dupeQuery().
+ */
+function woolman_website_civicrm_dupeQuery($obj, $type, &$query) {
+  if ($type == 'table' && empty($obj->noRules)) {
+    module_load_include('inc', 'woolman_website', 'woolman_dupe_query');
+    woolman_dupe_query($obj, $type, $query);
+  }
+}
+
+
+/**
+ * Implements hook_civicrm_tokens().
+ */
+function woolman_website_civicrm_tokens(&$tokens) {
+  $tokens['date'] = array(
+    'date.date_short' => 'Today\'s Date: dd/mm/yyyy',
+    'date.date_med' => 'Today\'s Date: Mon d yyyy',
+    'date.date_long' => 'Today\'s Date: Month dth, yyyy',
+  );
+  $tokens['relatives'] = array();
+  foreach (array('p1' => 'Parent 1', 'p2' => 'Parent 2', 'ec' => 'Emergency Contact') as $p => $n) {
+    $tokens['relatives']['relatives.' . $p . '_display_name'] = $n . ' Display Name';
+    $tokens['relatives']['relatives.' . $p . '_address'] = $n . ' Address';
+    $tokens['relatives']['relatives.' . $p . '_email'] = $n . ' Email';
+    $tokens['relatives']['relatives.' . $p . '_phone'] = $n . ' Phone';
+    if ($p != 'ec') {
+      $tokens['relatives']['relatives.' . $p . '_role'] = $n . ' Role';
+    }
+  }
+  $tokens['transcript'] = array(
+    'transcript.official' => 'Transcript: Official',
+    'transcript.narrative' => 'Transcript: Narrative',
+  );
+  $tokens['student'] = array(
+    'student.attendance_dates' => 'Student Attendance Dates',
+    'student.status' => 'Student Status',
+  );
+  $tokens['contact']['contact.address_format'] = 'Address (Full)';
+  $tokens['donor'] = array(
+    'donor.unthanked' => 'Donations: To Thank',
+    'donor.set_thank_you' => 'Donations: UPDATE unthanked (hidden)',
+    'donor.clear_thank_you' => 'Donations: CLEAR thanked today (hidden)',
+  );
+}
+
+
+/**
+ * Implements hook_civicrm_tokenValues().
+ */
+function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = array(), $context = null) {
+  $contacts = implode(',', $cids);
+  $tokens += array(
+    'contact' => array(),
+  );
+
+  // Bug in CiviCRM displays empty options as a long string of zeroes
+  $sp = CRM_Core_DAO::VALUE_SEPARATOR;
+  foreach ($values as &$vals) {
+    foreach ($vals as &$v) {
+      if (is_string($v) && strpos($v, $sp . '0' . $sp) !== FALSE) {
+        $v = '';
+      }
+    }
+  }
+
+  // Date tokens
+  if (!empty($tokens['date'])) {
+    $date = array(
+      'date.date_short' => date('m/d/Y'),
+      'date.date_med' => date('M j Y'),
+      'date.date_long' => date('F jS, Y'),
+    );
+    foreach ($cids as $cid) {
+      $values[$cid] = empty($values[$cid]) ? $date : $values[$cid] + $date;
+    }
+  }
+
+  // Fill first name and nick name with default values
+  if (in_array('first_name', $tokens['contact']) || in_array('nick_name', $tokens['contact'])) {
+    $dao = &CRM_Core_DAO::executeQuery("
+      SELECT first_name, nick_name, contact_type, id
+      FROM civicrm_contact
+      WHERE id IN ($contacts)"
+    );
+    while ($dao->fetch()) {
+      $cid = $dao->id;
+      if (!($values[$cid]['first_name'] = $dao->first_name)) {
+        $values[$cid]['first_name'] = $dao->contact_type == 'Individual' ? 'Friend' : 'Friends';
+      }
+      if (empty($values[$cid]['nick_name']) || $dao->contact_type != 'Individual') {
+        $values[$cid]['nick_name'] = $values[$cid]['first_name'];
+      }
+    }
+  }
+
+  // Format birth dates
+  if (in_array('birth_date', $tokens['contact'])) {
+    foreach ($values as &$v) {
+      if (!empty($v['birth_date']) && $bd = strtotime($v['birth_date'])) {
+        $v['birth_date'] = date('m/d/Y', $bd);
+      }
+    }
+  }
+
+  // Formatted address token
+  if (in_array('address_format', $tokens['contact'])) {
+    $dao = &CRM_Core_DAO::executeQuery('
+      SELECT *
+      FROM civicrm_address
+      WHERE contact_id IN (' . $contacts . ') AND is_primary = 1'
+    );
+    while ($dao->fetch()) {
+      $values[$dao->contact_id]['contact.address_format'] = woolman_format_address($dao);
+    }
+  }
+
+  // Related contact tokens
+  if (!empty($tokens['relatives'])) {
+    // Set defaults
+    foreach ($cids as $cid) {
+      $values[$cid]['relatives.p1_role'] = 'Parent 1';
+      $values[$cid]['relatives.p2_role'] = 'Parent 2';
+      $values[$cid]['relatives.ec_role'] = 'Emergency Contact';
+    }
+    $rtype = $rtokens = $found = array();
+    foreach ($tokens['relatives'] as $t) {
+      list($c, $d) = explode('_', $t, 2);
+      if ($c == 'ec') {
+        $rtype[19] = 19;
+      }
+      else {
+        $rtype[1] = 1;
+      }
+      $rtokens[$d] = $d;
+    }
+    $select = 'r.contact_id_a, r.relationship_type_id, c.id, c.display_name';
+    $join = 'INNER JOIN civicrm_contact c ON c.id = r.contact_id_b';
+    if (isset($rtokens['role'])) {
+      $select .= ', c.gender_id, cv.parental_role_8';
+      $join .= ' LEFT JOIN civicrm_value_parent_child_5 cv ON r.id = cv.entity_id';
+    }
+    if (isset($rtokens['address'])) {
+      $select .= ', a.street_address, a.supplemental_address_1, a.city, a.state_province_id, a.country_id, a.postal_code, a.postal_code_suffix';
+      $join .= ' LEFT JOIN civicrm_address a ON c.id = a.contact_id AND a.is_primary = 1';
+    }
+    if (isset($rtokens['email'])) {
+      $select .= ', e.email';
+      $join .= ' LEFT JOIN civicrm_email e ON c.id = e.contact_id AND e.is_primary = 1';
+    }
+    $dao = &CRM_Core_DAO::executeQuery('
+      SELECT ' . $select . '
+      FROM civicrm_relationship r
+      ' . $join . '
+      WHERE r.contact_id_a IN (' . $contacts . ')
+      AND r.relationship_type_id IN (' . implode(',', $rtype) . ')
+      ORDER BY r.is_active DESC'
+    );
+    $loc_type = woolman_get_civi_options('location_type');
+    while ($dao->fetch()) {
+      $cid = $dao->contact_id_a;
+      if ($dao->relationship_type_id == 1) {
+        $rel = isset($values[$cid]['relatives.p1_display_name']) ? 'p2' : 'p1';
+        if (isset($values[$cid]['relatives.p2_display_name'])) {
+          continue;
+        }
+      }
+      else {
+        $rel = 'ec';
+        if (isset($values[$cid]['relatives.ec_display_name'])) {
+          continue;
+        }
+      }
+      $values[$cid]['relatives.' . $rel . '_display_name'] = $dao->display_name;
+      if (in_array($rel . '_role', $tokens['relatives']) && $rel != 'ec') {
+        $role = $dao->parental_role_8 ? $dao->parental_role_8 : 'Parent';
+        if ($dao->gender_id == 1) {
+          $role = str_replace('Parent', 'Mother', $role);
+        }
+        if ($dao->gender_id == 2) {
+          $role = str_replace('Parent', 'Father', $role);
+        }
+        $values[$cid]['relatives.' . $rel . '_role'] = $role;
+      }
+      if (in_array($rel . '_address', $tokens['relatives'])) {
+        $values[$cid]['relatives.' . $rel . '_address'] = woolman_format_address($dao);
+      }
+      if (isset($dao->email)) {
+        $values[$cid]['relatives.' . $rel . '_email'] = $dao->email;
+      }
+      if (in_array($rel . '_phone', $tokens['relatives'])) {
+        $phone = array();
+        $result = woolman_civicrm_api('phone', 'get', array('contact_id' => $cid), 'values');
+        foreach($result as $p) {
+          $phone[$p['phone']] = $p['phone'] . ' (' . strtolower($loc_type[$p['location_type_id']][0]) . ')';
+        }
+        $values[$cid]['relatives.' . $rel . '_phone'] = implode(', ', $phone);
+      }
+    }
+  }
+
+  // Transcript tokens
+  if (!empty($tokens['transcript'])) {
+    $dao = &CRM_Core_DAO::executeQuery('
+      SELECT *
+      FROM civicrm_value_transcript_16
+      WHERE entity_id IN (' . $contacts . ')
+      ORDER BY course_credits_57 DESC, course_name_55 ASC'
+    );
+    while ($dao->fetch()) {
+      $cid = $dao->entity_id;
+      $earned_credit = ($dao->grade_56 && $dao->grade_56 != 'F' && $dao->grade_56 != 'I') ? $dao->course_credits_57 : '0';
+      if (empty($values[$cid]['transcript.official'])) {
+        $values[$cid]['transcript.official'] = '<table class="transcript"><thead><tr><th>Course Name</th><th>Credits Attempted</th><th>Credits Earned</th><th>Grade</th></tr></thead><tbody>';
+      }
+      $values[$cid]['transcript.official'] .= '
+        <tr>
+          <td>'. $dao->course_name_55 .'</td>
+          <td>'. $dao->course_credits_57 .'</td>
+          <td>'. $earned_credit.'</td>
+          <td>'. $dao->grade_56 .'</td>
+        </tr>';
+      if (empty($values[$cid]['transcript.narrative'])) {
+        $values[$cid]['transcript.narrative'] = '';
+      }
+      $values[$cid]['transcript.narrative'] .= '<hr />
+        <div>
+          <div>
+            <h3>' . $dao->course_name_55 . '</h3>
+            <strong>Grade Earned:</strong> ' . $dao->grade_56 .'<br />
+            <strong>Credits Earned:</strong> ' . $earned_credit .'<br />' .
+          '</div>
+          <div>' .
+            $dao->evaluation_58 .
+          '</div>
+        </div>';
+    }
+    foreach ($cids as $cid) {
+      if (!empty($values[$cid]['transcript.official'])) {
+        $values[$cid]['transcript.official'] .= '</tbody></table>';
+      }
+    }
+  }
+
+  // Student info
+  if (!empty($tokens['student'])) {
+    $dao = &CRM_Core_DAO::executeQuery('
+      SELECT r.contact_id_a, r.start_date, r.end_date, v.reason_for_leaving_52
+      FROM civicrm_relationship r
+      LEFT JOIN civicrm_value_student_info_14 v ON v.entity_id = r.id
+      WHERE r.contact_id_a IN (' . $contacts . ')
+      AND r.relationship_type_id = 10
+      AND r.contact_id_b = ' . WOOLMAN
+    );
+    while ($dao->fetch()) {
+      $cid = $dao->contact_id_a;
+      $start = $end = '';
+      if ($dao->start_date) {
+        $start = date('m/d/Y', strtotime($dao->start_date));
+      }
+      if ($dao->end_date) {
+        $end = date('m/d/Y', strtotime($dao->end_date));
+      }
+      $values[$cid]['student.attendance_dates'] = $start . ' - ' . $end;
+      if ($end && strtotime($dao->end_date) > time()) {
+        $values[$cid]['student.status'] = 'Enrolled';
+      }
+      else {
+        $values[$cid]['student.status'] = $dao->reason_for_leaving_52;
+      }
+    }
+  }
+
+  // Dontation info
+  if (!empty($tokens['donor'])) {
+    $spouses = array();
+    $contacts_and_spouses = $cids;
+    $dao = &CRM_Core_DAO::executeQuery("
+      SELECT contact_id_a, contact_id_b
+      FROM civicrm_relationship
+      WHERE relationship_type_id = 2
+      AND is_active = 1
+      AND (end_date IS NULL OR end_date > CURDATE())
+      AND (contact_id_a IN ($contacts) OR contact_id_b IN ($contacts))
+    ");
+    while ($dao->fetch()) {
+      if (!in_array($dao->contact_id_a, $contacts_and_spouses)) {
+        $contacts_and_spouses[] = $dao->contact_id_a;
+      }
+      if (!in_array($dao->contact_id_b, $contacts_and_spouses)) {
+        $contacts_and_spouses[] = $dao->contact_id_b;
+      }
+      if (in_array($dao->contact_id_a, $cids)) {
+        $spouses[$dao->contact_id_b] = $dao->contact_id_a;
+      }
+      if (in_array($dao->contact_id_b, $cids)) {
+        $spouses[$dao->contact_id_a] = $dao->contact_id_b;
+      }
+    }
+    $contacts_and_spouses = implode(',', $contacts_and_spouses);
+    // Clear today's thank-yous (a kind of crude UNDO)
+    if (in_array('clear_thank_you', $tokens['donor'])) {
+      CRM_Core_DAO::executeQuery("
+        UPDATE civicrm_contribution SET thankyou_date = NULL
+        WHERE is_test = 0 AND contribution_type_id IN (1,9) AND contribution_status_id = 1
+        AND DATE(thankyou_date) = CURDATE() AND contact_id IN ($contacts_and_spouses)"
+      );
+    }
+    if (in_array('unthanked', $tokens['donor'])) {
+      $dao = &CRM_Core_DAO::executeQuery("
+        SELECT cc.contact_id, cc.total_amount, cc.receive_date, cc.check_number, cc.contribution_type_id, con.display_name, hon.display_name as honoree, ac.label AS account, pi.label AS payment_instrument, ht.label AS honor_type, ca.designation_60 AS designation, n.note
+        FROM civicrm_contribution cc
+        INNER JOIN civicrm_contact con ON con.id = cc.contact_id
+        LEFT JOIN civicrm_contact hon ON hon.id = cc.honor_contact_id
+        LEFT JOIN civicrm_value_contribution_accounts_10 ca ON ca.entity_id = cc.id
+        LEFT JOIN civicrm_option_value ac ON ca.account_18 = ac.value AND ac.option_group_id = 103
+        LEFT JOIN civicrm_option_value pi ON cc.payment_instrument_id = pi.value AND pi.option_group_id = (SELECT id FROM civicrm_option_group WHERE name = 'payment_instrument')
+        LEFT JOIN civicrm_option_value ht ON cc.honor_type_id = ht.value AND ht.option_group_id = (SELECT id FROM civicrm_option_group WHERE name = 'honor_type')
+        LEFT JOIN civicrm_note n ON n.entity_table = 'civicrm_contribution' AND n.entity_id = cc.id
+        WHERE cc.is_test = 0 AND cc.contribution_type_id IN (1,9) AND cc.contribution_status_id = 1
+        AND cc.contact_id IN ($contacts_and_spouses) AND cc.thankyou_date IS NULL
+        ORDER BY cc.receive_date"
+      );
+      $header = '
+        <table class="donations" style="border-collapse:collapse; width: 100%; text-align:left;">
+          <thead><tr style="text-align:left;">
+            <th>Date</th>
+            <th>Donor</th>
+            <th>Amount</th>
+            <th>Paid By</th>
+            <th>Given for</th>
+          </tr></thead>
+          <tbody>';
+      $td = '<td style="border: 1px solid black;">';
+      while ($dao->fetch()) {
+        $cid = $dao->contact_id;
+        $row = '
+          <tr>' .
+            $td . date('m/d/Y', strtotime($dao->receive_date)) . '</td>' .
+            $td . $dao->display_name . '</td>' .
+            $td . '$' . number_format($dao->total_amount, 2) . '</td>' .
+            $td . ($dao->payment_instrument ? $dao->payment_instrument : 'In Kind')
+            . ($dao->check_number ? ' #' . $dao->check_number : '') . '</td>' .
+            $td . ($dao->account ? ($dao->designation ? $dao->designation : $dao->account) : $dao->note) . ($dao->honoree ? "<br />{$dao->honor_type} {$dao->honoree}" : '') . '</td>
+          </tr>';
+        if (in_array($cid, $cids)) {
+          $values[$cid]['donor.unthanked'] = woolman_aval($values[$cid], 'donor.unthanked', $header) . $row;
+        }
+        if (isset($spouses[$cid])) {
+          $values[$spouses[$cid]]['donor.unthanked'] = woolman_aval($values[$spouses[$cid]], 'donor.unthanked', $header) . $row;
+        }
+      }
+      foreach ($cids as $cid) {
+        if (!empty($values[$cid]['donor.unthanked'])) {
+          $values[$cid]['donor.unthanked'] .= '</tbody></table>';
+        }
+      }
+    }
+    if (in_array('set_thank_you', $tokens['donor'])) {
+      CRM_Core_DAO::executeQuery("
+        UPDATE civicrm_contribution SET thankyou_date = NOW()
+        WHERE is_test = 0 AND contribution_type_id IN (1,9) AND contribution_status_id = 1
+        AND contact_id IN ($contacts_and_spouses) AND thankyou_date IS NULL"
+      );
+    }
+  }
+
+  // Medical Info
+  foreach ($cids as $cid) {
+    if (empty($values[$cid]['custom_48'])) {
+      $values[$cid]['custom_48'] = '<br /><strong>Please Circle:</strong> Tylenol, Ibuprofin, Antihistamine, Hydrocortisone, Tums, Anti-Dirrheal, Other______________________________';
+    }
+  }
+}
+
+/**
+ * Formats a multi-line address.
+ */
+function woolman_format_address($obj, $sep = "<br />\n") {
+  $obj = (object) $obj;
+  $address = '';
+  if (!empty($obj->street_address) && $address = trim($obj->street_address)) {
+    $address .= $sep;
+  }
+  if (!empty($obj->supplemental_address_1) && $add = trim($obj->supplemental_address_1)) {
+    $address .= $add . $sep;
+  }
+  if (!empty($obj->supplemental_address_2) && $add = trim($obj->supplemental_address_2)) {
+    $address .= $add . $sep;
+  }
+  if (!empty($obj->city) && $add = trim($obj->city)) {
+    $address .= $add . (!empty($obj->state_province_id) ? ', ' : '');
+  }
+  if (!empty($obj->state_province_id)) {
+    require_once 'CRM/Core/PseudoConstant.php';
+    $address .= CRM_Core_PseudoConstant::stateProvinceAbbreviation($obj->state_province_id);
+  }
+  if (!empty($obj->postal_code) && $add = trim($obj->postal_code)) {
+    $address .= ' ' . $add . (empty($obj->postal_code_suffix) ? '' : '-' . $obj->postal_code_suffix);
+  }
+  if (!empty($obj->country_id) && $obj->country_id != USA) {
+    require_once 'CRM/Core/PseudoConstant.php';
+    $address .= $sep . CRM_Core_PseudoConstant::country($obj->country_id);
+  }
+  return $address;
+}
+
+
+/**
+ * Implements hook_civicrm_caseSummary().
+ */
+function woolman_website_civicrm_caseSummary($id) {
+  if (!($cid = woolman_aval($_GET, 'cid'))) {
+    $cid = db_result(db_query("SELECT contact_id FROM {civicrm_case_contact} WHERE case_id = $id LIMIT 0, 1"));
+  }
+
+  //format output
+  $summary = array(
+    'semester-pref' => array(
+      'label' => '<strong>Semester Preference:</strong>',
+      'value' => 'not specified',
+    ),
+    'grad-date' => array(
+      'label' => '<strong>HS Graduation:</strong>',
+      'value' => 'not specified ' . woolman_contact_link('<span class="icon edit-icon"></span>', $cid, array('html' => TRUE, 'op' => 'update', 'attributes' => array('class' => 'icon edit-icon'))),
+    ),
+  );
+  //semester preference
+  $resource = db_query("SELECT sem.semesters_5 AS semesters, act.id
+                        FROM {civicrm_activity} act
+                        INNER JOIN {civicrm_value_semester_choices_3} sem ON sem.entity_id = act.id
+                        WHERE act.id IN (SELECT ca.activity_id FROM {civicrm_case_activity} ca WHERE ca.case_id = $id)
+                        AND act.is_current_revision = 1 AND act.is_deleted = 0
+                        ");
+  if ($data = db_fetch_array($resource)) {
+    $dates = woolman_multivalue_arr($data['semesters']);
+    foreach ($dates as $count=> $date) {
+      $value .= '<em>'.substr($date, 0, 4).(substr($date,5,2) < 4 ? ' Spring' : ' Fall').'</em> or ';
+      $summary['semester-pref']['value'] = trim($value, ' or ');
+    }
+    if ($count) $summary['semester-pref']['label'] = '<strong>Semester Preferences:</strong>';
+    $title = 'change semester preference(s)';
+    $etc = '&amp;action=update&amp;id=' . $data['id'];
+  }
+  else {
+    $title = 'specify semester preference(s)';
+    $etc = '&amp;action=add&amp;selectedChild=activity&amp;atype=47';
+  }
+  $summary['semester-pref']['value'] .= ' <a title="' . $title.'" href="/civicrm/case/activity?reset=1&amp;cid=' . $cid.'&amp;caseid=' . $id . $etc.'#Semester_Choices"><span class="icon edit-icon"></span></a>';
+
+  //graduation date
+  $resource = db_query("SELECT hs_graduation_date_4 AS grad
+                        FROM  {civicrm_value_additional_info_2}
+                        WHERE entity_id = $cid AND hs_graduation_date_4 IS NOT NULL
+                        ");
+  if ($data = db_fetch_array($resource)) {
+    $summary['grad-date']['value'] = date('M, Y', strtotime($data['grad']));
+  }
+
+  //outreach trip
+  $resource = db_query("SELECT  con.first_name, con.display_name, con.id AS contact_id,
+                                act.subject, act.activity_date_time, act.details, act.id AS activity_id
+                        FROM  {civicrm_contact} con
+                        INNER JOIN  {civicrm_activity} act ON act.source_contact_id = con.id
+                        WHERE act.activity_type_id = 33 AND act.id IN
+                        (SELECT tar.activity_id FROM {civicrm_activity_target} tar WHERE tar.target_contact_id = $cid)
+                        ");
+  $i = 1;
+  while ($data = db_fetch_array($resource)) {
+    $summary['trip-' . $i++] = array('value' => 'Met ' . $data['display_name'].' at <a title="' . $data['details'].'" href="/civicrm/contact/view/activity?atype=33&action=view&reset=1&id=' . $data['activity_id'].'&cid=' . $data['contact_id'].'">' . $data['subject'].'</a> on '.date('m/d/Y', strtotime($data['activity_date_time']))
+                     );
+  }
+
+  //latest note
+  $summary['latest-note'] = array('label' => '<strong>Latest Activity Note:</strong>',
+                                  'value' => 'No notes in this case.',
+                                 );
+  $resource = db_query("SELECT act.id, act.activity_date_time, act.details, act.subject, con.display_name
+                        FROM  {civicrm_activity} act
+                        INNER JOIN  {civicrm_contact} con ON act.source_contact_id = con.id
+                        WHERE act.id IN (SELECT ca.activity_id FROM {civicrm_case_activity} ca WHERE ca.case_id = $id)
+                        AND act.is_current_revision = 1 AND act.is_deleted = 0 AND act.details IS NOT NULL
+                        ORDER BY act.activity_date_time DESC
+                        LIMIT 0, 1
+                        ");
+
+  if ($act = db_fetch_array($resource)) {
+    $summary['latest-note']['label'] .= ' <a title="View this activity." href="javascript:viewActivity(' . $act['id'].', ' . $cid.',\'\');">' . $act['subject'].'</a> (by ' . $act['display_name'].' on '.date('m/d/Y', strtotime($act['activity_date_time'])).')';
+    $summary['latest-note']['value'] = strlen($act['details']) > 200 ? _filter_htmlcorrector(substr($act['details'], 0, 190).'... <a title="View this activity." href="javascript:viewActivity(' . $act['id'].', ' . $cid.',\'\');">(more)</a>') : $act['details'];
+  }
+  return $summary;
+}
+
+/**
+ * Wrapper for all CiviCRM API calls
+ * For consistency, future-proofing, and error handling
+ */
+function woolman_civicrm_api($entity, $operation, $params, $to_return = NULL) {
+  $params += array(
+    'check_permissions' => FALSE,
+    'version' => 3,
+  );
+  // Avoid errors caused by passing in empty ids
+  if ($operation == 'create') {
+    $ids = array('id', 'case_id', 'contact_id', 'activity_id', 'participant_id');
+    foreach ($ids as $id) {
+      if (isset($params[$id]) && !$params[$id]) {
+        unset($params[$id]);
+      }
+    }
+  }
+  $result = civicrm_api($entity, $operation, $params);
+  if (!empty($result['is_error'])) {
+    $bt = debug_backtrace();
+    watchdog('woolman_civicrm', 'The CiviCRM "%function" API function returned the error: "%msg" when called by line !line of !file with the following parameters: "!params"', array('%function' => $entity . ' ' . $operation, '%msg' => $result['error_message'], '!line' => $bt[0]['line'], '!file' => array_pop(explode('/', $bt[0]['file'])), '!params' => print_r($params, TRUE)), WATCHDOG_ERROR);
+  }
+  // Convenience - return values or a single value
+  if ($to_return) {
+    $values = woolman_aval($result, 'values', array());
+    if ($to_return == 'single') {
+      $values = array_values($values);
+      return woolman_aval($values, '0', array(), TRUE);
+    }
+    if ($to_return == 'values') {
+      return $values;
+    }
+  }
+  return $result;
+}
+
+/**
+ * Implements hook_civicrm_tabs().
+ */
+function woolman_website_civicrm_tabs(&$tabs, $cid) {
+  // Hide medform and transcript tabs for most contacts
+  foreach ($tabs as $id => $tab) {
+    if ($tab['id'] == 'rel' && !empty($tab['count'])) {
+      if ($student = CRM_Core_DAO::singleValueQuery("SELECT id FROM civicrm_relationship WHERE contact_id_a = $cid AND contact_id_b = " . WOOLMAN . " AND relationship_type_id = 10 LIMIT 0, 1")) {
+        return;
+      }
+      $camper = CRM_Core_DAO::singleValueQuery("SELECT id FROM civicrm_participant WHERE contact_id = $cid AND event_id IN (SELECT id FROM civicrm_event WHERE event_type_id IN (8,9))");
+    }
+    elseif (($tab['id'] == 'custom_16' || (empty($camper) && $tab['id'] == 'custom_9')) && empty($tab['count'])) {
+      unset($tabs[$id]);
+    }
+  }
+}
+
+/**
+ * Lookup a uf ID from contact ID or vice-versa
+ * @param $id: uf or contact ID - defaults to current user
+ * @param $type: what type of ID is supplied (uf or contact)
+ */
+function woolman_user_cid($id = NULL, $type = 'uf') {
+  if (!$id) {
+    global $user;
+    $id = $user->uid;
+  }
+  $result = woolman_civicrm_api('uf_match', 'get', array($type . '_id' => $id), 'single');
+  if (!empty($result)) {
+    return $type == 'uf' ? $result['contact_id'] : $result['uf_id'];
+  }
+}
+
+/**
+ * Quick way to retrieve a contact's name given their uid or cid
+ * Cached as static for performance
+ * A user's own name is cached in session for even better performance
+ */
+function woolman_name($ret, $id = NULL, $id_type = 'contact') {
+  static $info = array();
+  global $user;
+  // Retrieve user's own name
+  if (!$id) {
+    $id_type = 'user';
+    $id = $user->uid;
+    if (!isset($info['user'][$id]) && !empty($_SESSION['woolman_name'])) {
+      $info['user'][$id] = $_SESSION['woolman_name'];
+    }
+  }
+  if (!$id) {
+    return 'Visitor';
+  }
+  if (!($contact = woolman_aval($info, $id_type . ':' . $id))) {
+    $query = 'SELECT first_name, nick_name, middle_name, last_name, display_name, sort_name
+    FROM {civicrm_contact} WHERE id = ';
+    if ($id_type == 'contact') {
+      $query .= '%d';
+    }
+    else {
+      $query .= '(SELECT contact_id FROM {civicrm_uf_match} WHERE uf_id = %d)';
+    }
+    $db = db_query($query, $id);
+    if ($contact = db_fetch_array($db)) {
+      $contact['nick_name'] = $contact['nick_name'] ? $contact['nick_name'] : $contact['first_name'];
+      $contact['full_name'] = $contact['nick_name'] . ' ' . $contact['last_name'];
+      $info[$id_type][$id] = $contact;
+      if ($id_type == 'user' && $id == $user->uid) {
+        $_SESSION['woolman_name'] = $contact;
+      }
+    }
+    else {
+      return 'Visitor';
+    }
+  }
+  return $contact[$ret . '_name'];
+}
+
+
+/**
+ * Convenience wrapper for civicrm_contact_get
+ * @PARAM: Will default to current user if no cid provided
+ * @PARAM: An array of fields or custom fields (by id) to return: i.e. array(2, 5, 'email') {
+ */
+function woolman_contact_get($cid=NULL, $extra=array(), $get_location=FALSE) {
+  if (!$cid) {
+    if (!($cid = woolman_user_cid())) {
+      return array();
+    }
+  }
+  $params = array(
+    'contact_id' => $cid,
+    'return.display_name' => 1,
+    'return.first_name' => 1,
+    'return.last_name' => 1,
+    'return.nick_name' => 1,
+    'return.gender' => 1,
+    'return.street_address' => 1,
+    'return.city' => 1,
+    'return.country' => 1,
+    'return.state_province' => 1,
+    'return.postal_code' => 1,
+    'return.email' => 1,
+    'return.phone' => 1,
+    'return.birth_date' => 1,
+  );
+  if ($extra && is_array($extra)) {
+    foreach ($extra as $c) {
+      if (is_numeric($c)) {
+        $params["return.custom_$c"] = 1;
+      }
+      else {
+        $params["return.$c"] = 1;
+      }
+    }
+  }
+  if ($c = woolman_civicrm_api('contact', 'get', $params, 'single')) {
+    $c['nick_name'] = woolman_aval($c, 'nick_name', woolman_aval($c, 'first_name', ''));
+
+    if ($get_location) {
+      foreach (array('phone', 'email', 'address') as $loc) {
+        $c['locations'][$loc] = woolman_civicrm_api($loc, 'get', array('contact_id' => $c['contact_id']), 'values');
+      }
+    }
+  }
+  return $c;
+}
+
+/**
+ * Generate a link to a contact.
+ *
+ * @param string $text: link display text
+ * @param int $contact_id
+ * @param array $options: to pass to the url function
+ *
+ * @return string
+ */
+function woolman_contact_link($text, $contact_id, $options = array()) {
+  $options += array(
+    'attributes' => array(),
+    'html' => TRUE,
+  );
+
+  // Remove all HTML and PHP tags from a tooltip.
+  if (isset($options['attributes']['title']) && strpos($options['attributes']['title'], '<') !== FALSE) {
+    $options['attributes']['title'] = strip_tags($options['attributes']['title']);
+  }
+
+  return '<a href="' . check_url(woolman_contact_url($contact_id, $options)) . '"' . drupal_attributes($options['attributes']) . '>' . ($options['html'] ? $text : check_plain($text)) . '</a>';
+}
+
+/**
+ * Generate a path to a contact.
+ *
+ * @param int $contact_id
+ * @param array $options: to pass to the url function
+ *
+ * @return string
+ */
+function woolman_contact_url($contact_id, $options = array()) {
+  $options += array(
+    'alias' => TRUE,
+    'https' => TRUE,
+    'op' => 'view',
+    'query' => array(),
+    'absolute' => TRUE,
+  );
+  $options['query'] += array(
+    'reset' => 1,
+    'cid' => $contact_id,
+    'action' => 'view',
+  );
+  switch ($options['op']) {
+    case 'view':
+      $path = 'civicrm/contact/view';
+      break;
+    case 'edit': case 'update':
+      $path = 'civicrm/contact/add';
+      $options['query']['action'] = 'update';
+      break;
+    default:
+      $path = 'civicrm/contact/view/' . $options['op'];
+  }
+  unset($options['op']);
+  return url($path, $options);
+}
+
+/**
+ * Loads a form during AHAH callback.
+ * TODO: already part of Drupal API in D7
+ */
+function woolman_process_ahah_form() {
+  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
+  $form = form_get_cache($form_build_id, $form_state);
+  $args = $form['#parameters'];
+  $form_id = array_shift($args);
+  $form_state['post'] = $form['#post'] = $_POST;
+  // Enable the submit/validate handlers to determine whether AHAH-submittted.
+  $form_state['ahah_submission'] = TRUE;
+  $form['#programmed'] = $form['#redirect'] = FALSE;
+  drupal_process_form($form_id, $form, $form_state);
+  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
+  return $form;
+}
+
+/**
+ * Wrapper for adding/finding/updating contacts in CiviCRM
+ * @param $params: array of arrays: keys should be:
+                   'contact', 'address', 'phone', 'email'
+ * @param $write_mode: 'search', 'do_not_update', 'update_all', 'fill_empty_fields'
+ * @param $match_mode: 'none', 'strict' or 'stricter'
+ * @param $return: 'return_cid' or 'return_contact'
+ * @param $exclude: string: comma separated list of contact ids that this person is not a match for (or subquery which returns ids) {
+ * @return array('op' => action taken, 'contact_id', 'contact' => full contact record) {
+ */
+function woolman_contact_match($params, $write_mode='update_all', $return='return_cid', $match_mode='strict', $exclude='') {
+  // Todo: this function is way too long and ought to rely on our deduping hooks for simplicity
+  // Moving it to the utils.inc for now to get it out of the way
+  module_load_include('inc', 'woolman_website', 'woolman_website_utils');
+  return _woolman_contact_match($params, $write_mode, $return, $match_mode, $exclude);
+}
+
+/**
+ * Get a contact's relations of certain types
+ * @param cid: contact id
+ * @param types: comma separated relationship_type_ids
+ */
+function woolman_find_relations($cid, $types, $current=TRUE) {
+  $query = "SELECT r.*, t.name_a_b, t.name_b_a , t.label_a_b, t.label_b_a FROM {civicrm_relationship} r, {civicrm_relationship_type} t
+    WHERE r.relationship_type_id IN (%s) AND (r.contact_id_a = %d OR r.contact_id_b = %d) and t.id = r.relationship_type_id";
+  if ($current) {
+    $query .= " AND r.is_active AND (r.end_date > CURDATE() OR r.end_date IS NULL)";
+  }
+  $resource = db_query($query, array($types, $cid, $cid));
+  $ret = array();
+  while ($r = db_fetch_object($resource)) {
+    $a_b = $r->contact_id_a == $cid ? 'a_b' : 'b_a';
+    $ret[$r->id] = array(
+      'contact_id' => $r->contact_id_a == $cid ? $r->contact_id_b : $r->contact_id_a,
+      'relationship_type_id' => $r->relationship_type_id,
+      'relationship_label' => $r->{'label_' . $a_b},
+      'relationship_name' => $r->{'name_' . $a_b},
+      'start_date' => $r->start_date,
+      'end_date' => $r->end_date,
+      'is_active' => $r->is_active,
+    );
+  }
+  return $ret;
+}
+
+
+/**
+ * @param $params: array to be sent to Civi API
+ * @param $update: whether to update the existing relationship, if found
+ * @return new or existing relationship id
+ */
+function woolman_relationship_add_or_update($params, $update=FALSE) {
+  $q = "SELECT * FROM {civicrm_relationship}
+        WHERE relationship_type_id = {$params['relationship_type_id']} AND
+        ((contact_id_a = {$params['contact_id_a']} AND contact_id_b = {$params['contact_id_b']})
+          OR (contact_id_b = {$params['contact_id_a']} AND contact_id_a = {$params['contact_id_b']}
+            AND relationship_type_id IN (SELECT id FROM {civicrm_relationship_type} WHERE name_a_b = name_b_a)))";
+
+  if (!empty($params['case_id'])) {
+    $q .= " AND case_id = {$params['case_id']}";
+  }
+  $resource = db_query($q);
+  if ($found = db_fetch_array($resource)) {
+    // Nice clean merge for updating existing
+    foreach ($params as $k => $v) {
+      if ($v === NULL || $v === '') {
+        unset($params[$k]);
+      }
+    }
+    $params += $found;
+  }
+
+  if (empty($found['id']) || $update) {
+    foreach (array('start', 'end') as $se) {
+      if (empty($params[$se . '_date'])) {
+        unset($params[$se . '_date']);
+      }
+      elseif (is_array($params[$se . '_date'])) {
+        $params[$se . '_date'] = woolman_date_array_to_string($params[$se . '_date']);
+      }
+    }
+    $result = woolman_civicrm_api('relationship', 'create', $params);
+    return $result['id'];
+  }
+  else return $found['id'];
+}
+
+/**
+ * Return a value from nested arrays or objects.
+ * @param $haystack: the array to search
+ * @param $keys: pass a single key, or multiple keys separated by : to get a nested value
+ * @param $default: value to return if given array key does not exist
+ * @param $strict: should we use empty or isset to determine if array key exists?
+ * @return: found value or default
+ */
+function woolman_aval($haystack, $keys, $default = NULL, $strict = FALSE) {
+  foreach (explode(':', $keys) as $key) {
+    if (is_object($haystack)) {
+      $haystack = (array) $haystack;
+    }
+    if (!is_array($haystack) || !isset($haystack[$key]) || (empty($haystack[$key]) && $default !== NULL && !$strict)) {
+      return $default;
+    }
+    $haystack = $haystack[$key];
+  }
+  // $haystack has been reduced down to the item we want
+  return $haystack;
+}
+
+/**
+ * Formats FAPI date array as big-endian string (yyyy-mm-dd)
+ */
+function woolman_date_array_to_string($date_array, $sep = '') {
+  if (isset($date_array['year']) && isset($date_array['month']) && isset($date_array['day'])) {
+    return $date_array['year'].$sep.substr('0'.$date_array['month'], -2).$sep.substr('0'.$date_array['day'], -2);
+  }
+}
+
+/**
+ * Formats a string as a FAPI date array
+ */
+function woolman_date_string_to_array($date_str) {
+  if ($date_str) {
+    $date = strtotime($date_str);
+    return array(
+      'year' => (int) date('Y', $date),
+      'month' => (int) date('m', $date),
+      'day' => (int) date('d', $date),
+    );
+  }
+}
+
+/**
+ * Returns a CiviCRM value-separated string
+ * @param $keys: use array keys instead of values, unset empty values (for input from FAPI checkboxes)
+ * @return string
+ */
+function woolman_multivalue_str($vals, $keys = FALSE) {
+  if ($keys && is_array($vals)) {
+    $vals = array_flip($vals);
+    unset($vals[0]);
+  }
+  if (empty($vals)) {
+    return '';
+  }
+  if (is_string($vals)) {
+    return '' . trim($vals, '') . '';
+  }
+  if (is_array($vals)) {
+    return '' . implode('', $vals) . '';
+  }
+  return '';
+}
+
+/**
+ * Explodes a CiviCRM value-separated string
+ * @return array
+ */
+function woolman_multivalue_arr($str) {
+  if (is_array($str)) {
+    return $str;
+  }
+  if ($str === '' || $str === NULL) {
+    return array();
+  }
+  return explode('', trim($str, ''));
+}
+
+/**
+ * Recursively set the default values for a form
+ * @param $form: FAPI form array
+ * @param $values: flat array of form values (i.e. from $form_state[values])
+ */
+function woolman_fill_form_values(&$form, $values) {
+  foreach ($form as $key => &$element) {
+    if (is_array($element) && $key[0] != '#') {
+      if (isset($values[$key])) {
+        $element['#default_value'] = $values[$key];
+        continue;
+      }
+      woolman_fill_form_values($element, $values);
+    }
+  }
+}
+
+/**
+ * Gets options from civicrm
+ */
+function woolman_get_civi_options($group, $options = array()) {
+  $args = array();
+  if ($group == 'location_type') {
+    $options += array(
+      'select' => 'name as label, id as value',
+      'from' => '{civicrm_location_type}',
+      'where' => 'is_active = 1',
+    );
+  }
+  elseif ($group == 'country') {
+    $o = array(
+      'select' => 'name as label, id as value',
+      'from' => '{civicrm_country}',
+      'order' => 'name',
+    );
+    $config = CRM_Core_Config::singleton();
+    if (!empty($config->countryLimit) && is_array($config->countryLimit)) {
+      $o['where'] = 'id IN (' . implode(',', $config->countryLimit) . ')';
+    }
+    $options += $o;
+  }
+  elseif ($group == 'state' || $group == 'state_abbr') {
+    $options += array(
+      'select' => ($group == 'state' ? 'name' : 'abbreviation') . ' AS label, id AS value',
+      'from' => '{civicrm_state_province}',
+      'where' => 'country_id = ' . USA,
+      'order' => $group == 'state' ? 'name' : 'abbreviation',
+    );
+  }
+  elseif ($group) {
+    $options += array(
+      'select' => 'label, value',
+      'from' => '{civicrm_option_value}',
+      'where' => 'is_active = 1',
+      'order' => 'weight, label',
+    );
+    $options['where'] .= ($options['where'] ? ' AND ' : '') . 'option_group_id = ';
+    if (is_numeric($group)) {
+      $options['where'] .= '%d';
+    }
+    else {
+      $options['where'] .= "(SELECT id FROM {civicrm_option_group} WHERE name = '%s')";
+    }
+    $args[] = $group;
+  }
+  $sql = 'SELECT ' . $options['select'] . ' FROM ' . $options['from'];
+  foreach (array('where' => 'WHERE', 'order' => 'ORDER BY', 'limit' => 'LIMIT') as $key => $op) {
+    if (!empty($options[$key])) {
+      $sql .= " $op " . $options[$key];
+    }
+  }
+  $result = array();
+  $resource = db_query($sql, $args);
+  while ($row = db_fetch_object($resource)) {
+    $result[$row->value] = $row->label;
+  }
+  return $result;
+}
+
+/**
+ * Returns latest timestamp from the log
+ */
+function woolman_civi_log_latest() {
+  return db_result(db_query('SELECT MAX(modified_date) FROM {civicrm_log}'));
+}
+
+/**
+ * Returns an integer as an english string
+ */
+function woolman_num_to_words($num) {
+  $num = (int) $num;
+  if ($num == 0) {
+    return 'zero';
+  }
+  module_load_include('inc', 'woolman_website', 'woolman_website_utils');
+  if ($num < 0) {
+    return 'negative ' . woolman_convert_triples(-$num, 0);
+  }
+  return woolman_convert_triples($num, 0);
+}
+
+/**
+ * Creates an array with name and id from the string produced by autocomplete
+ */
+function woolman_split_name_id($params) {
+  $split = explode('(ID#', $params);
+  $contact = array('name' => trim($split[0]));
+  if (!empty($split[1])) {
+    $contact['id'] = trim(str_replace(')', '', $split[1]));
+  }
+  return $contact;
+}
