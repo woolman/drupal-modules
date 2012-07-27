@@ -435,8 +435,7 @@ function ws_apply_staff_format_row($case) {
   $notes = array();
   foreach ($case['notes'] as $act) {
     $link = $act['status'] == 'Completed' ? 'viewActivity' : 'createActivity';
-    $verb = strtolower($act['status']);
-    $verb = $verb == 'scheduled' ? 'scheduled for' : $verb;
+    $verb = $act['status'] == 'Scheduled' ? 'scheduled for' : strtolower($act['status']);
     $notes[] = '<a href="#" ' . $act['id'] . ' data-atype="' . $act['activity_type_id'] . '" data-fn="' . $link . '" title="' . $act['type'] . ' by ' . woolman_name('full', $act['contact_id']) . " \n(" . $verb . ' ' . _ws_apply_act_date_format($act, TRUE) . ')">' . ws_staff_date($act['activity_date_time']) . ': ' . ($act['subject'] ? $act['subject'] : $act['type']) . '</a>';
   }
   // Notes cell

@@ -36,7 +36,7 @@ var wsStaff = function($, D, undefined) {
             $("#view-activity").dialog("close");
           }
           else {
-            $('.ui-dialog-buttonpane button + button').show();
+            $('.ui-dialog-buttonpane button').show();
           }
         });
       },
@@ -108,7 +108,7 @@ var wsStaff = function($, D, undefined) {
               }
             );
           }
-          $('.ui-dialog-buttonpane button + button').show();
+          $('.ui-dialog-buttonpane button').show();
         });
       },
 
@@ -136,16 +136,24 @@ var wsStaff = function($, D, undefined) {
           }
           $('.ui-dialog-buttonpane button + button, #activity-content form').hide();
           $("#activity-content").prepend('<div class="loading"></div>');
-          $.post('/staff/admissions/js?op=activity_form_submit&sem=' + encodeURIComponent(D.settings.ws_staff.semester) + '&ts=' + encodeURIComponent(timeStamp), $("#activity-content form").serialize(),
-            function(data) {
+          $.ajax({
+            type: 'POST',
+            dataType: 'json',
+            url: '/staff/admissions/js?op=activity_form_submit&sem=' + encodeURIComponent(D.settings.ws_staff.semester) + '&ts=' + encodeURIComponent(timeStamp),
+            data: $("#activity-content form").serialize(),
+            success: function(data) {
               if (editor !== null) {
                 editor.destroy();
                 editor = null;
               }
               $("#view-activity").dialog('close');
               applyUpdates(data);
-            }, 'json'
-          );
+            },
+            error: function() {
+              $('.ui-dialog-buttonpane button, #activity-content form').show();
+              $('#view-activity .loading').remove();
+            }
+          });
         }
       }
     });
@@ -357,9 +365,10 @@ var wsStaff = function($, D, undefined) {
    * Display a message for 10 seconds
    */
   var msgCount = 0
-  function setMsg(msg) {
+  function setMsg(msg, cls) {
+    cls = cls || 'msg';
     var id = 'msg-' + ++msgCount;
-    $('#staff-msg').append('<div id="' + id + '"><p>' + msg + '</p></div>');
+    $('#staff-msg').append('<div id="' + id + '" class="' + cls + '"><p>' + msg + '</p></div>');
     window.setTimeout("$('#" + id + "').animate({opacity: 0, height: 0}, 600, function(){$('#" + id + "').remove()})", 10000);
   }
 
@@ -432,17 +441,18 @@ var wsStaff = function($, D, undefined) {
     // Fetch updates from server every 5 min
     window.setInterval(fetchUpdates, 300000);
 
-    // Check date every 10 min
-    window.setInterval(checkDate, 600000);
+    // Check date every 15 min
+    window.setInterval(checkDate, 900000);
 
     $('#page').ajaxStart(function() {
       loading = true;
+      $('#staff-msg .err').remove();
       $(this).addClass('busy');
     }).ajaxStop(function() {
       loading = false;
       $(this).removeClass('busy');
     }).ajaxError(function() {
-      setMsg('Unable to reach Woolman server.<br />Check your internet connection.');
+      setMsg('Unable to reach Woolman server.<br />Check your internet connection.', 'err');
     });
 
     $("table.tablesorter").tablesorter({

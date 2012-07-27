@@ -135,6 +135,11 @@ form#-ws-apply-form-report .subset div.form-checkboxes {
   font-size: .95em;
 }
 
+#staff-msg .err p {
+  background-color:#FFF5C8;
+  border: 1px solid #FF8E3A;
+}
+
 #page.busy {
   cursor:progress;
 }

@@ -11,7 +11,7 @@ function ws_apply_staff_dates(&$form_state) {
   drupal_add_js(drupal_get_path('module', 'woolman_semester') . '/js/ws_apply_admin.js');
 
   $form = $sems = array();
-  $form['#prefix'] = '<p>This form lets you choose dates of upcoming semesters.</p>';
+  $form['#prefix'] = '<p>Enter dates of upcoming semesters. These are displayed to prospective students on the website and application form, and are used for automatically adding students when they are accepted.</p>';
   $form['table'] = array('#value' => '<table id="semester-dates"><thead><tr><th>Semester</th><th>Start Date</th><th>End Date</th></tr></thead><tbody>');
   $options = woolman_civicrm_api('option_value', 'get', array('option_group_id' => 80, 'options' => array('limit' => 9999)), 'values');
   foreach($options as $o) {
