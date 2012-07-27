@@ -624,7 +624,7 @@ function woolman_camp_manage_discount($form_state) {
     $form['year'] = array(
       '#type' => 'select',
       '#title' => 'Year',
-      '#description' => 'Which year of camp do you want to add/edit discounts for this person. (select ' . ($now+1) . ' to credit any over-payments from this year)',
+      '#description' => 'Which year of camp do you want to add/edit discounts for this person?<br />(select ' . ($now+1) . ' to credit any over-payments from this year)',
       '#options' => drupal_map_assoc(range($now - 2, $now + 1)),
       '#default_value' => $now,
       '#suffix' => '<p style="height:100px;">&nbsp;</p>',
@@ -676,7 +676,7 @@ function woolman_camp_manage_discount($form_state) {
     }
     $form['discounts'][0] = $fields;
     $form['discounts'][0]['amount']['#prefix'] = '<td class="new">';
-    $form['discounts'][0]['type']['#options'][''] = '- Add New -';
+    $form['discounts'][0]['type']['#options'][''] = 'Add New...';
     $form['clear'] = array('#value' => '<p style="clear:both; height:10px;"></p>');
     $form['submit-save'] = array(
       '#type' => 'submit',
@@ -700,9 +700,9 @@ function woolman_camp_manage_discount_submit($form, &$form_state) {
       if (!($d['type'] && $d['amount'])) {
         db_query("DELETE FROM {woolman_camp_discounts} WHERE id = $id");
       }
-      elseif (!($d['type'] == $existing['type'] && $d['amount'] == $existing['type'])) {
+      elseif (!($d['type'] == $existing['type'] && $d['amount'] == $existing['amount'])) {
         db_query("UPDATE {woolman_camp_discounts}
-        SET amount = '%s', type = '%s', date = CURDATE()
+        SET amount = '%s', type = '%s'
         WHERE id = $id
         ", $d['amount'], $d['type']);
       }
