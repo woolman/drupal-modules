@@ -602,10 +602,10 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
 
   // Bug in CiviCRM displays empty options as a long string of zeroes
   $sp = CRM_Core_DAO::VALUE_SEPARATOR;
-  foreach ($values as &$vals) {
-    foreach ($vals as &$v) {
+  foreach ($values as $key => $vals) {
+    foreach ($vals as $k => $v) {
       if (is_string($v) && strpos($v, $sp . '0' . $sp) !== FALSE) {
-        $v = '';
+        $values[$key][$k] = '';
       }
     }
   }
@@ -642,9 +642,9 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
 
   // Format birth dates
   if (in_array('birth_date', $tokens['contact'])) {
-    foreach ($values as &$v) {
+    foreach ($values as $k => $v) {
       if (!empty($v['birth_date']) && $bd = strtotime($v['birth_date'])) {
-        $v['birth_date'] = date('m/d/Y', $bd);
+        $values[$k]['birth_date'] = date('m/d/Y', $bd);
       }
     }
   }
@@ -702,7 +702,10 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
       AND r.relationship_type_id IN (' . implode(',', $rtype) . ')
       ORDER BY r.is_active DESC'
     );
-    $loc_type = woolman_get_civi_options('location_type');
+    $loc_type = array();
+    foreach (woolman_get_civi_options('location_type') as $k => $v) {
+      $loc_type[$k] = $v == 'Mobile' ? 'c' : strtolower($v[0]);
+    }
     while ($dao->fetch()) {
       $cid = $dao->contact_id_a;
       if ($dao->relationship_type_id == 1) {
@@ -736,9 +739,9 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
       }
       if (in_array($rel . '_phone', $tokens['relatives'])) {
         $phone = array();
-        $result = woolman_civicrm_api('phone', 'get', array('contact_id' => $cid), 'values');
+        $result = woolman_civicrm_api('phone', 'get', array('contact_id' => $dao->id), 'values');
         foreach($result as $p) {
-          $phone[$p['phone']] = $p['phone'] . ' (' . strtolower($loc_type[$p['location_type_id']][0]) . ')';
+          $phone[$p['phone']] = $p['phone'] . ' (' . $loc_type[$p['location_type_id']] . ')';
         }
         $values[$cid]['relatives.' . $rel . '_phone'] = implode(', ', $phone);
       }
@@ -1086,7 +1089,7 @@ function woolman_website_civicrm_tabs(&$tabs, $cid) {
       }
       $camper = CRM_Core_DAO::singleValueQuery("SELECT id FROM civicrm_participant WHERE contact_id = $cid AND event_id IN (SELECT id FROM civicrm_event WHERE event_type_id IN (8,9))");
     }
-    elseif (($tab['id'] == 'custom_16' || (empty($camper) && $tab['id'] == 'custom_9')) && empty($tab['count'])) {
+    elseif (($tab['id'] == 'custom_16' || (empty($camper) && ($tab['id'] == 'custom_9'|| $tab['id'] == 'custom_19'))) && empty($tab['count'])) {
       unset($tabs[$id]);
     }
   }
@@ -1468,63 +1471,72 @@ function woolman_fill_form_values(&$form, $values) {
 /**
  * Gets options from civicrm
  */
-function woolman_get_civi_options($group, $options = array()) {
-  $args = array();
-  if ($group == 'location_type') {
-    $options += array(
-      'select' => 'name as label, id as value',
-      'from' => '{civicrm_location_type}',
-      'where' => 'is_active = 1',
-    );
-  }
-  elseif ($group == 'country') {
-    $o = array(
-      'select' => 'name as label, id as value',
-      'from' => '{civicrm_country}',
-      'order' => 'name',
-    );
-    $config = CRM_Core_Config::singleton();
-    if (!empty($config->countryLimit) && is_array($config->countryLimit)) {
-      $o['where'] = 'id IN (' . implode(',', $config->countryLimit) . ')';
+function woolman_get_civi_options($group, $params = array()) {
+  static $cache = array();
+  // Do not cache if params are given
+  $no_cache = !empty($params);
+  if ($no_cache || !isset($cache[$group])) {
+    $args = array();
+    if ($group == 'location_type') {
+      $params += array(
+        'select' => 'name as label, id as value',
+        'from' => '{civicrm_location_type}',
+        'where' => 'is_active = 1',
+      );
     }
-    $options += $o;
-  }
-  elseif ($group == 'state' || $group == 'state_abbr') {
-    $options += array(
-      'select' => ($group == 'state' ? 'name' : 'abbreviation') . ' AS label, id AS value',
-      'from' => '{civicrm_state_province}',
-      'where' => 'country_id = ' . USA,
-      'order' => $group == 'state' ? 'name' : 'abbreviation',
-    );
-  }
-  elseif ($group) {
-    $options += array(
-      'select' => 'label, value',
-      'from' => '{civicrm_option_value}',
-      'where' => 'is_active = 1',
-      'order' => 'weight, label',
-    );
-    $options['where'] .= ($options['where'] ? ' AND ' : '') . 'option_group_id = ';
-    if (is_numeric($group)) {
-      $options['where'] .= '%d';
+    elseif ($group == 'country') {
+      $o = array(
+        'select' => 'name as label, id as value',
+        'from' => '{civicrm_country}',
+        'order' => 'name',
+      );
+      $config = CRM_Core_Config::singleton();
+      if (!empty($config->countryLimit) && is_array($config->countryLimit)) {
+        $o['where'] = 'id IN (' . implode(',', $config->countryLimit) . ')';
+      }
+      $params += $o;
     }
-    else {
-      $options['where'] .= "(SELECT id FROM {civicrm_option_group} WHERE name = '%s')";
+    elseif ($group == 'state' || $group == 'state_abbr') {
+      $params += array(
+        'select' => ($group == 'state' ? 'name' : 'abbreviation') . ' AS label, id AS value',
+        'from' => '{civicrm_state_province}',
+        'where' => 'country_id = ' . USA,
+        'order' => $group == 'state' ? 'name' : 'abbreviation',
+      );
     }
-    $args[] = $group;
-  }
-  $sql = 'SELECT ' . $options['select'] . ' FROM ' . $options['from'];
-  foreach (array('where' => 'WHERE', 'order' => 'ORDER BY', 'limit' => 'LIMIT') as $key => $op) {
-    if (!empty($options[$key])) {
-      $sql .= " $op " . $options[$key];
+    elseif ($group) {
+      $params += array(
+        'select' => 'label, value',
+        'from' => '{civicrm_option_value}',
+        'where' => 'is_active = 1',
+        'order' => 'weight, label',
+      );
+      $params['where'] .= ($params['where'] ? ' AND ' : '') . 'option_group_id = ';
+      if (is_numeric($group)) {
+        $params['where'] .= '%d';
+      }
+      else {
+        $params['where'] .= "(SELECT id FROM {civicrm_option_group} WHERE name = '%s')";
+      }
+      $args[] = $group;
     }
+    $sql = 'SELECT ' . $params['select'] . ' FROM ' . $params['from'];
+    foreach (array('where' => 'WHERE', 'order' => 'ORDER BY', 'limit' => 'LIMIT') as $key => $op) {
+      if (!empty($params[$key])) {
+        $sql .= " $op " . $params[$key];
+      }
+    }
+    $result = array();
+    $resource = db_query($sql, $args);
+    while ($row = db_fetch_object($resource)) {
+      $result[$row->value] = $row->label;
+    }
+    if ($no_cache) {
+      return $result;
+    }
+    $cache[$group] = $result;
   }
-  $result = array();
-  $resource = db_query($sql, $args);
-  while ($row = db_fetch_object($resource)) {
-    $result[$row->value] = $row->label;
-  }
-  return $result;
+  return $cache[$group];
 }
 
 /**
