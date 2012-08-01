@@ -14,6 +14,7 @@ function _ws_apply_report($arg) {
   drupal_add_js(drupal_get_path('module', 'woolman_semester') . '/js/ws_apply_staff.js');
   drupal_add_js('misc/autocomplete.js');
   drupal_add_js('misc/textarea.js');
+  drupal_add_js('misc/collapse.js');
 
   $semester = $arg = $arg ? $arg : 'upcoming';
   //fetch upcoming and past semesters from civi db
@@ -512,48 +513,7 @@ function ws_admissions_js() {
         break;
 
       case 'activity_form_submit':
-        $params = array();
-        foreach ($_POST as $key => $value) {
-          if (substr($key, 0, 6) == 'params') {
-            $params[substr($key, 7)] = $value;
-          }
-        }
-        // Process semester pref
-        if ($params['activity_type_id'] == 47) {
-          $params['activity_date_time'] = 'now';
-          $params['source_contact_id'] = woolman_user_cid();
-          $params['custom_5'] = woolman_multivalue_str($_POST['semester']);
-          $cid = $params['target_contact_id'];
-          $case = _ws_apply_get_case($cid, 2, FALSE);
-        }
-        else {
-          $params['activity_date_time'] .= ' ' . $_POST['activity_time'];
-        }
-        // Create
-        if (!$params['id']) {
-          unset($params['id']);
-          $params['source_contact_id'] = woolman_user_cid();
-        }
-        // Update
-        else {
-          unset($params['target_contact_id']);
-        }
-        woolman_civicrm_api('activity', 'create', $params);
-        // Update relationship dates for enrolled students
-        if (!empty($case) && $case['status_id'] == 2) {
-          woolman_student_relationship($cid, 'create');
-        }
-        // Send email
-        if (empty($params['id']) && $params['activity_type_id'] == 3) {
-          $msg = array(
-            'subject' => $params['subject'],
-            'body' => $params['details'],
-            'cc' => trim($_POST['cc']),
-            'bcc' => trim($_POST['bcc']),
-          );
-          drupal_mail('woolman_website', 0, $_POST['to'], language_default(), $msg, $_POST['from']);
-        }
-        ws_staff_js_update($_GET['ts'], $_GET['sem'], $params['case_id']);
+        ws_staff_activity_create_submit(NULL, NULL);
         break;
 
       case 'update_check':
@@ -635,6 +595,22 @@ function ws_staff_activity_create(&$form_state, $act, $activity_type_id, $cid, $
         '#suffix' => '</div>',
       );
     }
+    /* // Abandoned attempt to support file uploads
+    $form['#attributes'] = array('enctype' => "multipart/form-data");
+    $form['upload'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'Attach Files',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#suffix' => '<div class="clear-block"> </div>',
+    );
+    for ($i = 1; $i < 4; ++$i) {
+      $form['upload']['file_' . $i] = array(
+        '#type' => 'file',
+        '#title' => 'File ' . $i,
+        '#size' => 20,
+      );
+    }*/
     $form['params_details'] = array(
       '#type' => 'textarea',
       '#title' => 'Details',
@@ -652,7 +628,7 @@ function ws_staff_activity_create(&$form_state, $act, $activity_type_id, $cid, $
 
   // Modify form for sending an email
   if ($activity_type_id == 3 && !$act) {
-    unset($form['params_activity_date_time'], $form['activity_time']);
+    unset($form['params_activity_date_time'], $form['activity_time'], $form['upload']);
     $hidden['status_id'] = 2;
     $hidden['medium_id'] = 3;
     $form['params_subject']['#mark_req'] = TRUE;
@@ -694,7 +670,63 @@ function ws_staff_activity_create(&$form_state, $act, $activity_type_id, $cid, $
   foreach ($hidden as $k => $v) {
     $form['params_' . $k] = array('#type' => 'hidden', '#value' => $v);
   }
+  // A non-ajax submit button (part of the abandoned file attempt)
+  // $form['submit'] = array('#type' => 'submit', '#value' => 'Submit', '#attributes' => array('style' => 'display:none'));
   return $form;
+}
+
+/**
+ * An un-Drupalish submit handler that ignores $form_state and uses data from $_POST
+ * AJAX was much easier this way
+ */
+function ws_staff_activity_create_submit($form, $form_state) {
+  $params = array();
+  foreach ($_POST as $key => $value) {
+    if (substr($key, 0, 6) == 'params') {
+      $params[substr($key, 7)] = $value;
+    }
+  }
+  // Process semester pref
+  if ($params['activity_type_id'] == 47) {
+    $params['activity_date_time'] = 'now';
+    $params['source_contact_id'] = woolman_user_cid();
+    $params['custom_5'] = woolman_multivalue_str($_POST['semester']);
+    $cid = $params['target_contact_id'];
+    $case = _ws_apply_get_case($cid, 2, FALSE);
+  }
+  else {
+    $params['activity_date_time'] .= ' ' . $_POST['activity_time'];
+  }
+  // Create
+  if (!$params['id']) {
+    unset($params['id']);
+    $params['source_contact_id'] = woolman_user_cid();
+  }
+  // Update
+  else {
+    unset($params['target_contact_id']);
+  }
+  woolman_civicrm_api('activity', 'create', $params);
+  // Update relationship dates for enrolled students
+  if (!empty($case) && $case['status_id'] == 2) {
+    woolman_student_relationship($cid, 'create');
+  }
+  // Send email
+  if (empty($params['id']) && $params['activity_type_id'] == 3) {
+    $msg = array(
+      'subject' => $params['subject'],
+      'body' => $params['details'],
+      'cc' => trim($_POST['cc']),
+      'bcc' => trim($_POST['bcc']),
+    );
+    drupal_mail('woolman_website', 0, trim($_POST['to']), language_default(), $msg, $_POST['from']);
+  }
+  if ($form || $form_state) {
+    // For non-ajax submissions
+    drupal_goto('staff/admissions/applications');
+  }
+  // For ajax submissions
+  ws_staff_js_update($_GET['ts'], $_GET['sem'], $params['case_id']);
 }
 
 /**

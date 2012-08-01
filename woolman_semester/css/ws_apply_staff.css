@@ -358,3 +358,7 @@ table.tablesorter thead tr th.headerSortDown,
 #activity-content textarea {
   font-size: .92em;
 }
+
+#activity-content fieldset {
+  background-image:none;
+}

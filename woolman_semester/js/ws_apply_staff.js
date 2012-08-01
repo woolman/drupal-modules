@@ -60,7 +60,7 @@ var wsStaff = function($, D, undefined) {
   pub.createActivity = function(ele, row) {
     $("#activity-content").html('<div class="loading"> </div>');
     var atype = ele.attr('data-atype');
-    var aid = ele.attr('data-aid');
+    var aid = ele.attr('data-aid') || 0;
     var case_id = row.attr('data-case-id');
     var contact_id = row.attr('data-contact-id');
     var editor = null;
@@ -94,6 +94,7 @@ var wsStaff = function($, D, undefined) {
           // called on drupal to attach behaviors, so for now we're just calling these fn directly
           D.behaviors.textarea($("#view-activity"));
           D.behaviors.autocomplete($("#view-activity"));
+          D.behaviors.collapse($("#view-activity"));
           if ($('[name="params_details"]').length > 0 && (atype !== '3' || aid)) {
             editor = CKEDITOR.replace('params_details', {
               toolbar : [
@@ -136,24 +137,35 @@ var wsStaff = function($, D, undefined) {
           }
           $('.ui-dialog-buttonpane button + button, #activity-content form').hide();
           $("#activity-content").prepend('<div class="loading"></div>');
-          $.ajax({
-            type: 'POST',
-            dataType: 'json',
-            url: '/staff/admissions/js?op=activity_form_submit&sem=' + encodeURIComponent(D.settings.ws_staff.semester) + '&ts=' + encodeURIComponent(timeStamp),
-            data: $("#activity-content form").serialize(),
-            success: function(data) {
-              if (editor !== null) {
-                editor.destroy();
-                editor = null;
-              }
-              $("#view-activity").dialog('close');
-              applyUpdates(data);
-            },
-            error: function() {
-              $('.ui-dialog-buttonpane button, #activity-content form').show();
-              $('#view-activity .loading').remove();
+          var ajax = true;
+          $('#view-activity [type=file]').each(function() {
+            if ($(this).val()) {
+              ajax = false;
             }
-          });
+          }
+          if (ajax) {
+            $.ajax({
+              type: 'POST',
+              dataType: 'json',
+              url: '/staff/admissions/js?op=activity_form_submit&sem=' + encodeURIComponent(D.settings.ws_staff.semester) + '&ts=' + encodeURIComponent(timeStamp),
+              data: $("#activity-content form").serialize(),
+              success: function(data) {
+                if (editor !== null) {
+                  editor.destroy();
+                  editor = null;
+                }
+                $("#view-activity").dialog('close');
+                applyUpdates(data);
+              },
+              error: function() {
+                $('.ui-dialog-buttonpane button, #activity-content form').show();
+                $('#view-activity .loading').remove();
+              }
+            });
+          }
+          else {
+            $('#view-activity form')[0].submit();
+          }
         }
       }
     });
