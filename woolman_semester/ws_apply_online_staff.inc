@@ -437,7 +437,7 @@ function ws_apply_staff_format_row($case) {
   foreach ($case['notes'] as $act) {
     $link = $act['status'] == 'Completed' ? 'viewActivity' : 'createActivity';
     $verb = $act['status'] == 'Scheduled' ? 'scheduled for' : strtolower($act['status']);
-    $notes[] = '<a href="#" ' . $act['id'] . ' data-atype="' . $act['activity_type_id'] . '" data-fn="' . $link . '" title="' . $act['type'] . ' by ' . woolman_name('full', $act['contact_id']) . " \n(" . $verb . ' ' . _ws_apply_act_date_format($act, TRUE) . ')">' . ws_staff_date($act['activity_date_time']) . ': ' . ($act['subject'] ? $act['subject'] : $act['type']) . '</a>';
+    $notes[] = '<a href="#" data-aid="' . $act['id'] . '" data-atype="' . $act['activity_type_id'] . '" data-fn="' . $link . '" title="' . $act['type'] . ' by ' . woolman_name('full', $act['contact_id']) . " \n(" . $verb . ' ' . _ws_apply_act_date_format($act, TRUE) . ')">' . ws_staff_date($act['activity_date_time']) . ': ' . ($act['subject'] ? $act['subject'] : $act['type']) . '</a>';
   }
   // Notes cell
   $row[] = '<div class="notes">' . implode('<br/ >', $notes) . '<a href="#" class="new-note icon" data-fn="actionMenu"></a></div>';

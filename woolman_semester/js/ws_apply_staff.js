@@ -64,6 +64,61 @@ var wsStaff = function($, D, undefined) {
     var case_id = row.attr('data-case-id');
     var contact_id = row.attr('data-contact-id');
     var editor = null;
+    var save = aid == 0 && atype == 3 ? 'Send' : 'Save';
+    var buttons = {};
+    buttons['Cancel'] = function() {
+      $(this).dialog("close");
+    };
+    buttons[save] = function() {
+      var ok = true;
+      if (editor !== null) {
+        $('[name="params_details"]').val(editor.getData());
+      }
+      // Check required fields
+      $('.form-required', "#activity-content form").parent().parent().find(':input').each(function() {
+        if ($(this).val() == '') {
+          $(this).addClass('error').focus(function() {
+            $(this).removeClass('error');
+          });
+          ok = false;
+        }
+      });
+      if (ok === false) {
+        alert('Please complete required fields.');
+        return;
+      }
+      $('.ui-dialog-buttonpane button + button, #activity-content form').hide();
+      $("#activity-content").prepend('<div class="loading"></div>');
+      var ajax = true;
+      $('#view-activity [type=file]').each(function() {
+        if ($(this).val()) {
+          ajax = false;
+        }
+      });
+      if (ajax) {
+        $.ajax({
+          type: 'POST',
+          dataType: 'json',
+          url: '/staff/admissions/js?op=activity_form_submit&sem=' + encodeURIComponent(D.settings.ws_staff.semester) + '&ts=' + encodeURIComponent(timeStamp),
+          data: $("#activity-content form").serialize(),
+          success: function(data) {
+            if (editor !== null) {
+              editor.destroy();
+              editor = null;
+            }
+            $("#view-activity").dialog('close');
+            applyUpdates(data);
+          },
+          error: function() {
+            $('.ui-dialog-buttonpane button, #activity-content form').show();
+            $('#view-activity .loading').remove();
+          }
+        });
+      }
+      else {
+        $('#view-activity form')[0].submit();
+      }
+    };
     $("#view-activity").dialog({
       title: actTitle(ele, row),
       modal: true,
@@ -81,7 +136,7 @@ var wsStaff = function($, D, undefined) {
         $('#page').removeClass('busy');
       },
 
-      open:function() {
+      open: function() {
         $("#view-activity").show();
         $('.ui-dialog-buttonpane button + button').hide();
         $("#activity-content").load('/staff/admissions/js?op=activity_form&case_id=' + case_id + '&contact_id=' + contact_id + '&atype=' + atype + '&aid=' + aid, function(response, status) {
@@ -90,11 +145,7 @@ var wsStaff = function($, D, undefined) {
             return;
           }
           $('.datepicker', "#activity-content").datepicker();
-          // Todo - there seems to be a bug in D6 that broke tablesorter if we
-          // called on drupal to attach behaviors, so for now we're just calling these fn directly
-          D.behaviors.textarea($("#view-activity"));
-          D.behaviors.autocomplete($("#view-activity"));
-          D.behaviors.collapse($("#view-activity"));
+          attachBehaviors($("#view-activity"));
           if ($('[name="params_details"]').length > 0 && (atype !== '3' || aid)) {
             editor = CKEDITOR.replace('params_details', {
               toolbar : [
@@ -113,61 +164,7 @@ var wsStaff = function($, D, undefined) {
         });
       },
 
-      buttons: {
-        "Cancel": function() {
-          $(this).dialog("close");
-        },
-        "Save Activity": function() {
-          var ok = true;
-          if (editor !== null) {
-            $('[name="params_details"]').val(editor.getData());
-          }
-          // Check required fields
-          $('.form-required', "#activity-content form").parent().parent().find(':input').each(function() {
-            if ($(this).val() == '') {
-              $(this).addClass('error').focus(function() {
-                $(this).removeClass('error');
-              });
-              ok = false;
-            }
-          });
-          if (ok === false) {
-            alert('Please complete required fields.');
-            return;
-          }
-          $('.ui-dialog-buttonpane button + button, #activity-content form').hide();
-          $("#activity-content").prepend('<div class="loading"></div>');
-          var ajax = true;
-          $('#view-activity [type=file]').each(function() {
-            if ($(this).val()) {
-              ajax = false;
-            }
-          }
-          if (ajax) {
-            $.ajax({
-              type: 'POST',
-              dataType: 'json',
-              url: '/staff/admissions/js?op=activity_form_submit&sem=' + encodeURIComponent(D.settings.ws_staff.semester) + '&ts=' + encodeURIComponent(timeStamp),
-              data: $("#activity-content form").serialize(),
-              success: function(data) {
-                if (editor !== null) {
-                  editor.destroy();
-                  editor = null;
-                }
-                $("#view-activity").dialog('close');
-                applyUpdates(data);
-              },
-              error: function() {
-                $('.ui-dialog-buttonpane button, #activity-content form').show();
-                $('#view-activity .loading').remove();
-              }
-            });
-          }
-          else {
-            $('#view-activity form')[0].submit();
-          }
-        }
-      }
+      buttons: buttons
     });
   }
 
@@ -187,7 +184,7 @@ var wsStaff = function($, D, undefined) {
       menu += '<li><a href="#" data-atype="' + act + '" data-fn="createActivity">' + acts[act] + '</a></li>';
     }
     ele.after(menu + '</ul>');
-    D.behaviors.ws_staff('#action-menu');
+    attachBehaviors('#action-menu');
     $('#action-menu').fadeIn(190);
   }
 
@@ -280,7 +277,7 @@ var wsStaff = function($, D, undefined) {
     var check = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
     if (check != now) {
       now = check;
-      D.behaviors.ws_staff('#page');
+      attachBehaviors('#page');
     }
   }
 
@@ -351,9 +348,7 @@ var wsStaff = function($, D, undefined) {
               row.replaceWith(data['rows'][i]['row']);
               tableNumbers(table, true);
             }
-            // Todo - there seems to be a bug in D6 that broke tablesorter if we
-            // called on drupal to attach behaviors, so for now we're just calling this fn directly
-            D.behaviors.ws_staff($('tr[data-case-id="' + case_id + '"]'));
+            attachBehaviors($('tr[data-case-id="' + case_id + '"]'));
           }
           // If row does not belong on this page
           else {
@@ -516,6 +511,20 @@ var wsStaff = function($, D, undefined) {
       $(this).next('.rel-dt').html(rel);
     });
   };
+
+  /**
+  * Todo - there seems to be a bug in D6 that broke tablesorter when attaching its behavior,
+  * So here's a workaround (modified version of Drupal.attachBehaviors())
+  */
+  function attachBehaviors(context) {
+    context = context || document;
+    var behaviors = D.behaviors;
+    // Execute all of them except tableheader.
+    behaviors.tableHeader = function(){};
+    $.each(behaviors, function() {
+      this(context);
+    });
+  }
 
   return pub;
 }(jQuery, Drupal);
