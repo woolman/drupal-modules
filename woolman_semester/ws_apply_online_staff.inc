@@ -427,7 +427,7 @@ function ws_apply_staff_format_row($case) {
         $cell['class'] .= ' ready';
       }
 
-      
+
 
     }
     $cell['data'] = '<a href="#"' . $aid . ' data-atype="'. $type .'" data-fn="' . $link . '">' . $cell['data'] . '</a>';
@@ -677,7 +677,7 @@ function ws_staff_activity_create(&$form_state, $act, $activity_type_id, $cid, $
 
 /**
  * An un-Drupalish submit handler that ignores $form_state and uses data from $_POST
- * AJAX was much easier this way
+ * AJAX was easier this way :P
  */
 function ws_staff_activity_create_submit($form, $form_state) {
   $params = array();
@@ -706,11 +706,6 @@ function ws_staff_activity_create_submit($form, $form_state) {
   else {
     unset($params['target_contact_id']);
   }
-  woolman_civicrm_api('activity', 'create', $params);
-  // Update relationship dates for enrolled students
-  if (!empty($case) && $case['status_id'] == 2) {
-    woolman_student_relationship($cid, 'create');
-  }
   // Send email
   if (empty($params['id']) && $params['activity_type_id'] == 3) {
     $msg = array(
@@ -720,6 +715,15 @@ function ws_staff_activity_create_submit($form, $form_state) {
       'bcc' => trim($_POST['bcc']),
     );
     drupal_mail('woolman_website', 0, trim($_POST['to']), language_default(), $msg, $_POST['from']);
+    $params['details'] = nl2br($params['details']);
+  }
+
+  // Save activity
+  woolman_civicrm_api('activity', 'create', $params);
+
+  // Update relationship dates for enrolled students
+  if (!empty($case) && $case['status_id'] == 2) {
+    woolman_student_relationship($cid, 'create');
   }
   if ($form || $form_state) {
     // For non-ajax submissions
