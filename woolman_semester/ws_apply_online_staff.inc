@@ -636,7 +636,6 @@ function ws_staff_activity_create(&$form_state, $act, $activity_type_id, $cid, $
     $form['params_details']['#resizable'] = TRUE;
     $form['params_details']['#title'] = 'Message';
     $form['params_details']['#rows'] = 10;
-    $form['params_details']['#default_value'] = "\n\n\n\n" . woolman_name('full');
     foreach (array('bcc', 'cc', 'to') as $w => $to) {
       $form[$to] = array(
         '#type' => 'textfield',
@@ -651,7 +650,7 @@ function ws_staff_activity_create(&$form_state, $act, $activity_type_id, $cid, $
     if (!empty($c['email'])) {
       $form['to']['#default_value'] = '"' . $c['nick_name'] . ' ' . $c['last_name'] . '" <' . $c['email'] . '>, ';
     }
-    $email = '';
+    $email = $phone = '';
     foreach (woolman_civicrm_api('email', 'get', array('contact_id' => woolman_user_cid()), 'values') as $e) {
       if ($e['email'] && ($e['is_primary'] || !$email)) {
         $email = $e['email'];
@@ -661,6 +660,12 @@ function ws_staff_activity_create(&$form_state, $act, $activity_type_id, $cid, $
         break;
       }
     }
+    foreach (woolman_civicrm_api('phone', 'get', array('contact_id' => woolman_user_cid()), 'values') as $e) {
+      if ($e['phone'] && $e['location_type_id'] == 2) {
+        $phone = "\n" . $e['phone'] . ($e['phone_ext'] ? ' x' . $e['phone_ext'] : '');
+      }
+    }
+    $form['params_details']['#default_value'] = "\n\n\n" . woolman_name('full') . $phone . "\nThe Woolman Semester School\nLive What You Believe!";
     $email = '"' . woolman_name('full') . '" <' . $email . '>';
     $form['from'] = array('#type' => 'hidden', '#value' => $email);
     $form['from_display'] = array('#value' => '<strong>From: </strong>' . check_plain($email), '#weight' => -5);

@@ -186,14 +186,14 @@ form#-ws-apply-form-report .subset div.form-checkboxes {
 /* JS Select */
 
 .app-report-table div.sel.ready {
-  border: 1px solid #E6E6E6;
+  border: 1px dashed #E6E6E6;
   border-radius: 2px;
   padding: 2px;
 }
 
 .app-report-table div.sel.ready:hover {
   cursor:pointer;
-  border: 1px solid blue;
+  border: 1px dashed blue;
 }
 
 .app-report-table td select {
