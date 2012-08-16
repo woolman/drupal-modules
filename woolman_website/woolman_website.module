@@ -240,15 +240,15 @@ function woolman_website_civicrm_buildForm($formName, &$form) {
     if ($form->_values['contribution_type_id'] == 1) {
       $allowed = array('annual fund', 'ws scholarship', 'campership', 'seeds of peace');
       foreach ($form->_elements as &$e) {
-        if (!empty($e->_attributes['name']) && $e->_attributes['name'] == 'custom_18') {
+        /*if (!empty($e->_attributes['name']) && $e->_attributes['name'] == 'custom_18') {
           foreach ($e->_options as $oid => $o) {
             if (!in_array(woolman_aval($o, 'attr:value'), $allowed)) {
               unset($e->_options[$oid]);
             }
           }
-        }
+        }*/
         if (!empty($e->_name) && $e->_name == 'preferred_communication_method') {
-          unset($e->_elements[0], $e->_elements[3], $e->_elements[4]);
+          unset($e->_elements[0], $e->_elements[2], $e->_elements[3], $e->_elements[4], $e->_elements[5]);
         }
       }
     }
