@@ -233,6 +233,7 @@ function woolman_website_cron($force = FALSE) {
  * Implements hook_civicrm_buildForm().
  */
 function woolman_website_civicrm_buildForm($formName, &$form) {
+
   // Alter contribution forms
   if ($formName == 'CRM_Contribute_Form_Contribution_Main'
   && !empty($form->_values['contribution_type_id'])) {
@@ -266,6 +267,10 @@ function woolman_website_civicrm_buildForm($formName, &$form) {
           }
         }
       }
+    }
+    // Warn staff not to use this form!
+    if (user_access('access CiviCRM')) {
+      drupal_set_message('Hey ' . woolman_name('nick') . ', don\'t use this form to enter a credit card payment from someone else! This is a public contribution form and it will record the payment as coming from YOU. Instead, look them up in <a href="/civicrm">CiviCRM</a> and click the contribution tab.', 'warning', FALSE);
     }
   }
 }
