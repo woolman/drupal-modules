@@ -320,7 +320,6 @@ function ws_apply_staff_get_cases($params) {
  */
 function ws_apply_get_case_activities(&$cases) {
   if ($cases) {
-    $no_display = array(9,13,15,16,43,44,45,46,47);
     $now = date('Y-m-d H:i:s');
     $query = "SELECT ca.case_id, act.activity_type_id, act.id, act.subject, act.activity_date_time, ov.name AS status, av.label AS type, act.source_contact_id AS contact_id
       FROM  {civicrm_activity} act
@@ -328,6 +327,7 @@ function ws_apply_get_case_activities(&$cases) {
       LEFT JOIN {civicrm_option_value} av ON av.option_group_id = 2 AND av.value = act.activity_type_id
       LEFT JOIN  {civicrm_option_value} ov ON ov.option_group_id = 25 AND ov.value = act.status_id
       WHERE act.is_current_revision = 1 AND act.is_deleted = 0
+      AND act.activity_type_id NOT IN (9,13,15,16,43,44,45,46,47)
       AND ca.case_id IN (" . implode(',', array_keys($cases)) . ")
       ORDER BY act.activity_date_time";
     $resource = db_query($query);
@@ -337,16 +337,13 @@ function ws_apply_get_case_activities(&$cases) {
       if ($row->activity_date_time > $cases[$case]['recent_act'] && $row->activity_date_time <= $now) {
         $cases[$case]['recent_act'] = $row->activity_date_time;
       }
-      // Add activities (except the ones we don't care about)
-      if (!in_array($row->activity_type_id, $no_display)) {
-        // Put standard activities in thier place
-        if (in_array($row->activity_type_id, ws_application_steps())) {
-          $cases[$case]['acts'][$row->activity_type_id][] = (array) $row;
-        }
-        // Other activities get added as notes
-        else {
-          $cases[$case]['notes'][] = (array) $row;
-        }
+      // Put standard activities in thier place
+      if (in_array($row->activity_type_id, ws_application_steps())) {
+        $cases[$case]['acts'][$row->activity_type_id][] = (array) $row;
+      }
+      // Other activities get added as notes
+      else {
+        $cases[$case]['notes'][] = (array) $row;
       }
     }
   }

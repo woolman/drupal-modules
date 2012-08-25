@@ -6,7 +6,6 @@ module_load_include('inc', 'woolman_semester', 'ws_apply_online_utils');
  * Manage semester dates
  */
 function ws_apply_staff_dates(&$form_state) {
-  drupal_add_css('sites/all/libraries/jquery.ui/themes/default/ui.all.css', 'module', 'all', FALSE);
   jquery_ui_add(array('ui.datepicker'));
   drupal_add_js(drupal_get_path('module', 'woolman_semester') . '/js/ws_apply_admin.js');
 

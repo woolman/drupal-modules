@@ -857,7 +857,7 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
       CRM_Core_DAO::executeQuery("
         UPDATE civicrm_contribution SET thankyou_date = NULL
         WHERE is_test = 0 AND contribution_type_id IN (1,9) AND contribution_status_id = 1
-        AND DATE(thankyou_date) = CURDATE() AND contact_id IN ($contacts_and_spouses)"
+        AND DATE(thankyou_date) + INTERVAL 2 DAY > CURDATE() AND contact_id IN ($contacts_and_spouses)"
       );
     }
     if (in_array('unthanked', $tokens['donor'])) {
