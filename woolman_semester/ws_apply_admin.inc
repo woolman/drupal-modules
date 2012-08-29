@@ -112,7 +112,10 @@ function ws_apply_staff_dates_submit($form, &$form_state) {
  * Admin Form: allows staff to customize the application process
  */
 function _ws_apply_form_admin() {
-  //set some defaults
+  // Warn of danger!
+  drupal_add_js("jQuery('#edit-reset').click(function() {return confirm('This will erase ALL application questions and delete ALL introductory text from the application forms. Are you sure?');});", 'inline', 'footer');
+
+  // Our staff
   $resource = db_query("SELECT display_name, id FROM {civicrm_contact} WHERE employer_id = '" . WOOLMAN . "' ORDER BY sort_name");
   while ($row = db_fetch_array($resource)) {
     $employees[$row['id']] = $row['display_name'];
@@ -186,7 +189,7 @@ function _ws_apply_form_admin() {
     '#rows' => 3,
     '#description' => 'Instructions to students when choosing and answering the essay question.',
     '#default_value' => _ws_apply_settings('ws_apply_essay_instructions'),
-    '#suffix' => '<div><b>The applicant will be allowed to choose one of the following options for their essay question (enter up to four):</b><div>'
+    '#suffix' => '<div><b>The applicant will be allowed to choose one of the following options for their essay question (enter up to four):</b></div>'
   );
   for ($i=1; $i<=4; $i++) {
     $form['essays']['ws_apply_essay' . $i] = array(
@@ -208,7 +211,7 @@ function _ws_apply_form_admin() {
     '#rows' => 3,
     '#description' => 'Instructions to students when answering the short-answer questions.',
     '#default_value' => _ws_apply_settings('ws_apply_questions_instructions'),
-    '#suffix' => '<div><b>The applicant will be required to answer all of the following in short answer form (enter up to four):</b><div>'
+    '#suffix' => '<div><b>The applicant will be required to answer all of the following in short answer form (enter up to four):</b></div>'
   );
   for ($i=1; $i<=4; $i++) {
     $form['questions']['ws_apply_question' . $i] = array(

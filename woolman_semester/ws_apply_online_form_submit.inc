@@ -609,7 +609,7 @@ function ws_apply_process_submission($key, $title, $details, &$form_state, $case
   switch ($key) {
     case 35:
       $section = 'basic application (and parent questionnaire link)';
-      $message['body'] .= "\n\nAn email containing the following personalized link to the parent/guardian questionnaire has been sent to {$vals['parent1_first']} {$vals['parent1_last']}.\n\n{$links[0]}\n\nIf needed, you may copy this link into an email and re-send it to " . ($vals['parent1_gender']==1 ? 'her':'him') . ".  (but this link is only meant for " . woolman_name('nick') . "'s parents/guardians, sending it to anyone else is not recommended)";
+      $message['body'] .= "\n\nAn email containing the following personalized link to the parent/guardian questionnaire has been sent to {$vals['parent1_first']} {$vals['parent1_last']}: {$vals['parent1_email']}\n{$links[0]}\n\nIf needed, you may copy this link into an email and re-send it to " . ($vals['parent1_gender']==1 ? 'her':'him');
       break;
     case 36:
       $section = 'essay';
@@ -619,7 +619,7 @@ function ws_apply_process_submission($key, $title, $details, &$form_state, $case
       break;
     case 42:
       $section = 'school info (and teacher recommendation links)';
-      $message['body'] .= "\n\nThe following personalized links to the student recommendation form were sent to these teachers:\n\n{$vals['teacher1_first']} {$vals['teacher1_last']}: {$links[1]}\n\n{$vals['teacher2_first']} {$vals['teacher2_last']}: {$links[2]}\n\nIf needed, you may copy a link into an email and re-send it to them (but these links are only meant for these teachers, sending them to anyone else is not recommended)";
+      $message['body'] .= "\n\nThe following personalized links to the student recommendation form were sent to these teachers:\n\n{$vals['teacher1_first']} {$vals['teacher1_last']}: {$vals['teacher1_email']}\n{$links[1]}\n\n{$vals['teacher2_first']} {$vals['teacher2_last']}: {$vals['teacher2_email']}\n{$links[2]}\n\nIf needed, you may copy a link into an email and re-send it to them.";
   }
   $message['subject'] = woolman_name('full') . '\'s ' . $section;
   drupal_mail('woolman_website', 0, 'admissions@woolman.org', language_default(), $message, 'info@woolman.org');

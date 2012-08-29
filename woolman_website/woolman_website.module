@@ -852,7 +852,7 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
       }
     }
     $contacts_and_spouses = implode(',', $contacts_and_spouses);
-    // Clear today's thank-yous (a kind of crude UNDO)
+    // Clear thank-yous from past 48hrs (a kind of crude UNDO)
     if (in_array('clear_thank_you', $tokens['donor'])) {
       CRM_Core_DAO::executeQuery("
         UPDATE civicrm_contribution SET thankyou_date = NULL
