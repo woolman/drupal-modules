@@ -308,7 +308,7 @@ table.tablesorter tbody tr {
 table.tablesorter tbody tr.odd {
   background-color:#F5F5FF;
 }
-table.tablesorter tbody tr.even:hover {
+table.tablesorter tbody tr:hover {
   background-color:#FEFFE1
 }
 table.tablesorter tbody tr.odd:hover {
