@@ -10,7 +10,7 @@ function _ws_apply_form_get_started_submit($form, &$form_state) {
 
   $ok = TRUE;
   foreach (woolman_civicrm_api('case', 'get', $params, 'values') as $case) {
-    //make sure there isn't already an open application case
+    // Make sure there isn't already an open application case
     if ($case['case_type_id'] == 2 && empty($case['is_deleted'])) {
       $ok = FALSE;
     }

@@ -1050,6 +1050,7 @@ function woolman_website_civicrm_caseSummary($id) {
  * For consistency, future-proofing, and error handling
  */
 function woolman_civicrm_api($entity, $operation, $params, $to_return = NULL) {
+  // Merge in defaults (these params are required by the api but almost never change)
   $params += array(
     'check_permissions' => FALSE,
     'version' => 3,
@@ -1064,11 +1065,12 @@ function woolman_civicrm_api($entity, $operation, $params, $to_return = NULL) {
     }
   }
   $result = civicrm_api($entity, $operation, $params);
+  // Log errors
   if (!empty($result['is_error'])) {
     $bt = debug_backtrace();
     watchdog('woolman_civicrm', 'The CiviCRM "%function" API function returned the error: "%msg" when called by line !line of !file with the following parameters: "!params"', array('%function' => $entity . ' ' . $operation, '%msg' => $result['error_message'], '!line' => $bt[0]['line'], '!file' => array_pop(explode('/', $bt[0]['file'])), '!params' => print_r($params, TRUE)), WATCHDOG_ERROR);
   }
-  // Convenience - return values or a single value
+  // Convenience - return values array or a single value
   if ($to_return) {
     $values = (array) woolman_aval($result, 'values', array());
     if ($to_return == 'single') {
@@ -1086,7 +1088,7 @@ function woolman_civicrm_api($entity, $operation, $params, $to_return = NULL) {
  * Implements hook_civicrm_tabs().
  */
 function woolman_website_civicrm_tabs(&$tabs, $cid) {
-  // Hide medform and transcript tabs for most contacts
+  // Hide medform, alum and transcript tabs for most contacts
   foreach ($tabs as $id => $tab) {
     if ($tab['id'] == 'rel' && !empty($tab['count'])) {
       if ($student = CRM_Core_DAO::singleValueQuery("SELECT id FROM civicrm_relationship WHERE contact_id_a = $cid AND contact_id_b = " . WOOLMAN . " AND relationship_type_id = 10 LIMIT 0, 1")) {
