@@ -113,7 +113,7 @@ function _ws_apply_report($arg) {
     $abbr = $step[0] . strtoupper($step[$pos]);
     $header[] = array('data' => $abbr, 'title' => $step);
   }
-  $header[] = 'Follow-Up';
+  $header[] = array('data' => 'Follow-Up', 'class' => 'notes-col');
 
   // Table row for each student
   $table = array();
@@ -392,11 +392,11 @@ function ws_apply_staff_format_row($case) {
     }
     $cell['title'] = $step . ' for ' . $case['nick_name'] . ' ' . $case['last_name'] . " \n(not started)";
 
-    //activity doesn't exist
+    // Activity doesn't exist
     if (!($act = woolman_aval($case, "acts:$type:$i"))) {
       $cell['class'] .= 'ready';
     }
-    //activity exists: provide appropriate links & titles
+    // Activity exists: provide appropriate links & titles
     else {
       $aid = ' data-aid="' . $act['id'] . '"';
       $cell['class'] .= strtolower(str_replace(' ', '-', $act['status']));
@@ -437,7 +437,10 @@ function ws_apply_staff_format_row($case) {
     $notes[] = '<a href="#" data-aid="' . $act['id'] . '" data-atype="' . $act['activity_type_id'] . '" data-fn="' . $link . '" title="' . $act['type'] . ' by ' . woolman_name('full', $act['contact_id']) . " \n(" . $verb . ' ' . _ws_apply_act_date_format($act, TRUE) . ')">' . ws_staff_date($act['activity_date_time']) . ': ' . ($act['subject'] ? $act['subject'] : $act['type']) . '</a>';
   }
   // Notes cell
-  $row[] = '<div class="notes">' . implode('<br/ >', $notes) . '<a href="#" class="new-note icon" data-fn="actionMenu"></a></div>';
+  $row[] = array(
+    'data' => '<div class="notes">' . implode('<br/ >', $notes) . '<a href="#" class="new-note icon" data-fn="actionMenu"></a></div>',
+    'class' => 'notes-col'
+  );
 
   return array(
     'data' => $row,

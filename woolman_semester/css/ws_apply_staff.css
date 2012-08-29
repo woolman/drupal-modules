@@ -17,6 +17,10 @@ form#-ws-apply-form-report .subset div.form-checkboxes {
   clear: both;
 }
 
+.notes-col {
+  min-width: 25%;
+}
+
 .app-report-table a:link,
 .app-report-table a:visited {
   font-weight: normal;
