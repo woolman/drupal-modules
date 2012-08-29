@@ -6,7 +6,6 @@ module_load_include('inc', 'woolman_semester', 'ws_apply_online_utils');
  * Begin Application
  */
 function _ws_apply_form_get_started_submit($form, &$form_state) {
-
   $cid = $params['client_id'] = woolman_user_cid();
   $cases = woolman_civicrm_api('case', 'get', $params);
   $ok = TRUE;
@@ -53,7 +52,6 @@ function _ws_apply_form_get_started_submit($form, &$form_state) {
         $sems[$sem] = $form['semester_choices']['#options'][$sem];
       }
     }
-
     $params = array(
       'case_id' => $new_case['values']['id'],
       'activity_type_id' => 47,
@@ -64,7 +62,14 @@ function _ws_apply_form_get_started_submit($form, &$form_state) {
       'custom_5' => woolman_multivalue_str(array_keys($sems)),
     );
     $result = woolman_civicrm_api('activity', 'create', $params);
- }
+
+    // Alert staff
+    $message = array(
+      'subject' => 'Application started for ' . woolman_name('full'),
+      'body' => woolman_name('full') . ' just began the application process for ' . implode(' or ', $sems),
+    );
+    drupal_mail('woolman_website', 0, 'admissions@woolman.org', language_default(), $message, 'info@woolman.org');
+  }
 }
 
 /**
