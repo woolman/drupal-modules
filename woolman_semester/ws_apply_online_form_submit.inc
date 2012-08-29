@@ -7,31 +7,30 @@ module_load_include('inc', 'woolman_semester', 'ws_apply_online_utils');
  */
 function _ws_apply_form_get_started_submit($form, &$form_state) {
   $cid = $params['client_id'] = woolman_user_cid();
-  $cases = woolman_civicrm_api('case', 'get', $params);
+
   $ok = TRUE;
-  if (!empty($cases['values'])) {
-    foreach ($cases['values'] as $case) {
-      //make sure there isn't already an open application case
-      if ($case['case_type_id'] == 2 && empty($case['is_deleted'])) {
-        $ok = FALSE;
-      }
-      // Close prospective student cases
-      elseif ($case['case_type_id'] == 1 && !$case['is_deleted'] && $case['status_id'] != 2) {
-        woolman_civicrm_api('case', 'create', array(
-          'status_id' => 2,
-          'case_id' => $case['id'],
-        ));
-        $params = array(
-          'case_id' => $case['id'],
-          'activity_type_id' => 16,
-          'source_contact_id' => $cid,
-          'status_id' => 2,
-          'medium_id' => 7,
-          'subject' => 'Online Application Started',
-          'details' => '<p>Automatically closed when student began online application.</p>',
-        );
-        woolman_civicrm_api('activity', 'create', $params);
-      }
+  foreach (woolman_civicrm_api('case', 'get', $params, 'values') as $case) {
+    //make sure there isn't already an open application case
+    if ($case['case_type_id'] == 2 && empty($case['is_deleted'])) {
+      $ok = FALSE;
+    }
+    // Close prospective student cases
+    elseif ($case['case_type_id'] == 1 && empty($case['is_deleted']) && $case['status_id'] != 2) {
+      $params = array(
+        'case_id' => $case['id'],
+        'status_id' => 2,
+      );
+      // Update case status
+      woolman_civicrm_api('case', 'create', $params);
+      $params += array(
+        'activity_type_id' => 16,
+        'source_contact_id' => $cid,
+        'medium_id' => 7,
+        'subject' => 'Online Application Started',
+        'details' => '<p>Automatically closed when student began online application.</p>',
+      );
+      // Add "close case" activity
+      woolman_civicrm_api('activity', 'create', $params);
     }
   }
   if ($ok) {

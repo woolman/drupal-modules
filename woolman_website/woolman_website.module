@@ -1070,7 +1070,7 @@ function woolman_civicrm_api($entity, $operation, $params, $to_return = NULL) {
   }
   // Convenience - return values or a single value
   if ($to_return) {
-    $values = woolman_aval($result, 'values', array());
+    $values = (array) woolman_aval($result, 'values', array());
     if ($to_return == 'single') {
       $values = array_values($values);
       return woolman_aval($values, '0', array(), TRUE);
