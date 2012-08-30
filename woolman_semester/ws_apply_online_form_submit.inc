@@ -535,6 +535,7 @@ function _ws_apply_form_type_financial_aid_submit($form, &$form_state) {
   $params = array(
     'custom_61' => $vals['financial'],
     'status_id' => $vals['financial'] ? 5 : 2,
+    'subject' => 'Requesting Financial Aid: ' . ($vals['financial'] ? 'Yes' : 'No'),
     'id' => $form_state['storage']['act']['id'],
   );
   // If anything has changed, update act and send message
@@ -623,7 +624,7 @@ function ws_apply_process_submission($key, $title, $details, &$form_state, $case
       break;
     case 42:
       $section = 'school info (and teacher recommendation links)';
-      $message['body'] .= "\n\nThe following personalized links to the student recommendation form were sent to these teachers:\n\n{$vals['teacher1_first']} {$vals['teacher1_last']}: {$vals['teacher1_email']}\n{$links[1]}\n\n{$vals['teacher2_first']} {$vals['teacher2_last']}: {$vals['teacher2_email']}\n{$links[2]}\n\nIf needed, you may copy a link into an email and re-send it to them.";
+      $message['body'] .= "\n\nThe following personalized links to the student recommendation form were sent to these teachers:\n\n{$vals['teacher1_first']} {$vals['teacher1_last']}: {$vals['teacher1_email']}\n{$links[1]}\n\n{$vals['teacher2_first']} {$vals['teacher2_last']}: {$vals['teacher2_email']}\n{$links[2]}\n\nIf needed, you may copy a link into an email and re-send it.";
   }
   $message['subject'] = woolman_name('full') . '\'s ' . $section;
   drupal_mail('woolman_website', 0, 'admissions@woolman.org', language_default(), $message, 'info@woolman.org');
@@ -643,7 +644,7 @@ function _ws_apply_form_reference_submit($form, &$form_state) {
   switch ($act['activity_type_id']) {
     case 38:  $rec='parent';
               $form_name='parent/guardian questionnaire';
-              $title = $self['display_name'].'\'s parent/guardian questionnaire';
+              $title = 'Parent/guardian questionnaire';
               $qs = 12;
     break;
     case 39:  $rec='teacher';
@@ -690,7 +691,7 @@ function _ws_apply_form_reference_submit($form, &$form_state) {
     ));
   }
 
-  $message['subject'] = $self['display_name'] ." just submitted the $form_name for " . $student['display_name'];
+  $message['subject'] = "{$self['display_name']}'s $form_name for " . $student['display_name'];
 
   $message['body'] = "You can track the progress of {$student['first_name']}'s application here:\n
   http://woolman.org/staff/admissions/applications";
