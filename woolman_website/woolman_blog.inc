@@ -1,92 +1,56 @@
 <?php
+
 /**
- * Callback for ~blog/submissions page
+ * Customize blog form
+ * 
+ * @see woolman_form_alter()
  */
-function cust_wool_blog_submission() {
+function _woolman_blog_form_alter(&$form, $form_state) {
   global $user;
 
-  //privledged users will bypass this step and go right to the blog form
+  // Only privledged users can publish a blog article
   $allowed = array('staff', 'administrator');
-  if (array_intersect($user->roles, $allowed)) {
-    drupal_goto('node/add/blog-entry');
+  if (!array_intersect($user->roles, $allowed)) {
+    $form['field_journal_date']['#access'] = FALSE;
+    if (empty($form['nid']['#value'])) {
+      $form['field_journal_date'][0]['#default_value']['value'] = NULL;
+    }
   }
-
-  $intro = '<p><strong>We welcome your submissions to the Woolman Blog. Writings, reflections, poetry and art are all wonderful additions to our community.</strong></p>';
-
-  //anonymous users must login first
-  if (in_array('anonymous user', $user->roles)) {
-    return $intro.'<p><em>In order to proceed, please login, or if you don\'t yet have an account, take a few moments to '.l('register', 'user/register', array('query' => array('destination' => '~blog/submissions'), 'alias' => TRUE)).'.</em></p>';
+  // Populate author field
+  if (empty($form['field_journal_author'][0]['#default_value']['value'])) {
+    $about = '';
+    civicrm_initialize();
+    $cid = woolman_user_cid();
+    $c = woolman_civicrm_api('contact', 'get', array('id' => $cid, 'return.custom_54' => 1));
+    if (!empty($c['values'][$cid]['custom_54'])) {
+      $about = ', ' . $c['values'][$cid]['custom_54'];
+    }
+    $form['field_journal_author'][0]['#default_value']['value'] = woolman_name('full') . $about;
   }
-  else {
-    return $intro . drupal_get_form('cust_wool_blog_form');
+  // Remove "headshot" field - we don't use it anymore
+  if (empty($form['field_journal_image'][0]['#default_value']['fid'])) {
+    $form['field_journal_image']['#access'] = FALSE;
   }
 }
 
 /**
- * Generate blog form
+ * Handle new blog submission
+ * 
+ * @see woolman_website_nodeapi()
  */
-function cust_wool_blog_form($form_state) {
+function _woolman_blog_insert($node) {
   global $user;
-  $about = '';
-  civicrm_initialize();
-  $cid = woolman_user_cid();
-  $c = woolman_civicrm_api('contact', 'get', array('id' => $cid, 'return.custom_54' => 1));
-  if (!empty($c['values'][$cid]['custom_54'])) {
-    $about = ', ' . $c['values'][$cid]['custom_54'];
+
+  // Tell unprivledged users that their article has not been published yet.
+  $allowed = array('staff', 'administrator');
+  if (!array_intersect($user->roles, $allowed)) {
+    drupal_set_message('Your article has been submitted to our staff for review. We will post it or contact you about it soon. Thanks for your contribution.');
   }
-  $form = array();
-  $form['#prefix'] = '';
-  $form['title'] = array('#type' => 'textfield',
-                          '#title' => t('Title'),
-                          '#required' => TRUE,
-                        );
-  $form['author'] = array('#type' => 'textfield',
-                          '#title' => t('Author'),
-                          '#description' => t('Name and description of the person writing this article'),
-                          '#required' => TRUE,
-                          '#default_value' => woolman_name('full') . $about,
-                          );
-  $form['body'] = array('#type' => 'textarea',
-                          '#title' => t('Body'),
-                          '#rows' => 22,
-                          '#required' => TRUE,
-                        );
-  $form['format'] = filter_form();
-  $form['submit'] = array('#type' => 'submit',
-                            '#value' => t('Submit'),
-                            '#submit' => array('cust_wool_blog_submit'),
-                          );
-  return $form;
-}
-
-/**
- * Callback for blog form submission
- */
-function cust_wool_blog_submit($form, &$form_state) {
-  global $user;
-  module_load_include('inc', 'node', 'node.pages');
-  $node = new stdClass();
-  $node->type = 'blog_entry';
-  node_object_prepare($node);
-
-  $node->title = $form_state['values']['title'];
-  $node->body = $form_state['values']['body'];
-  $node->revision = FALSE;
-  $node->field_journal_author = array(array('value' => $form_state['values']['author']));
-
-  node_save($node);
-
-  //get rid of path alias, since it's junk without field_journal_date
-  path_set_alias($path = 'node/' . $node->nid);
-
-  drupal_set_message('Thanks for submitting an article to the Woolman Blog! We will review your article and post it or contact you about it soon.');
 
   // Send mail alert to admin
   $message = array('subject' => 'Blog submission by ' . woolman_name('display'));
-  $message['body'] = 'Title: ' . $form_state['values']['title'] . "\n" .
-  'Author: ' . $form_state['values']['author'] . "\n" .
-  'View entry at http://woolman.org/node/' . $node->nid;
-  drupal_mail('woolman_website', 'blog', 'webmaster@woolman.org, grace.oedel@gmail.com', language_default(), $message, '"' . woolman_name('full') . '" <' . $user->mail . '>');
-
-  drupal_goto('~blog');
+  $message['body'] = 'Title: ' . $node->title . "\n" .
+  'Author: ' . $node->field_journal_author[0]['value'] . "\n" .
+  'View entry at '. url('node/' . $node->nid, array('absolute' => TRUE));
+  drupal_mail('woolman_website', 'blog', 'webmaster@woolman.org, emilyz@woolman.org, grace.oedel@gmail.com', language_default(), $message, '"' . woolman_name('full') . ' [Woolman Blog]" <' . $user->mail . '>');
 }

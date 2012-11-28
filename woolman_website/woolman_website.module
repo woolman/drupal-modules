@@ -21,13 +21,6 @@ function woolman_website_menu() {
     'file' => 'woolman_website_utils.inc',
     'type' => MENU_CALLBACK,
   );
-  $items['~blog/submissions'] = array(
-    'title' => 'Blog Submissions',
-    'page callback' => 'cust_wool_blog_submission',
-    'access arguments' => array('access content'),
-    'type' => MENU_CALLBACK,
-    'file' => 'woolman_blog.inc',
-  );
   $items['staff/directory'] = array(
     'title' => 'Woolman Directory',
     'page callback' => 'drupal_get_form',
@@ -168,6 +161,26 @@ function woolman_website_form_alter(&$form, $form_state, $form_id) {
       $form['cid']['#default_value'] = (int) $_GET['c'];
     }
   }
+
+  // Inline images
+  if (isset($form['field_inline_images'])) {
+    $css = '#show-field-inline-images, #edit-field-inline-images-field-inline-images-add-more {
+      border-radius: 3px;
+      background-repeat:no-repeat; 
+      background-image: url("/sites/all/modules/woolman/woolman_website/image-icon.png");
+      padding-left: 20px;
+    }';
+    $form['field_inline_images']['#prefix'] = "<style type='text/css'>$css</style>" . '
+      <button id="show-field-inline-images" type="button" onclick="$(\'#field-inline-images-items\').show(400); $(\'#show-field-inline-images\').hide(); return false;">Add Images</button>' .
+      str_replace('<div', '<div style="display:none;"', $form['field_inline_images']['#prefix']);
+    $form['field_inline_images']['field_inline_images_add_more']['#value'] = "Add Another Image";
+  }
+
+  // Blog tweaks
+  if ($form_id == 'blog_entry_node_form') {
+    module_load_include('inc', 'woolman_website', 'woolman_blog');
+    _woolman_blog_form_alter($form, $form_state);
+  }
 }
 
 /**
@@ -175,6 +188,7 @@ function woolman_website_form_alter(&$form, $form_state, $form_id) {
  */
 function woolman_website_nodeapi(&$node, $op, $teaser, $page) {
 
+  // Sync CiviCRM events to drupal event nodes and rsvp webform
   if (isset($node->type) && $node->type == 'event'
   && isset($node->field_event_type[0]['value']) && $node->field_event_type[0]['value'] == 'Woolman Semester') {
     switch ($op) {
@@ -207,6 +221,11 @@ function woolman_website_nodeapi(&$node, $op, $teaser, $page) {
         break;
     }
     woolman_website_cron(TRUE);
+  }
+  // Respond to a new blog entry being created
+  if ($op == 'insert' && isset($node->type) && $node->type == 'blog_entry') {
+    module_load_include('inc', 'woolman_website', 'woolman_blog');
+    _woolman_blog_insert($node);
   }
 }
 
