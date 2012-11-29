@@ -164,13 +164,20 @@ function woolman_website_form_alter(&$form, $form_state, $form_id) {
 
   // Inline images
   if (isset($form['field_inline_images'])) {
-    $css = '#show-field-inline-images, #edit-field-inline-images-field-inline-images-add-more {
-      border-radius: 3px;
-      background-repeat:no-repeat; 
-      background-image: url("/sites/all/modules/woolman/woolman_website/image-icon.png");
-      padding-left: 20px;
-    }';
-    $form['field_inline_images']['#prefix'] = "<style type='text/css'>$css</style>" . '
+    $js = 'Drupal.behaviors.w_rot = function(context) {
+      $(".insert select.insert-style", context).not(".rot").addClass("rot").change(function() {
+        var img = $(this).parents(".filefield-element").find(".imagefield-preview img");
+        img.removeClass("rotate-90-l").removeClass("rotate-90-r");
+        if ($(this).val() == "imagecache_Rotate_Left") {
+          img.addClass("rotate-90-l");
+        }
+        else if ($(this).val() == "imagecache_Rotate_Right") {
+          img.addClass("rotate-90-r");
+        }
+      });
+    };';
+    drupal_add_js($js, 'inline', 'footer');
+    $form['field_inline_images']['#prefix'] = '
       <button id="show-field-inline-images" type="button" onclick="$(\'#field-inline-images-items\').show(400); $(\'#show-field-inline-images\').hide(); return false;">Add Images</button>' .
       str_replace('<div', '<div style="display:none;"', $form['field_inline_images']['#prefix']);
     $form['field_inline_images']['field_inline_images_add_more']['#value'] = "Add Another Image";
