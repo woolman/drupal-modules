@@ -111,7 +111,32 @@ function woolman_website_mail($key, &$msg, $params) {
  */
 function woolman_website_form_alter(&$form, $form_state, $form_id) {
 
-  //change search button text in various views
+  // Alter node edit forms
+  if (woolman_aval($form, '#id') == 'node-form') {
+    drupal_add_js(drupal_get_path('module', 'woolman_website') . '/node_form.js', 'module', 'footer');
+
+    // Inline images
+    if (isset($form['field_inline_images'])) {
+      $form['field_inline_images']['#prefix'] = '
+        <button id="show-field-inline-images" type="button" onclick="$(\'#field-inline-images-items\').show(400); $(\'#show-field-inline-images\').hide(); return false;">Add Images</button>' .
+        str_replace('<div', '<div style="display:none;"', $form['field_inline_images']['#prefix']);
+      $form['field_inline_images']['field_inline_images_add_more']['#value'] = "Add Another Image";
+    }
+
+    // Blog tweaks
+    if ($form_id == 'blog_entry_node_form') {
+      module_load_include('inc', 'woolman_website', 'woolman_blog');
+      _woolman_blog_form_alter($form, $form_state);
+    }
+
+    // Hide Event ID field
+    if ($form_id == 'event_node_form' && isset($form['field_civicrm_event_id'])) {
+      $form['field_civicrm_event_id']['#access'] = FALSE;
+    }
+    return;
+  }
+
+  // Change search button text in various views
   $view_name = isset($form_state['view']) && isset($form_state['view']->name) ? $form_state['view']->name : '';
   if ($view_name == 'blog' || $view_name == 'songbook') {
     if (!empty($form['submit']['#value'])) {
@@ -150,43 +175,12 @@ function woolman_website_form_alter(&$form, $form_state, $form_id) {
     unset($form['search_theme_form']['#title']);
   }
 
-  // Hide Event ID field
-  if ($form_id == 'event_node_form' && isset($form['field_civicrm_event_id'])) {
-    $form['field_civicrm_event_id']['#access'] = FALSE;
-  }
 
   // Contact form -- set default category from url
   if ($form_id == 'contact_mail_page') {
     if (!empty($_GET['c']) && is_numeric($_GET['c'])) {
       $form['cid']['#default_value'] = (int) $_GET['c'];
     }
-  }
-
-  // Inline images
-  if (isset($form['field_inline_images'])) {
-    $js = 'Drupal.behaviors.w_rot = function(context) {
-      $(".insert select.insert-style", context).not(".rot").addClass("rot").change(function() {
-        var img = $(this).parents(".filefield-element").find(".imagefield-preview img");
-        img.removeClass("rotate-90-l").removeClass("rotate-90-r");
-        if ($(this).val() == "imagecache_Rotate_Left") {
-          img.addClass("rotate-90-l");
-        }
-        else if ($(this).val() == "imagecache_Rotate_Right") {
-          img.addClass("rotate-90-r");
-        }
-      });
-    };';
-    drupal_add_js($js, 'inline', 'footer');
-    $form['field_inline_images']['#prefix'] = '
-      <button id="show-field-inline-images" type="button" onclick="$(\'#field-inline-images-items\').show(400); $(\'#show-field-inline-images\').hide(); return false;">Add Images</button>' .
-      str_replace('<div', '<div style="display:none;"', $form['field_inline_images']['#prefix']);
-    $form['field_inline_images']['field_inline_images_add_more']['#value'] = "Add Another Image";
-  }
-
-  // Blog tweaks
-  if ($form_id == 'blog_entry_node_form') {
-    module_load_include('inc', 'woolman_website', 'woolman_blog');
-    _woolman_blog_form_alter($form, $form_state);
   }
 }
 
