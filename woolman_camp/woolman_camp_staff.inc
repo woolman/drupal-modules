@@ -24,10 +24,11 @@ function woolman_camp_staff() {
 
   $next_year = $year = woolman_camp_next_year();
   $years = drupal_map_assoc(range(2005, $year));
-  if (!empty($_GET['year']) && array_key_exists($_GET['year'], $years)) {
-    $year = $_GET['year'];
+  if (!empty($_REQUEST['year']) && array_key_exists($_REQUEST['year'], $years)) {
+    $year = $_REQUEST['year'];
   }
-  $data = array();
+  $data = $camper_sort = $stats = $reg = array();
+  $programs = woolman_camp_event_types();
   $sessions = woolman_camp_get_sessions($year, TRUE);
   foreach ($sessions as $id => $session) {
     $data[$id] = array_keys($session['campers']);
@@ -35,7 +36,6 @@ function woolman_camp_staff() {
   $cache = cache_get('woolman_camp_staff_session_' . $year);
   $timestamp = $cache->created;
   $cache = $cache->data;
-  $stats = $reg = array();
 
   // Get parents & forms
   $query = db_query("
@@ -55,7 +55,7 @@ function woolman_camp_staff() {
     if (!isset($cache[$id]) || $data[$id] !== $cache[$id]) {
       woolman_camp_staff_graph_session($session);
     }
-    if (!$camper_sort[$session['event_type_id']]) {
+    if (empty($camper_sort[$session['event_type_id']])) {
       $camper_sort[$session['event_type_id']] = array();
     }
     $registered = $waitlisted = $boys = $girls = 0;
@@ -108,6 +108,7 @@ function woolman_camp_staff() {
   }
 
   $output = '<div id="camp-staff">';
+  // We started tracking reg-dates in 2011
   if ($year > 2011) {
     $output .= '<div id="registration-graph"><img src="/sites/default/files/woolman_graphs/year-' . $year . '.png?ts=' . $timestamp . '"></div>';
   }
@@ -124,7 +125,7 @@ function woolman_camp_staff() {
     array('data' => 'Forms'),
     array('data' => 'Paid'),
   );
-  foreach ($camper_sort as $which_camp => $kids) {
+  foreach ($camper_sort as $program => $kids) {
     ksort($kids);
     $tbody = array();
     foreach ($kids as $cid) {
@@ -181,8 +182,8 @@ function woolman_camp_staff() {
     }
     $table = theme('table', $thead, $tbody, array('class' => 'tablesorter'));
     $output .= '<div class="camp-session">
-                  <h2>' . ($which_camp == 8 ? 'Sierra Friends Camp' : 'Woolman Teen Leadership Camp') . '</h2>
-                  <div class="session-stats">' . $stats[$which_camp] . '
+                  <h2>' . $programs[$program]['event_type'] . '</h2>
+                  <div class="session-stats">' . $stats[$program] . '
                     <p style="font-size:0.8em;clear:both;">*Campers who have not yet been approved are included in these numbers (be sure to approve them ASAP!) Campers who are waitlisted, cancelled, or rejected are not included in the graphs, only in the table below.</p>
                   </div>
                   <div>' . $table . '<div style="font-size:0.8em;clear:both;">*All ages are as of July 1, ' . $year.'</div></div>
@@ -251,7 +252,9 @@ function woolman_camp_years_nav_submit($form, &$form_state) {
   drupal_goto('staff/camp/registration', array('year' => $form_state['values']['year_select']));
 }
 
-
+/**
+ * AJAX page callback to load a back-end form
+ */
 function woolman_camp_viewform() {
   $op = arg(3);
   $id = arg(4);
@@ -401,6 +404,7 @@ function woolman_camp_approval_form_submit($form, &$form_state) {
   $data = $form_state['storage']['data'];
   unset($form_state['storage']);
   $parent = woolman_contact_get($data['pid']);
+  $event_types = array_keys(woolman_camp_event_types());
 
   switch($form_state['values']['op']) {
     case 'Accept Camper':
@@ -418,9 +422,9 @@ function woolman_camp_approval_form_submit($form, &$form_state) {
       drupal_set_message($data['camper_name'].'\'s application has been denied. An automatic email has <strong>not</strong> been sent to ' . $parent['display_name'].'; you\'ll have to break the news yourself.');
     break;
   }
-  db_query('UPDATE {civicrm_participant} SET status_id = ' . $status.'
+  db_query('UPDATE {civicrm_participant} SET status_id = ' . $status . '
             WHERE contact_id = %d AND status_id = 8 AND event_id IN
-            (SELECT id FROM {civicrm_event} WHERE event_type_id IN (8,9))', $data['cid']);
+            (SELECT id FROM {civicrm_event} WHERE event_type_id IN (' . implode(',', $event_types) . '))', $data['cid']);
 }
 
 
@@ -850,7 +854,7 @@ function woolman_camp_rates(&$form_state) {
   drupal_add_js(drupal_get_path('module', 'woolman_camp') . '/js/staff_dates_rates.js');
   $year = woolman_camp_next_year();
   $prices = array();
-  $camps = array('sfc' => 'Sierra Friends Camp', 'tlc' => 'Teen Leadership Camp');
+  $programs = woolman_camp_event_types();
   $db = db_query('SELECT * FROM {woolman_camp_rates} WHERE year IN (%d,%d,%d)', $year-1, $year, $year+1);
   while ($row = db_fetch_array($db)) {
     $prices[$row['year']] = $row;
@@ -859,12 +863,6 @@ function woolman_camp_rates(&$form_state) {
     $year => woolman_camp_get_sessions($year),
     ($year+1) => woolman_camp_get_sessions($year+1)
   );
-  foreach ($sessions as $y => $sess) {
-    foreach ($sess as $id => $s) {
-      $sessions[$y][($s['event_type_id']==8?'sfc':'tlc')][] = $s;
-      unset($sessions[$y][$id]);
-    }
-  }
   $form_state['storage']['sessions'] = $sessions;
   $form_state['storage']['prices'] = $prices;
   $form = array(
@@ -872,7 +870,7 @@ function woolman_camp_rates(&$form_state) {
     '#prefix' => '<p>The camp year begins Sept 1st. On that date the website will automatically switch to show next year\'s dates and rates, and online registration will open.</p>',
   );
   for ($i=1; $i<=2; ++$i) {
-    $form['year_' . $year] = array(
+    $form["year_$year"] = array(
       '#type' => 'fieldset',
       '#title' => $year.' Dates &amp; Rates',
       '#tree' => TRUE,
@@ -881,27 +879,9 @@ function woolman_camp_rates(&$form_state) {
     );
     if (!($pricedefault = woolman_aval($prices, $year))) {
       $pricedefault = $prices[$year-1];
-      $form['year_' . $year]['#description'] = '<div class="messages">Rates for ' . $year . ' have not yet been saved. These are last year\'s rates -- you may wish to adjust them before pressing the save button.</div>';
+      $form["year_$year"]['#description'] = '<div class="messages">Rates for ' . $year . ' have not yet been saved. These are last year\'s rates -- you may wish to adjust them before pressing the save button.</div>';
     }
-    $form['year_' . $year]['sfc_price'] = array(
-      '#prefix' => '<p><em>All prices are for a single week of camp. All discounts are per camper, not per week.</em></p><div class="subset">',
-      '#type' => 'textfield',
-      '#field_prefix' => '$',
-      '#size' => 5,
-      '#title' => 'SFC weekly price',
-      '#description' => 'Weekly rate for Sierra Friends Camp',
-      '#default_value' => $pricedefault['sfc_price']
-    );
-    $form['year_' . $year]['tlc_price'] = array(
-      '#type' => 'textfield',
-      '#size' => 5,
-      '#field_prefix' => '$',
-      '#title' => 'Teen Camp weekly price',
-      '#description' => 'Weekly rate for teen camp',
-      '#suffix' => '</div>',
-      '#default_value' => $pricedefault['tlc_price']
-    );
-    $form['year_' . $year]['sfc_multi_week_discount'] = array(
+    $form["year_$year"]['sfc_multi_week_discount'] = array(
       '#prefix' => '<div class="subset">',
       '#type' => 'textfield',
       '#size' => 5,
@@ -910,7 +890,7 @@ function woolman_camp_rates(&$form_state) {
       '#description' => 'Discount per week for SFC campers coming for 2 or more weeks',
       '#default_value' => $pricedefault['sfc_multi_week_discount']
     );
-    $form['year_' . $year]['family_discount'] = array(
+    $form["year_$year"]['family_discount'] = array(
       '#suffix' => '</div>',
       '#type' => 'textfield',
       '#size' => 5,
@@ -919,7 +899,7 @@ function woolman_camp_rates(&$form_state) {
       '#description' => '(per camper - applies to SFC and TLC and combos of both)',
       '#default_value' => $pricedefault['family_discount']
     );
-    $form['year_' . $year]['early_discount'] = array(
+    $form["year_$year"]['early_discount'] = array(
       '#prefix' => '<div class="subset">',
       '#type' => 'textfield',
       '#size' => 5,
@@ -928,14 +908,14 @@ function woolman_camp_rates(&$form_state) {
       '#description' => '(per camper)',
       '#default_value' => $pricedefault['early_discount']
     );
-    $form['year_' . $year]['early_date'] = array(
+    $form["year_$year"]['early_date'] = array(
       '#type' => 'date',
       '#title' => 'Early registration deadline',
       '#description' => 'Register by this date to get early bird discount',
       '#default_value' => woolman_date_string_to_array($pricedefault['early_date']),
       '#suffix' => '</div>',
     );
-    $form['year_' . $year]['deposit'] = array(
+    $form["year_$year"]['deposit'] = array(
       '#prefix' => '<div class="subset">',
       '#type' => 'textfield',
       '#size' => 5,
@@ -944,7 +924,7 @@ function woolman_camp_rates(&$form_state) {
       '#description' => 'Amount required to reserve a place at camp (per camper, per week)',
       '#default_value' => $pricedefault['deposit'],
     );
-    $form['year_' . $year]['shuttle_price'] = array(
+    $form["year_$year"]['shuttle_price'] = array(
       '#type' => 'textfield',
       '#size' => 5,
       '#field_prefix' => '$',
@@ -952,7 +932,7 @@ function woolman_camp_rates(&$form_state) {
       '#description' => 'Price of a one-way shuttle ride',
       '#default_value' => $pricedefault['shuttle_price'],
     );
-    $form['year_' . $year]['gender_balance'] = array(
+    $form["year_$year"]['gender_balance'] = array(
       '#type' => 'textfield',
       '#size' => 4,
       '#maxlength' => 3,
@@ -962,100 +942,113 @@ function woolman_camp_rates(&$form_state) {
       '#suffix' => '</div>',
       '#default_value' => $pricedefault['gender_balance'],
     );
-    foreach ($camps as $c => $camp) {
-      $form['year_' . $year][$c] = array(
+    foreach ($programs as $c => $program) {
+      $name = $program['event_type'];
+      $form["year_$year"][$c] = array(
         '#type' => 'fieldset',
-        '#title' => $year . ' ' . $camp . ' Sessions',
+        '#title' => "$year $name Sessions",
+        '#description' => 'Ages ' . $program['age_min'] . '-' . $program['age_max'],
         '#attributes' => array('class' => 'session-selection'),
       );
-      $form['year_' . $year][$c]['number'] = array(
+      $form["year_$year"][$c]['number'] = array(
         '#type' => 'select',
-        '#options' => range(0, 6),
+        '#options' => range(0, 8),
         '#title' => 'Number of sessions',
         '#default_value' => count($sessions[$year][$c]),
-        '#attributes' => array('class' => 'number-of-sessions'),
+        '#attributes' => array('class' => 'number-of-events'),
       );
-      for ($s=1; $s<=6; ++$s) {
+      for ($s = 1; $s <= 8; ++$s) {
+        $i = $s - 1;
         if ($s == 1) {
           $default_max = woolman_aval($sessions, "$year:$c:1:max_participants", woolman_aval($sessions, ($year-1) . ":$c:1:max_participants"));
         }
-        $form['year_' . $year][$c][$s . '_title'] = array(
+        $form["year_$year"][$c][$s . '_title'] = array(
           '#prefix' => '<div class="session-dates">',
           '#type' => 'textfield',
           '#size' => 20,
-          '#default_value' => woolman_aval($sessions, "$year:$c:" . ($s-1) . ':title', $year . ' ' . strtoupper($c) . ' Session ' . $s),
+          '#default_value' => woolman_aval($sessions, "$year:$c:$i:title", $year . ' ' . trim(str_replace('Camp', '', $name)) . ' Session ' . $s),
           '#suffix' => '<hr />',
         );
-        $form['year_' . $year][$c][$s . '_start'] = array(
+        $form["year_$year"][$c][$s . '_start'] = array(
           '#prefix' => '<div class="subset">',
           '#type' => 'date',
           '#title' => 'Start',
-          '#default_value' => woolman_date_string_to_array(woolman_aval($sessions, "$year:$c:" . ($s-1) . ':start_date')),
+          '#default_value' => woolman_date_string_to_array(woolman_aval($sessions, "$year:$c:$i:start_date")),
         );
-        $form['year_' . $year][$c][$s . '_end'] = array(
+        $form["year_$year"][$c][$s . '_end'] = array(
           '#suffix' => '</div>',
           '#type' => 'date',
           '#title' => 'End',
-          '#default_value' => woolman_date_string_to_array(woolman_aval($sessions, "$year:$c:" . ($s-1) . ':end_date')),
+          '#default_value' => woolman_date_string_to_array(woolman_aval($sessions, "$year:$c:$i:end_date")),
         );
-        $form['year_' . $year][$c][$s . '_max'] = array(
+        $form["year_$year"][$c][$s . '_price'] = array(
+          '#prefix' => '<div class="subset">',
+          '#type' => 'textfield',
+          '#size' => 8,
+          '#maxlength' => 10,
+          '#field_prefix' => '$',
+          '#title' => 'Price',
+          '#default_value' => woolman_aval($sessions, "$year:$c:$i:price", woolman_aval($sessions, "$year:$c:1:price")),
+        );
+        $form["year_$year"][$c][$s . '_max'] = array(
           '#type' => 'textfield',
           '#size' => 2,
           '#maxlength' => 2,
-          '#title' => 'Max Participants',
-          '#suffix' => '</div>',
-          '#default_value' => woolman_aval($sessions, "$year:$c:" . ($s-1) . ':max_participants', $default_max),
+          '#title' => 'Max Campers',
+          '#suffix' => '</div></div>',
+          '#default_value' => woolman_aval($sessions, "$year:$c:$i:max_participants", $default_max),
         );
       }
     }
     $form_state['storage']['shuttles'][$year] = $shuttles = woolman_camp_get_shuttle($year, FALSE);
     foreach (array('coming' => 'Shuttles to Camp (start of session)', 'going' => 'Shuttles from Camp (end of session)') as $dir => $label) {
-      $form['year_' . $year][$dir] = array(
+      $form["year_$year"][$dir] = array(
         '#type' => 'fieldset',
         '#title' => $label,
         '#attributes' => array('class' => 'shuttle-selection ' . $dir)
       );
-      $form['year_' . $year][$dir]['number'] = array(
+      $form["year_$year"][$dir]['number'] = array(
         '#type' => 'select',
         '#options' => range(0, 9),
         '#title' => 'Number of Shuttles',
         '#default_value' => count($shuttles[$dir]),
-        '#attributes' => array('class' => 'number-of-shuttles')
+        '#attributes' => array('class' => 'number-of-events')
       );
       $existing = array_values($shuttles[$dir]);
       for ($s=1; $s<=9; ++$s) {
-        $form['year_' . $year][$dir][$s . '_title'] = array(
+        $i = $s - 1;
+        $form["year_$year"][$dir][$s . '_title'] = array(
           '#prefix' => '<div class="shuttle-times"><h4 class="underline">Shuttle '.($dir=='coming'?'to Camp ':'Home ') . $s . '</h4><div class="subset">',
           '#type' => 'textfield',
           '#title' => 'Title',
           '#size' => 30,
-          '#default_value' => woolman_aval($existing, ($s-1) . ':title')
+          '#default_value' => woolman_aval($existing, "$i:title")
         );
-        $form['year_' . $year][$dir][$s . '_date'] = array(
+        $form["year_$year"][$dir][$s . '_date'] = array(
           '#type' => 'date',
           '#title' => 'Date',
-          '#default_value' => woolman_date_string_to_array(woolman_aval($existing, ($s-1) . ':start_date'))
+          '#default_value' => woolman_date_string_to_array(woolman_aval($existing, "$i:start_date"))
         );
-        $form['year_' . $year][$dir][$s . '_max'] = array(
+        $form["year_$year"][$dir][$s . '_max'] = array(
           '#type' => 'textfield',
           '#size' => 2,
           '#maxlength' => 2,
           '#title' => 'Seats',
           '#suffix' => '</div>',
-          '#default_value' => woolman_aval($existing, ($s-1) . ':max_participants'),
+          '#default_value' => woolman_aval($existing, "$i:max_participants"),
         );
-        $form['year_' . $year][$dir][$s . '_description'] = array(
+        $form["year_$year"][$dir][$s . '_description'] = array(
           '#type' => 'textarea',
           '#title' => 'Description',
           '#rows' => 4,
           '#cols' => 40,
           '#description' => 'Include pickup/dropoff times, locations, and instructions',
           '#suffix' => '</div>',
-          '#default_value' => woolman_aval($existing, ($s-1) . ':description'),
+          '#default_value' => woolman_aval($existing, "$i:description"),
         );
       }
     }
-    $form['year_' . $year]['submit' . $year] = array(
+    $form["year_$year"]['submit' . $year] = array(
       '#type' => 'submit',
       '#prefix' => '<div class="clear-block"> </div>',
       '#value' => 'Save ' . $year.' Dates & Rates'
@@ -1071,7 +1064,7 @@ function woolman_camp_rates(&$form_state) {
  */
 function woolman_camp_rates_submit ($form, &$form_state) {
   $year = substr($form_state['clicked_button']['#value'], 5, 4);
-  $vals = $form_state['values']['year_' . $year];
+  $vals = $form_state['values']["year_$year"];
   $vals['year'] = $vals['early_date']['year'] = $year;
   $vals['early_date'] = woolman_date_array_to_string($vals['early_date'], '-');
   if (empty($form_state['storage']['prices'][$year])) {
@@ -1080,28 +1073,28 @@ function woolman_camp_rates_submit ($form, &$form_state) {
   else {
     drupal_write_record('woolman_camp_rates', $vals, 'year');
   }
-  $camps = array('sfc' => 8, 'tlc' => 9);
-  $names = array('sfc' => 'Sierra Friends Camp', 'tlc' => 'Teen Leadership Camp');
   $now = date('YmdHis');
   // Save camp sessions
-  foreach ($camps as $c => $type) {
-    for ($s=1; $s<=$vals[$c]['number']; ++$s) {
-      $vals[$c][$s . '_start']['year'] = $vals[$c][$s . '_end']['year'] = $year;
+  foreach (woolman_camp_event_types() as $type => $program) {
+    for ($s = 1; $s <= $vals[$type]['number']; ++$s) {
+      $i = $s - 1;
+      $vals[$type][$s . '_start']['year'] = $vals[$type][$s . '_end']['year'] = $year;
       $params = array(
-        'title' => $vals[$c][$s . '_title'],
-        'summary' => 'Another incredible session at ' . $names[$c],
+        'title' => $vals[$type][$s . '_title'],
+        'summary' => 'Another incredible session at ' . $program['event_type'],
         'event_type_id' => $type,
         'is_public' => 1,
-        'max_participants' => $vals[$c][$s . '_max'],
-        'start_date' => woolman_date_array_to_string($vals[$c][$s . '_start']).'120000',
-        'end_date' => woolman_date_array_to_string($vals[$c][$s . '_end']).'120000',
+        'max_participants' => $vals[$type][$s . '_max'],
+        //'default_fee_id' => 
+        'start_date' => woolman_date_array_to_string($vals[$type][$s . '_start']).'120000',
+        'end_date' => woolman_date_array_to_string($vals[$type][$s . '_end']).'120000',
         'is_active' => 1,
         'currency' => 'USD',
         'has_waitlist' => 1,
-        'created_id' => woolman_user_cid()
+        'created_id' => woolman_user_cid(),
       );
       $same = FALSE;
-      if ($sess = woolman_aval($form_state['storage'], "sessions:$year:$c:" . ($s-1))) {
+      if ($sess = woolman_aval($form_state['storage'], "sessions:$year:$type:$i")) {
         $params['id'] = $sess['id'];
         if ((strtotime($sess['start_date']) == strtotime($params['start_date']))
         && (strtotime($sess['end_date']) == strtotime($params['end_date']))
@@ -1114,9 +1107,9 @@ function woolman_camp_rates_submit ($form, &$form_state) {
         woolman_civicrm_api('event', 'create', $params);
       }
     }
-    if ($vals[$c]['number'] < count($form_state['storage']['sessions'][$year][$c])) {
-      for ($i=1+$vals[$c]['number']; $i<=count($form_state['storage']['sessions'][$year][$c]); ++$i) {
-        woolman_civicrm_api('event', 'delete', array('event_id' => $form_state['storage']['sessions'][$year][$c][$i-1]['id']));
+    if ($vals[$type]['number'] < count($form_state['storage']['sessions'][$year][$type])) {
+      for ($i=1+$vals[$type]['number']; $i<=count($form_state['storage']['sessions'][$year][$type]); ++$i) {
+        woolman_civicrm_api('event', 'delete', array('event_id' => $form_state['storage']['sessions'][$year][$type][$i-1]['id']));
       }
     }
   }

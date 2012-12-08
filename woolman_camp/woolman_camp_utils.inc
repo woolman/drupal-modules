@@ -3,6 +3,27 @@
 civicrm_initialize();
 
 /**
+ * Fetch camp programs (civi event types) managed by this module.
+ * TODO: Eventually we will store this in the db and provide a UI
+ */
+function woolman_camp_event_types() {
+  return array(
+    8 => array(
+      'event_type' => 'Camp Woolman',
+      'abbr' => 'sfc',
+      'age_min' => 9,
+      'age_max' => 14,
+    ),
+    9 => array(
+      'event_type' => 'Teen Leadership Camp',
+      'abbr' => 'tlc',
+      'age_min' => 15,
+      'age_max' => 16,
+    ),
+  );
+}
+
+/**
  * Find user's family members
  * Loads most recent camp attendance for each child
  */
@@ -104,18 +125,30 @@ function woolman_camp_age($dob, $year, $cid = NULL) {
 }
 
 /**
+ * Check if a given age is within the limits of a particluar program
+ */
+function woolman_camp_age_range($age, $program_id, $padding = 0) {
+  $programs = woolman_camp_event_types();
+  $min = $programs[$program_id]['age_min'] + $padding;
+  $max = $programs[$program_id]['age_max'] - $padding;
+  return $age >= $min && $age <= $max;
+}
+
+/**
  * Gets session dates and attendance numbers
  * Gets campers: by default a simple count, or optionally get details of each camper
  */
 function woolman_camp_get_sessions($year, $get_campers = FALSE) {
+  $programs = woolman_camp_event_types();
   $sessions = array();
   $query = db_query(
-    "SELECT ev.id, ev.title, ev.start_date, ev.end_date, ev.event_type_id, ev.max_participants, COUNT(pa.id) AS campers, COUNT(boys.id) AS boys, COUNT(girls.id) AS girls, DATEDIFF(ev.end_date, ev.start_date) as days
+    "SELECT ev.id, ev.title, ev.start_date, ev.end_date, ev.event_type_id, ev.max_participants, ps.price_set_id, COUNT(pa.id) AS campers, COUNT(boys.id) AS boys, COUNT(girls.id) AS girls, DATEDIFF(ev.end_date, ev.start_date) as days
     FROM {civicrm_event} ev
+    LEFT JOIN {civicrm_price_set_entity} ps ON ps.entity_table = 'civicrm_event' AND ps.entity_id = ev.id
     LEFT JOIN {civicrm_participant} pa ON ev.id = pa.event_id AND pa.status_id IN (SELECT id FROM {civicrm_participant_status_type} WHERE is_counted = 1)
     LEFT JOIN {civicrm_contact} girls ON girls.id = pa.contact_id AND girls.gender_id = 1
     LEFT JOIN {civicrm_contact} boys ON boys.id = pa.contact_id AND boys.gender_id = 2
-    WHERE ev.event_type_id IN(8,9) AND YEAR(ev.start_date) = %d AND ev.is_active = 1 AND ev.is_template <> 1
+    WHERE ev.event_type_id IN(" . implode(',', array_keys($programs)) . ") AND YEAR(ev.start_date) = %d AND ev.is_active = 1 AND ev.is_template <> 1
     GROUP BY ev.id
     ORDER BY ev.event_type_id, ev.start_date
     ", $year);
@@ -248,6 +281,8 @@ function woolman_camp_get_payments($cid, $year) {
  * Calculates payments, fees and discounts for a family
  */
 function woolman_camp_calc_fees($parent_cid, $year) {
+  $programs = woolman_camp_event_types();
+  $camp_and_shuttle = array_merge(array(10), array_keys($programs));
   if (!($rates = woolman_camp_get_rates($year))) {
     return;
   }
@@ -277,7 +312,7 @@ function woolman_camp_calc_fees($parent_cid, $year) {
     INNER JOIN {civicrm_contact} con ON con.id = pa.contact_id
     INNER JOIN {civicrm_participant_status_type} st ON st.id = pa.status_id
     LEFT JOIN {civicrm_value_medical_info_9} med ON med.entity_id = pa.contact_id
-    WHERE con.is_deleted <> 1 AND ev.event_type_id IN (8, 9, 10) AND YEAR(ev.start_date) = %d AND ev.is_active = 1 AND ev.is_template <> 1 AND pa.is_test <> 1 AND (pa.contact_id IN (SELECT contact_id FROM {civicrm_participant} WHERE id IN (SELECT entity_id FROM {civicrm_value_registration_questions_7} WHERE parent_15 = %d)) OR pa.contact_id = %d)
+    WHERE con.is_deleted <> 1 AND ev.event_type_id IN (' . implode(',', $camp_and_shuttle) . ') AND YEAR(ev.start_date) = %d AND ev.is_active = 1 AND ev.is_template <> 1 AND pa.is_test <> 1 AND (pa.contact_id IN (SELECT contact_id FROM {civicrm_participant} WHERE id IN (SELECT entity_id FROM {civicrm_value_registration_questions_7} WHERE parent_15 = %d)) OR pa.contact_id = %d)
     ORDER BY con.birth_date DESC', $year, $parent_cid, $parent_cid);
   while ($row=db_fetch_array($db)) {
     if (!$row['event_id'] || !$row['contact_id']) {
@@ -304,10 +339,10 @@ function woolman_camp_calc_fees($parent_cid, $year) {
     if ($row['is_counted']) {
       $counted[$cid] = $cid;
     }
-    if (empty($register_date) || $row['register_date']<$register_date) {
+    if (empty($register_date) || $row['register_date'] < $register_date) {
       $register_date = $row['register_date'];
     }
-    if (empty($ret['campers'][$cid]['register_date']) || ($row['register_date'] && $row['register_date']<$ret['campers'][$cid]['register_date'])) {
+    if (empty($ret['campers'][$cid]['register_date']) || ($row['register_date'] && $row['register_date'] < $ret['campers'][$cid]['register_date'])) {
       $ret['campers'][$cid]['register_date'] = $row['register_date'];
     }
     $row['weeks'] = $weeks = (int) round($row['days'] / 7);
@@ -475,6 +510,46 @@ function woolman_camp_discount_types() {
     'Family Discount',
     'Account Credit',
   ));
+}
+
+/**
+ * Fetch the price of an event
+ *
+ * @param array: $event
+ */
+function woolman_camp_event_price_get($event) {
+  if (empty($event['price_set_id'])) {
+    return;
+  }
+  $price_field = woolman_civicrm_api('price_field', 'get', array('price_set_id' => $event['price_set_id']), 'values');
+  foreach ($price_field as $field) {
+    $price = woolman_civicrm_api('price_field_value', 'get', array('price_field_id' => $field['id'], 'is_default' => 1), 'values');
+    foreach ($price as $value) {
+      if (!empty($value['is_default'])) {
+        return $value['amount'];
+      }
+    }
+  }
+}
+
+/**
+ * Fetch the price of an event
+ *
+ * @param int: $event_id
+ * @param int: $price
+ */
+function woolman_camp_event_price_create($event_id, $price) {
+  $price_set = CRM_Core_DAO_singleValueQuery("SELECT price_set_id FROM civicrm_price_set_entity WHERE entity_table = 'civicrm_event' AND entity_id = $event_id LIMIT 1");
+  
+  $price_field = woolman_civicrm_api('price_field', 'get', array('price_set_id' => $event['price_set_id']), 'values');
+  foreach ($price_field as $field) {
+    $price = woolman_civicrm_api('price_field_value', 'get', array('price_field_id' => $field['id'], 'is_default' => 1), 'values');
+    foreach ($price as $value) {
+      if (!empty($value['is_default'])) {
+        return $value['amount'];
+      }
+    }
+  }
 }
 
 /**

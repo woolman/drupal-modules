@@ -21,22 +21,6 @@ function woolman_camp_schema() {
         'default' => 0,
         'description' => 'Summer of:',
       ),
-      'sfc_price' => array(
-        'type' => 'int',
-        'size' => 'small',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => 'Price per week of sierra friends camp',
-      ),
-      'tlc_price' => array(
-        'type' => 'int',
-        'size' => 'small',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => 'Price per week of teen camp',
-      ),
       'sfc_multi_week_discount' => array(
         'type' => 'int',
         'size' => 'small',
@@ -251,4 +235,13 @@ function woolman_camp_update_6102() {
   $ret = array();
   db_create_table($ret, 'woolman_camp_age_exception', $schema);
   return $ret;
+}
+
+/**
+ * First steps toward abstraction.
+ */
+function FIXME_woolman_camp_update_6103() {
+  $ret = array();
+  db_drop_field($ret, 'woolman_camp_rates', 'sfc_price');
+  db_drop_field($ret, 'woolman_camp_rates', 'tlc_price');
 }
