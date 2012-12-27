@@ -199,6 +199,7 @@ function _ws_apply_form_basic_submit($form, &$form_state) {
   $params = array(
     'activity_type_id' => 53,
     'source_contact_id' => $cid,
+    'target_contact_id' => $cid,
     'subject' => $form['self']['self_medium']['#options'][$vals['self_medium']],
     'status_id' => 2,
     'details' => '<p><em>Entered by ' . $vals['self_first'].' ' . $vals['self_last'].' on the Woolman Semester application form:</em></p><p>' . $vals['self_details'].'</p>',
