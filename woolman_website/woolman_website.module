@@ -1088,7 +1088,8 @@ function woolman_civicrm_api($entity, $operation, $params, $to_return = NULL) {
   // Log errors
   if (!empty($result['is_error'])) {
     $bt = debug_backtrace();
-    watchdog('woolman_civicrm', 'The CiviCRM "%function" API function returned the error: "%msg" when called by line !line of !file with the following parameters: "!params"', array('%function' => $entity . ' ' . $operation, '%msg' => $result['error_message'], '!line' => $bt[0]['line'], '!file' => array_pop(explode('/', $bt[0]['file'])), '!params' => print_r($params, TRUE)), WATCHDOG_ERROR);
+    $file = explode('/', $bt[0]['file']);
+    watchdog('woolman_civicrm', 'The CiviCRM "%function" API function returned the error: "%msg" when called by line !line of !file with the following parameters: "!params"', array('%function' => $entity . ' ' . $operation, '%msg' => $result['error_message'], '!line' => $bt[0]['line'], '!file' => array_pop($file), '!params' => print_r($params, TRUE)), WATCHDOG_ERROR);
   }
   // Convenience - return values array or a single value
   if ($to_return) {

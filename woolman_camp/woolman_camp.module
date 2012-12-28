@@ -45,7 +45,7 @@ function woolman_camp_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('woolman_camp_rates'),
     'access arguments' => array('access CiviCRM'),
-    'file' => 'woolman_camp_staff.inc',
+    'file' => 'woolman_camp_admin.inc',
   );
   $items['staff/camp/registration'] = array(
     'title' => 'Camp Registration',

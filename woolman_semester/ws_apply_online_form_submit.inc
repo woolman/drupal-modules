@@ -202,7 +202,8 @@ function _ws_apply_form_basic_submit($form, &$form_state) {
     'target_contact_id' => $cid,
     'subject' => $form['self']['self_medium']['#options'][$vals['self_medium']],
     'status_id' => 2,
-    'details' => '<p><em>Entered by ' . $vals['self_first'].' ' . $vals['self_last'].' on the Woolman Semester application form:</em></p><p>' . $vals['self_details'].'</p>',
+    'details' => '<p><em>Entered by ' . $vals['self_first'] . ' ' . $vals['self_last'] .
+      ' on the Woolman Semester application form:</em></p><p>' . $vals['self_details'] . '</p>',
     'custom_6' => 'woolman semester',
     'custom_7' => $vals['self_medium'],
   );
@@ -233,10 +234,12 @@ function _ws_apply_form_basic_submit($form, &$form_state) {
   $details = '<ul>';
   $set = 'self';
   $skip = 0;
-  foreach ($vals as $key=> $val) {
+  foreach ($vals as $key => $val) {
     if ((strpos($key, 'elf_') || strpos($key, 'arent'))) {
       if (strpos($key, 'arent') && strpos($key, '_first')) {
-        if (!$val) break;
+        if (!$val) {
+          break;
+        }
         $details .= '</ul><h4>Parent/Guardian:</h4><ul>';
         $set = substr($key, 0, 7);
         $skip = 0;

@@ -2,12 +2,21 @@
 
 civicrm_initialize();
 
+// Event type id of shuttle
+define('WOOLMAN_CAMP_SHUTTLE', 10);
+
 /**
- * Fetch camp programs (civi event types) managed by this module.
+ * Returns camp programs (civi event types) managed by this module.
  * TODO: Eventually we will store this in the db and provide a UI
  */
 function woolman_camp_event_types() {
   return array(
+    11 => array(
+      'event_type' => 'Mini-Camp',
+      'abbr' => 'mini',
+      'age_min' => 6,
+      'age_max' => 9,
+    ),
     8 => array(
       'event_type' => 'Camp Woolman',
       'abbr' => 'sfc',
@@ -154,11 +163,11 @@ function woolman_camp_get_sessions($year, $get_campers = FALSE) {
     ", $year);
   while($row = db_fetch_array($query)) {
     if (!$row['max_participants']) {
-      $row['max_participants'] = 30;
+      $row['max_participants'] = 40;
       $row['max_participants_not_set'] = TRUE;
     }
     $row['full'] = ($row['campers'] >= $row['max_participants']);
-    $row['weeks'] = (int)round($row['days']/7);
+    $row['weeks'] = (int) round($row['days'] / 7);
     if ($get_campers) {
       $row['campers'] = array();
     }
@@ -185,6 +194,18 @@ function woolman_camp_get_sessions($year, $get_campers = FALSE) {
     }
   }
   return $sessions;
+}
+
+/**
+ * Sort a flat array of events into a nested array sorted by program
+ */
+function woolman_camp_sort_sessions($sessions) {
+  $programs = woolman_camp_event_types();
+  $sorted = array_fill_keys(array_keys($programs), array());
+  foreach ($sessions as $id => $session) {
+    $sorted[$session['event_type_id']][$id] = $session;
+  }
+  return $sorted;
 }
 
 /**
@@ -235,7 +256,7 @@ function woolman_camp_update_reg_act($status) {
     // Alert staff of new registration
     $message = array(
       'subject' => 'New camp registration by ' . woolman_name('display'),
-      'body' => woolman_name('display') . ' just started the registration process.',
+      'body' => woolman_name('display') . " just started the registration process.\n\nNote: they will not appear on the registration screen until they complete the form. If they do not do so soon you may wish to contact them:\n" . woolman_contact_url($cid),
     );
     drupal_mail('woolman_website', 0, 'camp@woolman.org', language_default(), $message, 'info@woolman.org');
   }
@@ -282,7 +303,7 @@ function woolman_camp_get_payments($cid, $year) {
  */
 function woolman_camp_calc_fees($parent_cid, $year) {
   $programs = woolman_camp_event_types();
-  $camp_and_shuttle = array_merge(array(10), array_keys($programs));
+  $camp_and_shuttle = array_merge(array(WOOLMAN_CAMP_SHUTTLE), array_keys($programs));
   if (!($rates = woolman_camp_get_rates($year))) {
     return;
   }
@@ -298,8 +319,8 @@ function woolman_camp_calc_fees($parent_cid, $year) {
   );
   $discount = 0;
   $counted = array();
-  
-  // Calculate total paid
+
+  // Add up total paid
   foreach ($ret['payments'] as $p) {
     $ret['total_paid'] += $p['total_amount'];
   }
@@ -314,13 +335,20 @@ function woolman_camp_calc_fees($parent_cid, $year) {
     LEFT JOIN {civicrm_value_medical_info_9} med ON med.entity_id = pa.contact_id
     WHERE con.is_deleted <> 1 AND ev.event_type_id IN (' . implode(',', $camp_and_shuttle) . ') AND YEAR(ev.start_date) = %d AND ev.is_active = 1 AND ev.is_template <> 1 AND pa.is_test <> 1 AND (pa.contact_id IN (SELECT contact_id FROM {civicrm_participant} WHERE id IN (SELECT entity_id FROM {civicrm_value_registration_questions_7} WHERE parent_15 = %d)) OR pa.contact_id = %d)
     ORDER BY con.birth_date DESC', $year, $parent_cid, $parent_cid);
-  while ($row=db_fetch_array($db)) {
+  while ($row = db_fetch_array($db)) {
     if (!$row['event_id'] || !$row['contact_id']) {
       continue;
     }
     $cid = $row['contact_id'];
+    if (empty($ret['campers'][$cid])) {
+      $ret['campers'][$cid] = array(
+        'register_date' => NULL,
+        'weeks' => 0,
+        'session_names' => '',
+      );
+    }
     //Shuttle
-    if ($row['event_type_id'] == 10) {
+    if ($row['event_type_id'] == WOOLMAN_CAMP_SHUTTLE) {
       if ($row['is_counted'] && !isset($ret['campers'][$cid]['shuttle'][$row['event_id']])) {
         ++$ret['shuttles'];
         $ret['total_fees'] += $rates['shuttle_price'];
@@ -347,7 +375,7 @@ function woolman_camp_calc_fees($parent_cid, $year) {
     }
     $row['weeks'] = $weeks = (int) round($row['days'] / 7);
     $camp = $ret['campers'][$cid]['camp'] = ($row['event_type_id']==8?'sfc':'tlc');
-    $row['price'] = $rates[$camp.'_price']*$weeks;
+    $row['price'] = woolman_camp_event_price_get(array('id' => $row['event_id']));
     $ret['total_fees'] += $row['price'];
     $ret[$camp.'_weeks'] += $weeks;
     $ret['campers'][$cid]['weeks'] += $weeks;
@@ -356,9 +384,10 @@ function woolman_camp_calc_fees($parent_cid, $year) {
     $ret['campers'][$cid]['gender_id'] = $row['gender_id'];
     $ret['campers'][$cid]['medform_date'] = $row['medform_date'];
     $ret['campers'][$cid]['total_paid'] += $row['fee_amount'];
-    if ($ret['campers'][$cid]['session_names'])
+    if ($ret['campers'][$cid]['session_names']) {
       $ret['campers'][$cid]['session_names'] .= ', ';
-    $ret['campers'][$cid]['session_names'] .= str_replace($year,'',$row['title']);
+    }
+    $ret['campers'][$cid]['session_names'] .= trim(str_replace($year, '', $row['title']));
     if ($row['status'] == 'Pending from pay later' || $row['status'] == 'Registered') {
       $ret['total_approved'] += $row['weeks'];
       $row['message'] = $row['fee_amount'] >= ($rates['deposit']*$row['weeks']) ? 'Registered.' : 'Registration approved. Please pay deposit to reserve your space in this session.';
@@ -518,11 +547,8 @@ function woolman_camp_discount_types() {
  * @param array: $event
  */
 function woolman_camp_event_price_get($event) {
-  if (empty($event['price_set_id'])) {
-    return;
-  }
-  $price_field = woolman_civicrm_api('price_field', 'get', array('price_set_id' => $event['price_set_id']), 'values');
-  foreach ($price_field as $field) {
+  $field = woolman_camp_event_price_field_get($event);
+  if ($field) {
     $price = woolman_civicrm_api('price_field_value', 'get', array('price_field_id' => $field['id'], 'is_default' => 1), 'values');
     foreach ($price as $value) {
       if (!empty($value['is_default'])) {
@@ -533,22 +559,65 @@ function woolman_camp_event_price_get($event) {
 }
 
 /**
- * Fetch the price of an event
+ * Save the price of an event
  *
  * @param int: $event_id
  * @param int: $price
  */
 function woolman_camp_event_price_create($event_id, $price) {
-  $price_set = CRM_Core_DAO_singleValueQuery("SELECT price_set_id FROM civicrm_price_set_entity WHERE entity_table = 'civicrm_event' AND entity_id = $event_id LIMIT 1");
-  
-  $price_field = woolman_civicrm_api('price_field', 'get', array('price_set_id' => $event['price_set_id']), 'values');
-  foreach ($price_field as $field) {
+  $params = array('amount' => $price);
+  $params['name'] = $params['label'] = 'Camp Fee';
+  $params['is_default'] = $params['is_active'] = 1;
+
+  $event_params = array('id' => $event_id);
+  $field = woolman_camp_event_price_field_get($event_params);
+
+  // If field/set doesn't exist, create them
+  if (!$field) {
+    $event = woolman_civicrm_api('event', 'get', $event_params, 'single');
+    $set = woolman_civicrm_api('price_set', 'create', array(
+      'entity_id' => $event_id,
+      'entity_table' => 'civicrm_event',
+      'name' => $event['title'],
+      'title' => $event['title'],
+      'is_active' => 1,
+      'extends' => 1,
+      'is_quick_config' => 1,
+    ));
+    $field = woolman_civicrm_api('price_field', 'create', array(
+      'price_set_id' => $set['id'],
+      'name' => 'Camp Fee',
+      'label' => 'Camp Fee',
+      'html_type' => 'Radio',
+      'is_active' => 1,
+    ));
+  }
+  else {
     $price = woolman_civicrm_api('price_field_value', 'get', array('price_field_id' => $field['id'], 'is_default' => 1), 'values');
     foreach ($price as $value) {
       if (!empty($value['is_default'])) {
-        return $value['amount'];
+        $params['id'] = $value['id'];
       }
     }
+  }
+  $params['price_field_id'] = $field['id'];
+  $price = woolman_civicrm_api('price_field_value', 'create', $params);
+}
+
+/**
+ * Fetch the price field of an event
+ *
+ * @param array: $event
+ */
+function woolman_camp_event_price_field_get($event) {
+  if (empty($event['price_set_id'])) {
+    $event['price_set_id'] = CRM_Core_DAO::singleValueQuery("SELECT price_set_id
+      FROM civicrm_price_set_entity
+      WHERE entity_table = 'civicrm_event' AND entity_id = {$event['id']} LIMIT 1"
+    );
+  }
+  if ($event['price_set_id']) {
+    return woolman_civicrm_api('price_field', 'get', array('price_set_id' => $event['price_set_id']), 'single');
   }
 }
 
@@ -565,7 +634,8 @@ function woolman_camp_get_shuttle($year, $get_passengers) {
       LEFT JOIN {civicrm_contact} con ON con.is_deleted <> 1 AND con.id = pa.contact_id';
   }
   $db = db_query("SELECT $select FROM $from
-    WHERE ev.event_type_id = 10 AND YEAR(ev.start_date) = %d AND ev.is_active <> 0 AND ev.is_template <> 1
+    WHERE ev.event_type_id = " . WOOLMAN_CAMP_SHUTTLE . " AND YEAR(ev.start_date) = %d
+      AND ev.is_active <> 0 AND ev.is_template <> 1
     ORDER BY ev.start_date", $year);
   $ret = array('coming' => array(), 'going' => array());
   while ($row = db_fetch_array($db)) {
@@ -669,7 +739,7 @@ function woolman_camp_process_payments($cron) {
       // Couldn't figure out what to do with this payment - need manual intervention
       $message = array(
         'subject' => 'Unprocessed Camp Payment - Please Review',
-        'body' => "A payment of \${$info->total_amount} was recieved from " . woolman_name('display', $info->contact_id) . 
+        'body' => "A payment of \${$info->total_amount} was recieved from " . woolman_name('display', $info->contact_id) .
         ".\nHowever this person does not have any registered campers. Please edit this payment and give soft-credit to the person who registered for camp.\n\n" . woolman_contact_url($info->contact_id, array('op' => 'contribution', 'query' => array('action' => 'update', 'id' => $info->id))),
       );
       drupal_mail('woolman_website', 0, 'camp@woolman.org', language_default(), $message, 'info@woolman.org');
