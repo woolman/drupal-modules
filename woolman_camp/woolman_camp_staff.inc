@@ -2,6 +2,9 @@
 
 module_load_include('inc', 'woolman_camp', 'woolman_camp_utils');
 
+/**
+ * Main page for camp management
+ */
 function woolman_camp_staff() {
   $path = drupal_get_path('module', 'woolman_camp');
   drupal_add_css($path . '/css/camp_staff.css', 'module', 'all', FALSE);
@@ -33,7 +36,7 @@ function woolman_camp_staff() {
   foreach ($sessions as $id => $session) {
     $data[$id] = array_keys($session['campers']);
   }
-  $cache = cache_get('woolman_camp_staff_session_' . $year);
+  $cache = cache_get("woolman_camp_staff_session_$year");
   $timestamp = $cache->created;
   $cache = $cache->data;
 
@@ -44,7 +47,7 @@ function woolman_camp_staff() {
     WHERE n.entity_id = p.id AND n.parent_15 = con.id AND p.event_id IN (".implode(',',array_keys($sessions)).")
     GROUP BY p.contact_id");
   while ($c = db_fetch_array($query)) {
-    $parents[$c['camper']] = '<a target="_blank" href="/civicrm/contact/view?reset=1&cid=' . $c['parent_15'].'">' . $c['first_name'] . '<i></i>' . ($c['nick_name'] ? ' (' . $c['nick_name'] . ')' : '') . ' <i></i>' . $c['last_name'] .'</a>';
+    $parents[$c['camper']] = '<a target="_blank" href="/civicrm/contact/view?reset=1&cid=' . $c['parent_15'] . '">' . $c['first_name'] . '<i></i>' . ($c['nick_name'] ? ' (' . $c['nick_name'] . ')' : '') . ' <i></i>' . $c['last_name'] .'</a>';
     $reg[$c['camper']] = $c['id'];
     $parent_id[$c['camper']] = $c['parent_15'];
     $fees[$c['camper']] = l('+', 'staff/camp/viewform/add-payment/' . $c['parent_15'] . '/' . $year, array('alias' => TRUE, 'attributes' => array('class' => 'popups-form a-p', 'title' => 'New Payment')));
@@ -83,18 +86,18 @@ function woolman_camp_staff() {
         $campers[$c['contact_id']]['fee_amount'] += $c['fee_amount'];
       }
       $span = '<span ' . ($c['status_id'] == 8 ? 'class="' : 'title="Change status" class="p-s ') . strtolower($c['class']) . '" data-sid="' . $c['status_id'] . '">' . $c['status'];
-      $campers[$c['contact_id']]['status'][$span][$c['participant_id']] = $campers[$c['contact_id']]['sessions'][$id] = trim(str_replace("$year",'',$session['title']));
+      $campers[$c['contact_id']]['status'][$span][$c['participant_id']] = $campers[$c['contact_id']]['sessions'][$id] = trim(str_replace("$year", '', $session['title']));
       $camper_sort[$session['event_type_id']][$c['last_name'] . $c['nick_name'] . $c['first_name'] . $c['contact_id']] = $c['contact_id'];
     }
     $stats[$session['event_type_id']] .=
       '<div class="session">
-        <h4>' . $session['title'].'</h4>
+        <h4>' . $session['title'] . '</h4>
         <div class="session-inner">
           <div>' . woolman_camp_date_format($session['start_date'], $session['end_date']) . '</div>
-          <div><strong>Limit: </strong>' . $session['max_participants'].'</div>
+          <div><strong>Limit: </strong>' . $session['max_participants'] . '</div>
           <div><strong>Registered*: </strong>' . $registered.' (' . $girls . ' girl' . ($girls == 1 ? '' : 's') . ' &amp; ' . $boys . ' boy' . ($boys == 1 ? '' : 's') . ')</div>
           <div><strong>Waitlisted: </strong>' . $waitlisted.'</div>
-          <div class="age-graph"><img src="/sites/default/files/woolman_graphs/session' . $session['id'].'.png?ts=' . $timestamp . '" /></div>
+          <div class="age-graph"><img src="/sites/default/files/woolman_graphs/session' . $session['id'] . '.png?ts=' . $timestamp . '" /></div>
         </div>
       </div>';
   }
@@ -162,15 +165,15 @@ function woolman_camp_staff() {
       }
       $paid = '';
       if ($c['fee_amount'] || $year>=2011) {
-        $paid = '$'.number_format($c['fee_amount'], 2);
+        $paid = '$' . number_format($c['fee_amount'], 2);
         if ($parent_id[$cid])
-          $paid = l($paid, 'staff/camp/viewform/payments/' . $parent_id[$cid].'/' . $year, array('alias' => TRUE, 'attributes' => array('class' => 'popups')));
+          $paid = l($paid, 'staff/camp/viewform/payments/' . $parent_id[$cid] . '/' . $year, array('alias' => TRUE, 'attributes' => array('class' => 'popups')));
       }
 
       $tbody[] = array('class' => $rowclass, 'data' => array(
-        '<a target="_blank" href="/civicrm/contact/view?reset=1&cid=' . $c['contact_id'].'">'. $c['first_name'] .'<i></i>'. ($c['nick_name'] ? ' (' . $c['nick_name'].')' : '') . ($c['middle_name'] ? ' ' . $c['middle_name'][0].'.' : '').' <i></i>' . $c['last_name'].'<i></i></a>',
+        '<a target="_blank" href="/civicrm/contact/view?reset=1&cid=' . $c['contact_id'] . '">' . $c['first_name'] .'<i></i>'. ($c['nick_name'] ? ' (' . $c['nick_name'] . ')' : '') . ($c['middle_name'] ? ' ' . $c['middle_name'][0] . '.' : '') . ' <i></i>' . $c['last_name'] . '<i></i></a>',
         $c['age'],
-        array('data' => ($c['gender_id'] == 1 ? 'F' : 'M'), 'class' => 'gender-'. $c['gender_id']),
+        array('data' => ($c['gender_id'] == 1 ? 'F' : 'M'), 'class' => 'gender-' . $c['gender_id']),
         $c['city'],
         ($c['camper_since']==$year?'':$c['camper_since']),
         $parents[$cid],
@@ -182,7 +185,7 @@ function woolman_camp_staff() {
     }
     $table = theme('table', $thead, $tbody, array('class' => 'tablesorter'));
     $output .= '<div class="camp-session">
-                  <h2>' . $programs[$program]['event_type'] . '</h2>
+                  <h2 class="underline">' . $programs[$program]['name'] . '</h2>
                   <div class="session-stats">' . $stats[$program] . '
                     <p style="font-size:0.8em;clear:both;">*Campers who have not yet been approved are included in these numbers (be sure to approve them ASAP!) Campers who are waitlisted, cancelled, or rejected are not included in the graphs, only in the table below.</p>
                   </div>
@@ -216,6 +219,9 @@ function woolman_camp_staff() {
   return drupal_get_form(woolman_camp_years_nav, $years, $year) . $output;
 }
 
+/**
+ * Navigation form for main camp staff page
+ */
 function woolman_camp_years_nav(&$form_state, $years, $year) {
   return array(
     'year_select' => array(
@@ -248,6 +254,9 @@ function woolman_camp_years_nav(&$form_state, $years, $year) {
   );
 }
 
+/**
+ * Submit handler for camp navigation form
+ */
 function woolman_camp_years_nav_submit($form, &$form_state) {
   drupal_goto('staff/camp/registration', array('year' => $form_state['values']['year_select']));
 }
@@ -304,6 +313,9 @@ function woolman_camp_viewform() {
   return '<div id="staff-form" style="min-height:300px;">' . $output . '</div>';
 }
 
+/**
+ * Display an application form
+ */
 function woolman_camp_get_app($id) {
   $query = db_query('
     SELECT p.contact_id as cid, n.parent_15 AS pid, n.*, p.register_date
@@ -315,73 +327,100 @@ function woolman_camp_get_app($id) {
     $data['parent_name'] = woolman_name('full', $data['pid']);
     $date = date('M j Y', strtotime($data['register_date']));
     drupal_set_title('Application for ' . $data['camper_name']);
-    $text = '<em>Submitted by ' . $data['parent_name'].' on ' . $date.'</em>
-            <h4>Camper Questions</h4>'
-            .nl2br(html_entity_decode($data['camper_question_1_10']))
-            .nl2br(html_entity_decode($data['camper_question_2_12']))
-            .'<h4>Parent Questions</h4>'
-            .nl2br(html_entity_decode($data['parent_question_1_13']))
-            .nl2br(html_entity_decode($data['parent_question_2_14']));
+    $text = '<em>Submitted by ' . $data['parent_name'] . ' on ' . $date.'</em>
+      <h4>Camper Questions</h4>'
+      .nl2br(html_entity_decode($data['camper_question_1_10']))
+      .nl2br(html_entity_decode($data['camper_question_2_12']))
+      .'<h4>Parent Questions</h4>'
+      .nl2br(html_entity_decode($data['parent_question_1_13']))
+      .nl2br(html_entity_decode($data['parent_question_2_14']));
     return array($data, $text);
   }
 }
 
+/**
+ * Display a table of fees and payments
+ */
 function woolman_camp_payment_summary($id, $year) {
+  $programs = woolman_camp_event_types();
   $reg = woolman_camp_calc_fees($id, $year);
-  $parent = woolman_contact_get($id);
   $dbody = $pbody = $cbody = array();
-  drupal_set_title('Fees and Payments for ' . $parent['display_name']);
+  drupal_set_title('Fees and Payments for ' . woolman_name('display', $id));
 
   $dhead = array('Item', 'Date', 'Amount');
-  foreach (array('sfc' => 'Sierra Friends Camp', 'tlc' => 'Teen Leadership Camp') as $camp=> $name) {
-    if ($w=$reg[$camp.'_weeks']) {
+  foreach ($reg['sessions'] as $type => $sessions) {
+    if ($s = $sessions['count']) {
       $dbody[] = array(
-        $w.' Week'.($w==1?'':'s').' of ' . $name,
+        $s . ' Session' . ($s == 1 ? '' : 's') . ' of ' . $programs[$type]['name'],
         date('M j, Y', strtotime($reg['register_date'])),
-        '$'.($w*$reg['rates'][$camp.'_price']),
+        '$' . $sessions['price'],
       );
     }
   }
   if ($w = $reg['shuttles']) {
-    $dbody[] = array($w .' Shuttle Ride'.($w==1?'':'s').':', '', '$' . $reg['shuttle_price']);
-  }
-  foreach ($reg['discounts'] as $title => $info) {
-    $dbody[] = array('data' => array(
-      $title, date('M j, Y', strtotime($info['date'])), '-$' . $info['amount']),
-      'style' => 'font-style:italic;'
+    $dbody[] = array(
+      $w . ' Shuttle Ride' . ($w == 1 ? '' : 's'),
+      '',
+      '$' . $reg['shuttle_price'],
     );
   }
-  $dbody[] = array('data' => array(
-    'Fees minus discounts', '', '$'.($reg['total_fees']-$reg['total_discount'])),
-    'style' => 'font-weight:bold;'
+  foreach ($reg['discounts'] as $title => $info) {
+    $dbody[] = array(
+      'data' => array(
+        $title,
+        date('M j, Y', strtotime($info['date'])),
+        '-$' . $info['amount'],
+      ),
+      'style' => 'font-style:italic;',
+    );
+  }
+  $dbody[] = array(
+    'data' => array(
+      'Fees minus discounts',
+      '',
+      '$' . ($reg['total_fees'] - $reg['total_discount'])
+    ),
+    'style' => 'font-weight:bold;',
   );
 
   $phead = array('Paid By', 'Date', 'Method', 'Amount');
   foreach ($reg['payments'] as $count => $payment) {
-    $pbody[] =  array($payment['display_name'],
-                        date('M j, Y', strtotime($payment['receive_date'])),
-                        $payment['method'],
-                        '$' . $payment['total_amount'],
-                      );
+    $pbody[] =  array(
+      $payment['display_name'],
+      date('M j, Y', strtotime($payment['receive_date'])),
+      $payment['method'],
+      '$' . $payment['total_amount'],
+    );
   }
-  $pbody[] = array('data' => array('Total Paid', '', '', '$' . $reg['total_paid']),
-                   'style' => 'font-weight:bold;'
-                    );
-  $pbody[] = array('data' => array('Outstanding Balance', '', '', '$'.($reg['total_fees']-$reg['total_discount']-$reg['total_paid'])),
-                   'style' => 'font-weight:bold;font-style:italic;'
-                    );
+  $pbody[] = array(
+    'data' => array('Total Paid', '', '', '$' . $reg['total_paid']),
+    'style' => 'font-weight:bold;',
+  );
+  $pbody[] = array(
+    'data' => array(
+      'Outstanding Balance',
+      '',
+      '',
+      '$' . ($reg['total_fees']-$reg['total_discount']-$reg['total_paid']),
+    ),
+   'style' => 'font-weight:bold;font-style:italic;'
+  );
   $chead = array('Name', 'Sessions', 'Total Paid');
   foreach ($reg['campers'] as $camper) {
-    $cbody[] =  array($camper['first_name'],
-                       $camper['session_names'],
-                      '$' . $camper['total_paid'],
-                );
+    $cbody[] = array(
+      $camper['first_name'],
+      $camper['session_names'],
+      '$' . $camper['total_paid'],
+    );
   }
-  return  theme('table', $dhead, $dbody, array(), 'Fees and Discounts') .
-          theme('table', $phead, $pbody, array(), 'To-Date Payments for Camp ' . $year) .
-          theme('table', $chead, $cbody, array(), 'Campers');
+  return theme('table', $dhead, $dbody, array(), 'Fees and Discounts') .
+    theme('table', $phead, $pbody, array(), 'To-Date Payments for Camp ' . $year) .
+    theme('table', $chead, $cbody, array(), 'Campers');
 }
 
+/**
+ * Form builder for staff to approve/reject a camp application
+ */
 function woolman_camp_approval_form(&$form_state, $data) {
   $form_state['storage']['data'] = $data;
   return array(
@@ -399,7 +438,9 @@ function woolman_camp_approval_form(&$form_state, $data) {
   );
 }
 
-
+/**
+ * Submit handler for staff to approve/reject a camp application
+ */
 function woolman_camp_approval_form_submit($form, &$form_state) {
   $data = $form_state['storage']['data'];
   unset($form_state['storage']);
@@ -409,17 +450,17 @@ function woolman_camp_approval_form_submit($form, &$form_state) {
   switch($form_state['values']['op']) {
     case 'Accept Camper':
       $status = 1;
-      $to = '"' . $parent['display_name'].'" <' . $parent['email'].'>';
+      $to = '"' . $parent['display_name'] . '" <' . $parent['email'] . '>';
       $from = '"Woolman Camps" <camp@woolman.org>';
       $message['subject'] = 'Your camp application has been accepted';
-      $message['body'] = "Hello {$parent['nick_name']}\n\nWe've got good news for you! Your camper application for {$data['camper_first']} has been accepted. You are now ready to finalize your registration online by completing med forms and paying your deposit and fees. You'll find everything you need at:\nhttp://camp.woolman.org/register/status\n\nRemember, {$data['camper_first']}'s place at camp is not reserved until your deposit is received. You can find out details about making this payment by clicking the above link.\n\nWe're so excited to see {$data['camper_first']} at camp this summer!\n\nSincerely,\nYour Friendly Woolman Camp Staff\n530-273-3183x3\nhttp://camp.woolman.org";
+      $message['body'] = "Hello {$parent['nick_name']}\n\nWe've got good news for you! Your camper application for {$data['camper_first']} has been accepted. You are now ready to finalize your registration online by completing med forms and paying your deposit and fees. You'll find everything you need at:\nhttp:// Camp.woolman.org/register/status\n\nRemember, {$data['camper_first']}'s place at camp is not reserved until your deposit is received. You can find out details about making this payment by clicking the above link.\n\nWe're so excited to see {$data['camper_first']} at camp this summer!\n\nSincerely,\nYour Friendly Woolman Camp Staff\n530-273-3183x3\nhttp:// Camp.woolman.org";
       $message['to_cid'] = $parent['contact_id'];
       drupal_mail('woolman_website', 'create_activity', $to, language_default(), $message, $from);
-      drupal_set_message($data['camper_name'].'\'s application has been accepted. A friendly email has been sent to ' . $parent['display_name'].' with further instructions.');
+      drupal_set_message($data['camper_name'] . '\'s application has been accepted. A friendly email has been sent to ' . $parent['display_name'] . ' with further instructions.');
     break;
     case 'Deny Application':
       $status = 11;
-      drupal_set_message($data['camper_name'].'\'s application has been denied. An automatic email has <strong>not</strong> been sent to ' . $parent['display_name'].'; you\'ll have to break the news yourself.');
+      drupal_set_message($data['camper_name'] . '\'s application has been denied. An automatic email has <strong>not</strong> been sent to ' . $parent['display_name'] . '; you\'ll have to break the news yourself.');
     break;
   }
   db_query('UPDATE {civicrm_participant} SET status_id = ' . $status . '
@@ -427,7 +468,9 @@ function woolman_camp_approval_form_submit($form, &$form_state) {
             (SELECT id FROM {civicrm_event} WHERE event_type_id IN (' . implode(',', $event_types) . '))', $data['cid']);
 }
 
-
+/**
+ * Form builder for staff to adjust camper age
+ */
 function woolman_camp_age_adjust($form_state, $cid, $year) {
   $form = array(
     '#prefix' => '<p><em>This allows campers to register for a session that they are otherwise too old or too young for.</em></p>',
@@ -476,7 +519,9 @@ function woolman_camp_age_adjust($form_state, $cid, $year) {
   return $form;
 }
 
-
+/**
+ * Submit handler for staff to adjust camper age
+ */
 function woolman_camp_age_adjust_submit($form, &$form_state) {
   if (!($cid = woolman_aval($form_state, 'storage:cid'))) {
     $camper = woolman_split_name_id($form_state['values']['camper']);
@@ -504,13 +549,16 @@ function woolman_camp_age_adjust_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Form builder for staff to enter camp payment
+ */
 function woolman_camp_add_payment(&$form_state, $cid, $reg, $year) {
   $form_state['storage']['reg'] = $reg;
   $form_state['storage']['year'] = $year;
   $form_state['storage']['parent'] = $parent = woolman_contact_get($cid);
 
   $form = array(
-    '#prefix' => '<p>Add payment for ' . $parent['display_name'].'\'s family</p>',
+    '#prefix' => '<p>Add payment for ' . $parent['display_name'] . '\'s family</p>',
     '#redirect' => array('staff/camp/registration', "year=$year"),
   );
   $form['paid_by'] = array(
@@ -518,7 +566,7 @@ function woolman_camp_add_payment(&$form_state, $cid, $reg, $year) {
     '#title' => 'Paid by',
     '#size' => 40,
     '#autocomplete_path' => 'staff/js/autocomplete/contact',
-    '#default_value' => $parent['display_name'].' (ID#' . $cid.')'
+    '#default_value' => $parent['display_name'] . ' (ID#' . $cid.')'
   );
   $form['amount'] = array(
     '#type' => 'textfield',
@@ -554,6 +602,9 @@ function woolman_camp_add_payment(&$form_state, $cid, $reg, $year) {
   return $form;
 }
 
+/**
+ * Validate handler for staff to enter camp payment
+ */
 function woolman_camp_add_payment_validate($form, &$form_state) {
   $vals = $form_state['values'];
   if ($vals['method'] == 4 && !$vals['check_no']) {
@@ -564,6 +615,9 @@ function woolman_camp_add_payment_validate($form, &$form_state) {
   }
 }
 
+/**
+ * Submit handler for staff to enter camp payment
+ */
 function woolman_camp_add_payment_submit($form, &$form_state) {
   $reg = $form_state['storage']['reg'];
   $year = $form_state['storage']['year'];
@@ -600,16 +654,19 @@ function woolman_camp_add_payment_submit($form, &$form_state) {
   }
   if ($vals['email']) {
     $children = implode(' and ', $children);
-    $to = '"' . $parent['display_name'].'" <' . $parent['email'].'>';
+    $to = '"' . $parent['display_name'] . '" <' . $parent['email'] . '>';
     $from = '"Woolman Camps" <camp@woolman.org>';
     $message['subject'] = 'Payment Received';
-    $message['body'] = "Hello {$parent['nick_name']}\n\nThis is to acknowledge that we have received your payment of \${$vals['amount']}. Camp will be here before you know it, so double-check that you have everything on the packing list: http://camp.woolman.org/packing-list\n\nAs always, please don't hesitate to contact us with any questions.\n\nWe're looking forward to a great summer with $children!\n\nSincerely,\nYour Friendly Woolman Camp Staff\n530-273-3183\nhttp://camp.woolman.org";
+    $message['body'] = "Hello {$parent['nick_name']}\n\nThis is to acknowledge that we have received your payment of \${$vals['amount']}. Camp will be here before you know it, so double-check that you have everything on the packing list: http:// Camp.woolman.org/packing-list\n\nAs always, please don't hesitate to contact us with any questions.\n\nWe're looking forward to a great summer with $children!\n\nSincerely,\nYour Friendly Woolman Camp Staff\n530-273-3183\nhttp:// Camp.woolman.org";
     $message['to_cid'] = $parent['contact_id'];
     drupal_mail('woolman_website', 'create_activity', $to, language_default(), $message, $from);
-    drupal_set_message('An email acknowledgment has been sent to '. $parent['display_name']);
+    drupal_set_message('An email acknowledgment has been sent to ' . $parent['display_name']);
   }
 }
 
+/**
+ * Form builder for staff to manage discounts
+ */
 function woolman_camp_manage_discount($form_state) {
   $form = array(
     '#redirect' => array('staff/camp/registration'),
@@ -690,6 +747,9 @@ function woolman_camp_manage_discount($form_state) {
   return $form;
 }
 
+/**
+ * Submit handler for staff to manage discounts
+ */
 function woolman_camp_manage_discount_submit($form, &$form_state) {
   if (empty($form_state['storage'])) {
     $form_state['rebuild'] = TRUE;
@@ -722,12 +782,16 @@ function woolman_camp_manage_discount_submit($form, &$form_state) {
   drupal_set_message($year . ' discounts saved for ' . woolman_name('full', $cid));
 }
 
+/**
+ * Form builder for staff to add discounts
+ */
 function woolman_camp_add_discount(&$form_state, $id, $reg, $year) {
+  $programs = woolman_camp_event_types();
   $form_state['storage']['year'] = $year;
   $form_state['storage']['parent'] = $parent = woolman_contact_get($id);
   $form = array('#redirect' => array('staff/camp/registration', "year=$year"));
   $form['type'] = array(
-    '#prefix' => '<table><caption><strong>Fees for ' . $parent['display_name'].'</strong></caption><tbody>',
+    '#prefix' => '<table><caption><strong>Fees for ' . $parent['display_name'] . '</strong></caption><tbody>',
     '#type' => 'select',
     '#options' => array('' => '- Select Type -') + woolman_camp_discount_types(),
     '#required' => TRUE,
@@ -743,25 +807,26 @@ function woolman_camp_add_discount(&$form_state, $id, $reg, $year) {
     '#suffix' => '</td></tr>',
     '#required' => TRUE,
   );
-  foreach (array('sfc' => 'Sierra Friends Camp', 'tlc' => 'Teen Leadership Camp') as $camp=> $name) {
-    if ($w=$reg[$camp.'_weeks'])
-      $form['type']['#prefix'] .= '<tr><td>' . $w.' Week'.($w==1?'':'s').' of ' . $name.':</td><td>$'.($w*$reg['rates'][$camp.'_price']).'</td></tr>';
+  foreach ($reg['sessions'] as $type => $sessions) {
+    if ($s = $sessions['count']) {
+      $form['type']['#prefix'] .= '<tr><td>' . $s . ' Session' . ($s == 1 ? '' : 's') . ' of ' . $programs[$type]['name'] . ':</td><td>$' . $sessions['price'] . '</td></tr>';
+    }
   }
   if ($w = $reg['shuttles']) {
-    $form['type']['#prefix'] .= '<tr><td>'. $w .' Shuttle Ride'.($w==1?'':'s').':</td><td>$' . $reg['shuttle_price'].'</td></tr>';
+    $form['type']['#prefix'] .= '<tr><td>' . $w .' Shuttle Ride' . ($w==1?'':'s') . ':</td><td>$' . $reg['shuttle_price'] . '</td></tr>';
   }
   foreach ($reg['discounts'] as $title => $info) {
-    $form['type']['#prefix'] .= '<tr style="font-style:italic;"><td>' . $title.':</td><td>-$' . $info['amount'].'</td></tr>';
+    $form['type']['#prefix'] .= '<tr style="font-style:italic;"><td>' . $title.':</td><td>-$' . $info['amount'] . '</td></tr>';
   }
 
   $form['type']['#prefix'] .= '<tr><td>';
 
-  $form['amount']['#suffix'] .= '<tr style="font-weight:bold;"><td>Fees Minus Discounts:</td><td>$<span id="discount-form-subtotal">'.($reg['total_fees']-$reg['total_discount']).'</span></td></tr>';
+  $form['amount']['#suffix'] .= '<tr style="font-weight:bold;"><td>Fees Minus Discounts:</td><td>$<span id="discount-form-subtotal">' . ($reg['total_fees']-$reg['total_discount']) . '</span></td></tr>';
 
-  $form['amount']['#suffix'] .= '<tr><td>Paid so far by ' . $parent['display_name'].':</td><td>$<span id="discount-form-paid">' . $reg['total_paid'].'</span></td></tr>';
+  $form['amount']['#suffix'] .= '<tr><td>Paid so far by ' . $parent['display_name'] . ':</td><td>$<span id="discount-form-paid">' . $reg['total_paid'] . '</span></td></tr>';
 
-  $form['amount']['#suffix'] .= '<tr style="font-weight:bold;"><td>Balance Due:</td><td>$<span id="discount-form-balance">'.($reg['total_fees']-$reg['total_discount']-$reg['total_paid']).'</span></td></tr></tbody></table>
-  <div id="discount-form-base" style="display:none;">'.($reg['total_fees']-$reg['total_discount']).'</div>';
+  $form['amount']['#suffix'] .= '<tr style="font-weight:bold;"><td>Balance Due:</td><td>$<span id="discount-form-balance">' . ($reg['total_fees']-$reg['total_discount']-$reg['total_paid']) . '</span></td></tr></tbody></table>
+  <div id="discount-form-base" style="display:none;">' . ($reg['total_fees']-$reg['total_discount']) . '</div>';
 
   $form['submit-payment'] = array(
     '#type' => 'submit',
@@ -770,20 +835,26 @@ function woolman_camp_add_discount(&$form_state, $id, $reg, $year) {
   return $form;
 }
 
+/**
+ * Validate handler for staff to add discounts
+ */
 function woolman_camp_add_discount_validate($form, &$form_state) {
   $vals = $form_state['values'];
   if ($vals['type'] && !is_numeric($vals['amount'])) {
-    form_error($form['amount'], 'Sorry, ' . $vals['amount'].' is not a valid amount');
+    form_error($form['amount'], 'Sorry, ' . $vals['amount'] . ' is not a valid amount');
   }
 }
 
+/**
+ * Submit handler for staff to add discounts
+ */
 function woolman_camp_add_discount_submit($form, &$form_state) {
   $year = $form_state['storage']['year'];
   $parent = $form_state['storage']['parent'];
   unset($form_state['storage']);
   $vals = $form_state['values'];
-  db_query('INSERT INTO {woolman_camp_discounts} (cid,amount,date,year,type) VALUES (' . $parent['contact_id'].',' . $vals['amount'].',CURDATE(),' . $year.',\'' . $vals['type'] . '\')');
-  drupal_set_message('Added ' . $vals['type'].' discount of $' . $vals['amount'].' for ' . $parent['display_name']);
+  db_query('INSERT INTO {woolman_camp_discounts} (cid,amount,date,year,type) VALUES (' . $parent['contact_id'] . ',' . $vals['amount'] . ',CURDATE(),' . $year.',\'' . $vals['type'] . '\')');
+  drupal_set_message('Added ' . $vals['type'] . ' discount of $' . $vals['amount'] . ' for ' . $parent['display_name']);
 }
 
 /**
@@ -802,11 +873,12 @@ function woolman_camp_fee_report($year) {
     'Paid To Date',
     'Outstanding',
   );
-  //Get parents
+  // Get parents
   $query = db_query("
     SELECT n.parent_15 AS cid, c.display_name
     FROM {civicrm_participant} p, {civicrm_value_registration_questions_7} n, {civicrm_contact} c
-    WHERE n.entity_id = p.id AND c.id = n.parent_15 AND p.event_id IN (".implode(',',array_keys($sessions)).") AND p.status_id IN (SELECT id FROM {civicrm_participant_status_type} WHERE is_counted)
+    WHERE n.entity_id = p.id AND c.id = n.parent_15 AND p.event_id IN (" . implode(',', array_keys($sessions)) . ")
+    AND p.status_id IN (SELECT id FROM {civicrm_participant_status_type} WHERE is_counted)
     GROUP BY n.parent_15
     ORDER BY c.sort_name");
   $total_campers = $total_weeks = $total_fees = $total_discount = $total_paid = $total_shuttle = 0;
@@ -815,16 +887,16 @@ function woolman_camp_fee_report($year) {
     $tbody[] = array(
       $c['display_name'],
       count($r['campers']),
-      $r['sfc_weeks'] + $r['tlc_weeks'],
+      $r['weeks'],
       date('M j Y', strtotime($r['register_date'])),
       '$' . $r['total_fees'],
       '$' . $r['total_discount'],
-      '$'.($r['total_fees']-$r['total_discount']),
+      '$' . ($r['total_fees']-$r['total_discount']),
       '$' . $r['total_paid'],
-      '$'.($r['total_fees']-$r['total_discount']-$r['total_paid'])
+      '$' . ($r['total_fees']-$r['total_discount']-$r['total_paid'])
     );
     $total_campers += count($r['campers']);
-    $total_weeks += ($r['sfc_weeks'] + $r['tlc_weeks']);
+    $total_weeks += $r['weeks'];
     $total_fees += $r['total_fees'];
     $total_discount += $r['total_discount'];
     $total_paid += $r['total_paid'];
@@ -836,11 +908,11 @@ function woolman_camp_fee_report($year) {
       $total_campers,
       $total_weeks,
       '',
-      '$'.number_format($total_fees),
-      '$'.number_format($total_discount),
-      '$'.number_format(($total_fees-$total_discount)),
-      '$'.number_format($total_paid),
-      '$'.number_format(($total_fees-$total_discount-$total_paid))
+      '$' . number_format($total_fees),
+      '$' . number_format($total_discount),
+      '$' . number_format(($total_fees-$total_discount)),
+      '$' . number_format($total_paid),
+      '$' . number_format(($total_fees-$total_discount-$total_paid))
     ),
     'style' => 'font-weight:bold;');
   return theme('table', $thead, $tbody) . '<p style="font-weight:bold;">Average Tuition: $' . number_format((($total_fees-$total_discount-$total_shuttle)/$total_weeks)) . ' per week.</p>';
@@ -883,14 +955,12 @@ function woolman_camp_js() {
 function woolman_camp_staff_graph_session($session) {
   require_once DRUPAL_ROOT . '/sites/all/libraries/jpgraph/src/jpgraph.php';
   require_once DRUPAL_ROOT . '/sites/all/libraries/jpgraph/src/jpgraph_bar.php';
-  if ($session['event_type_id'] == 8) {
-    $boys = $girls = array_fill(9, 6, 0);
-    $size = 300;
-  }
-  else {
-    $size = 210;
-    $boys = $girls = array_fill(14, 4, 0);
-  }
+  $programs = woolman_camp_event_types();
+  $program = $programs[$session['event_type_id']];
+  $range = $program['age_max'] - $program['age_min'] + 1;
+  $boys = $girls = array_fill($program['age_min'], $range, 0);
+  $size = $range * 50;
+  $size = $size > 240 ? $size : 240;
   $max = 8;
 
   foreach ($session['campers'] as $c) {

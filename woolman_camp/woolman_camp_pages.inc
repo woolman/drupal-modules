@@ -3,43 +3,52 @@
 module_load_include('inc', 'woolman_camp', 'woolman_camp_forms');
 
 /**
+ * Camp landing page callback
  * Displays general information about registration
- *
  */
 function woolman_camp_landing() {
   drupal_add_css(drupal_get_path('module', 'woolman_camp') . '/css/camp_landing.css');
   $year = woolman_camp_next_year();
+  $programs = woolman_camp_event_types();
   $welcome = '';
-  $form_link = '<a href="/register/form">&gt;&gt; Click here to register</a>';
+  $form_link = '>> Click here to register';
+  $form_url = '~camp/register/form';
   if (user_is_logged_in()) {
     $welcome = '<div>Welcome back, ' . woolman_name('nick') . '</div>';
     $act = woolman_camp_get_reg_act();
     if ($act['status_id'] == 4) {
       $welcome .= '<div><em>Your registration is in progress</em></div>';
-      $form_link = '<a href="/register/form">&gt;&gt; Click here to continue your registration</a>';
+      $form_link = '>> Click here to continue your registration';
     }
     elseif ($act['status_id'] == 2) {
       $welcome .= "<div><em>You've registered for camp {$year}!</em></div>";
-      $form_link = '<a href="/register/status">&gt;&gt; Click here to view your registration, make changes, &amp; pay tuition.</a>';
+      $form_link = '>> Click here to view your registration, make changes, & pay tuition.';
+      $form_url = '~camp/register/status';
     }
   }
-  $body = '<h4>Registration Process</h4>
-            <ul class="styled star">
-              <li>Enter or update your family info.</li>
-              <li>Decide which sessions your children will attend.</li>
-              <li>Fill-out their emergency medical info.</li>
-              <li>Complete your registration by paying $100 deposit per week (we also accept cash and checks if you prefer not to pay online).</li>
-              <li>That\'s it! We\'ll send you an email to confirm your registration.</li>
-            </ul>
-            <p>More information can be found on our <a href="/parents/questions">FAQ</a> page. Prices are here: <a href="/dates-rates">Dates &amp; Rates</a>. Need to know more? Please don\'t hesitate to <a href="/contact?c=3">contact us</a>.</p>';
-  if (!($session_data = woolman_camp_get_sessions($year))) {
-    return '<h2>Online Registration for ' . $year . '</h2>
-            <p>We have not yet started registering for next year. Upcoming dates and rates will be announced soon.</p>' . $body;
+  $body = '
+    <h4>Registration Process</h4>
+    <ul class="styled star">
+      <li>Enter or update your family info.</li>
+      <li>Decide which sessions your children will attend.</li>
+      <li>Fill-out their emergency medical info.</li>
+      <li>Complete your registration by paying $100 deposit per week (we also accept cash and checks if you prefer not to pay online).</li>
+      <li>That\'s it! We\'ll send you an email to confirm your registration.</li>
+    </ul>
+    <p>More information can be found on our <a href="/parents/questions">FAQ</a> page. Prices are here: <a href="/dates-rates">Dates &amp; Rates</a>. Need to know more? Please don\'t hesitate to <a href="/contact?c=3">contact us</a>.</p>
+  ';
+  $session_data = woolman_camp_get_sessions($year);
+  if (!$session_data) {
+    return '
+      <h2>Online Registration for ' . $year . '</h2>
+      <p>We have not yet started registering for next year. Upcoming dates and rates will be announced soon.</p>' .
+      $body;
   }
   $rates = woolman_camp_get_rates($year);
+  $sessions = array_fill_keys(array_keys($programs), '');
   foreach ($session_data as $s) {
-    $type = ($s['event_type_id'] == 8 ? 'sfc' : 'tlc');
-    $percent = $s['campers']/$s['max_participants'];
+    $type = $s['event_type_id'];
+    $percent = $s['campers'] / $s['max_participants'];
     if (substr($s['start_date'], 0, 10) < date('Y-m-d')) {
       if (substr($s['end_date'], 0, 10) <= date('Y-m-d')) {
         $status = '<span class="closed">Ended.</span>';
@@ -61,40 +70,50 @@ function woolman_camp_landing() {
       else {
         $status = '<span class="open">Space available.</span>';
       }
-      if ($percent < 1 && $s['boys'] >= ($rates['gender_balance'] / 100 * $s['max_participants'])) {
-        $status .= '<br /><span class="full">Open for girls, waitlist for boys.</span>';
-      }
-      elseif ($percent < 1 && $s['girls'] >= ($rates['gender_balance'] / 100 * $s['max_participants'])) {
-        $status .= '<br /><span class="full">Open for boys, waitlist for girls.</span>';
-      }
-      elseif ($percent < 1) {
-        $status .= '<br /><span class="open">Open for boys and girls.</span>';
+      if ($rates['gender_balance'] !== '') {
+        if ($percent < 1 && $s['boys'] >= ($rates['gender_balance'] / 100 * $s['max_participants'])) {
+          $status .= '<br /><span class="full">Open for girls, waitlist for boys.</span>';
+        }
+        elseif ($percent < 1 && $s['girls'] >= ($rates['gender_balance'] / 100 * $s['max_participants'])) {
+          $status .= '<br /><span class="full">Open for boys, waitlist for girls.</span>';
+        }
+        elseif ($percent < 1) {
+          $status .= '<br /><span class="open">Open for boys and girls.</span>';
+        }
       }
     }
-    $sessions[$type] .= '<div class="session"><h5 class="session-title">' . $s['title'].'</h5>
-                          <div class="session-dates">
-                            ' . woolman_camp_date_format($s['start_date'], $s['end_date']) . '
-                          </div>
-                          <div class="session-status">
-                            ' . $status.'
-                          </div>
-                        </div>';
+    $sessions[$type] .= '
+      <div class="session">
+        <h5 class="session-title">' . $s['title'] . '</h5>
+        <div class="session-dates">
+          ' . woolman_camp_date_format($s['start_date'], $s['end_date']) . '
+        </div>
+        <div class="session-status">
+          ' . $status . '
+        </div>
+      </div>
+    ';
   }
-  $content = '<div id="session-outer">
-                <h3>This Year\'s Sessions</h3>
-                <div id="sfc-sessions">
-                  <h4>Sierra Friends Camp</h4><p class="session-ages">Ages 9-14</p>
-                  ' . $sessions['sfc'].'
-                </div>
-                <div id="tlc-sessions">
-                  <h4>Teen Leadership Camp</h4><p class="session-ages">Ages 15-16</p>
-                  ' . $sessions['tlc'].'
-                </div>
-              </div>
-              <div id="registration-info">
-                <h2>Online Registration: Now Open for '.$year.'</h2>
-                ' . $welcome . $form_link . $body . '
-              </div>';
+  $content = '<div id="session-outer"> <h3>This Year\'s Sessions</h3>';
+  $classes = array('even' => 'odd', 'odd' => 'even');
+  $class = 'odd';
+  foreach ($programs as $type => $program) {
+    if ($sessions[$type]) {
+      $content .= "
+        <div class='session-wrapper program-$type $class'>
+          <h4>{$program['name']}</h4>
+          <p class='session-ages'>Ages {$program['age_min']}-{$program['age_max']}</p>
+          {$sessions[$type]}
+        </div>";
+      $class = $classes[$class];
+    }
+  }
+  $content .= '
+    </div>
+    <div id="registration-info">
+      <h2>Online Registration: Now Open for ' . $year . '</h2>' .
+      $welcome . l($form_link, $form_url, array('alias' => TRUE)) . $body . '
+    </div>';
 
   return $content;
 }
@@ -106,7 +125,7 @@ function woolman_camp_landing() {
  * Called from hook menu for both ~camp/register/form and ~camp/register/status
  */
 function woolman_camp_page() {
-  drupal_add_css(drupal_get_path('module', 'woolman_camp') .'/css/camp_forms.css');
+  drupal_add_css(drupal_get_path('module', 'woolman_camp') . '/css/camp_forms.css');
 
   if (!woolman_camp_get_sessions(woolman_camp_next_year())) {
     drupal_goto('~camp/register');
@@ -182,6 +201,7 @@ function woolman_camp_status() {
   drupal_add_js(drupal_get_path('module', 'woolman_camp') . '/js/status_page.js');
   $year = woolman_camp_next_year();
   $shuttles = woolman_camp_get_shuttle($year, FALSE);
+  $programs = woolman_camp_event_types();
   $reg = woolman_camp_calc_fees(woolman_user_cid(), $year);
   $output = ' <h2>Registration Status</h2>
               <p>This page shows you the current status of your registration. As you complete forms, have applications accepted, and pay fees, you\'ll be able to see your registration status updated here. <em>You may wish to bookmark this page.</em></p>
@@ -195,15 +215,15 @@ function woolman_camp_status() {
                     </ul>
                   </p>';
   foreach ($reg['campers'] as $cid => $c) {
-    $med = 'Click Here to Complete '. $c['first_name'] .'\'s Medical Form';
+    $med = 'Click Here to Complete ' . $c['first_name'] .'\'s Medical Form';
     $medclass = 'incomplete';
     if ($c['medform_date'] > 0) {
       $med = 'Medical Form Completed';
       $medclass = 'done';
     }
     $output .= '<div class="camper-info">
-                  <p class="medform ' . $medclass.'">'. l($med, '~camp/register/medical/'. $cid, array('alias' => TRUE, 'attributes' => array('class' => 'popups-form'))) .'</p>
-                  <h4 class="camper-name">' . $c['first_name'].' ' . $c['last_name'].'</h4>
+                  <p class="medform ' . $medclass . '">'. l($med, '~camp/register/medical/' . $cid, array('alias' => TRUE, 'attributes' => array('class' => 'popups-form'))) .'</p>
+                  <h4 class="camper-name">' . $c['first_name'] . ' ' . $c['last_name'] . '</h4>
                   <div class="sessions">';
     foreach ($c['sessions'] as $s) {
       $output .=  ' <div class="session">
@@ -218,7 +238,7 @@ function woolman_camp_status() {
       $shuttle = '';
       if (isset($c['shuttle'])) {
         foreach ($c['shuttle'] as $sh) {
-          $shuttle .= '<li>'. $sh['title'] . '</li>';
+          $shuttle .= '<li>' . $sh['title'] . '</li>';
         }
       }
       if ($shuttle) {
@@ -235,28 +255,28 @@ function woolman_camp_status() {
   $output .=  ' </div>
                   <div id="payment-info">
                     <h3>Payment Info</h3>
-                    <p>You have <strong>'.woolman_num_to_words($c).'</strong> camper'.($c==1?'':'s');
-  if ($weeks = $reg['total_approved'] + $reg['total_pending']) {
-    $output .= ' registered for <strong>' . woolman_num_to_words($weeks) . '</strong> week' . ($weeks==1?'':'s') . ' at camp';
+                    <p>You have <strong>' . woolman_num_to_words($c) . '</strong> camper' . ($c == 1 ? '' : 's');
+  if ($sessions = $reg['total_approved'] + $reg['total_pending']) {
+    $output .= ' registered for <strong>' . woolman_num_to_words($sessions) . '</strong> session' . ($sessions <= 1 ? '' : 's') . ' at camp';
     if (!empty($reg['total_waitlist'])) {
-      $output .= ', and you\'re on the waitlist for an additional <strong>'.woolman_num_to_words($reg['total_waitlist']).'</strong> week'.($reg['total_waitlist']==1?'':'s');
+      $output .= ', and you\'re on the waitlist for an additional <strong>' . woolman_num_to_words($reg['total_waitlist']) . '</strong> session' . ($reg['total_waitlist'] == 1 ? '' : 's');
     }
     $output .= '.</p>';
   }
   else {
-    $output .= '. They\'re on the waitlist for a total of <strong>'.woolman_num_to_words($reg['total_waitlist']).'</strong> week'.($reg['total_waitlist']==1?'':'s').' at camp.</p>';
+    $output .= '. They\'re on the waitlist for a total of <strong>' . woolman_num_to_words($reg['total_waitlist']) . '</strong> session' . ($reg['total_waitlist'] == 1 ? '' : 's') . ' at camp.</p>';
   }
   if ($reg['total_fees'] - $reg['total_discount'] > $reg['total_paid']) {
     $output .= '<p>';
     if ($reg['deposit'] > $reg['total_paid']) {
-      $output .= 'Deposit fees ($' . $reg['rates']['deposit'].' per week) should be paid right away to reserve your place at camp. ';
+      $output .= 'Deposit fees ($' . $reg['rates']['deposit'] . ' per week) should be paid right away to reserve your place at camp. ';
     }
     $output .= 'Full tuition is due on the first day of camp.</p>';
   }
   $output .= '<table><caption><strong>Your Camp Fees</strong></caption><tbody>';
-  foreach (array('sfc' => 'Sierra Friends Camp', 'tlc' => 'Teen Leadership Camp') as $camp=> $name) {
-    if ($w = $reg[$camp.'_weeks']) {
-      $output .= '<tr><td>' . $w . ' Week' . ($w == 1 ? '' : 's') . ' of ' . $name.':</td><td class="p">$' . ($w * $reg['rates'][$camp.'_price']) . '</td></tr>';
+  foreach ($reg['sessions'] as $id => $camp) {
+    if ($camp['count']) {
+      $output .= '<tr><td>' . $camp['count'] . ' Session' . ($w == 1 ? '' : 's') . ' of ' . $programs[$id]['name'] .':</td><td class="p">$' . $camp['price'] . '</td></tr>';
     }
   }
   if ($w = $reg['shuttles']) {
@@ -270,11 +290,11 @@ function woolman_camp_status() {
 
   $output .= '</tbody></table><table><caption><strong>Your Payments</strong></caption><tbody>';
 
-  $output .= '<tr><td>Deposit Paid:</td><td class="p">$'.($reg['deposit']<=$reg['total_paid']?$reg['deposit']:$reg['total_paid']).' of $' . $reg['deposit'].'</td></tr>';
+  $output .= '<tr><td>Deposit Paid:</td><td class="p">$' . ($reg['deposit']<=$reg['total_paid']?$reg['deposit']:$reg['total_paid']) . ' of $' . $reg['deposit'] . '</td></tr>';
 
-  $output .= '<tr><td>Total Paid:</td><td class="p">$' . $reg['total_paid'].' of $'.($reg['total_fees']-$reg['total_discount']).'</td></tr>';
+  $output .= '<tr><td>Total Paid:</td><td class="p">$' . $reg['total_paid'] . ' of $' . ($reg['total_fees']-$reg['total_discount']) . '</td></tr>';
 
-  $output .= '<tr style="font-weight:bold;"><td>Total Balance Due:</td><td class="p">$'.($reg['total_fees']-$reg['total_discount'] - $reg['total_paid']).'</td></tr>';
+  $output .= '<tr style="font-weight:bold;"><td>Total Balance Due:</td><td class="p">$' . ($reg['total_fees']-$reg['total_discount'] - $reg['total_paid']) . '</td></tr>';
 
   $output .= '</tbody></table>';
   if ($reg['total_waitlist']) {

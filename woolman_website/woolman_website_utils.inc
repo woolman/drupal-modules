@@ -41,7 +41,6 @@ function theme_multicolumn_options($element) {
   return $output;
 }
 
-
 /**
  * Autocomplete callback
  */
@@ -71,19 +70,19 @@ function woolman_website_autocomplete($type, $str= '') {
         $resource = db_query($db, $arg);
         while ($row = db_fetch_array($resource)) {
           if ($row['city'] || $row['state']) {
-            $addr = ': '.$row['city'].($row['city'] ? ', ' : '').$row['state'];
+            $addr = ': ' . $row['city'].($row['city'] ? ', ' : '').$row['state'];
           }
           else {
             $addr = '';
           }
-          $matches[$row['display_name'].' (ID#'.$row['id'].')'] = $row['sort_name'].$addr;
+          $matches[$row['display_name'].' (ID#' . $row['id'].')'] = $row['sort_name'].$addr;
         }
         break;
 
       case 'state':
         $resource = db_query("SELECT name, abbreviation FROM {civicrm_state_province} WHERE abbreviation LIKE '%s%%' AND country_id = 1228 LIMIT 30", $str);
         while ($row = db_fetch_array($resource)) {
-          $matches[$row['abbreviation']] = $row['abbreviation'].' '.$row['name'];
+          $matches[$row['abbreviation']] = $row['abbreviation'].' ' . $row['name'];
         }
         break;
 
@@ -118,14 +117,13 @@ function woolman_website_autocomplete($type, $str= '') {
                               LIMIT 30", $str, $str);
         while ($row = db_fetch_array($resource)) {
           $name = ltrim($row['subject'], 'Outreach Trip to ');
-          $matches[$name.' (ID#'.$row['id'].')'] = $name.' on '  ._ws_admissions_date_format($row);
+          $matches[$name.' (ID#' . $row['id'].')'] = $name.' on '  ._ws_admissions_date_format($row);
         }
         break;
     }
   }
   exit(drupal_json($matches));
 }
-
 
 /**
  * Outputs CiviCRM custom field group to Drupal FAPI
@@ -184,7 +182,7 @@ function woolman_custom_field_group_fapi($group, $entity_id=NULL, $submission_id
 
   // Get existing submission
   if ($entity_id || $submission_id) {
-    $q = 'SELECT * FROM {'.$info['table_name'].'} ';
+    $q = 'SELECT * FROM {' . $info['table_name'].'} ';
     if ($submission_id) {
       $query = db_query($q.'WHERE id = %d', $submission_id);
     }
@@ -271,11 +269,8 @@ function woolman_custom_field_group_fapi_submit($vals, $group, $entity_id) {
       if ($f['html_type'] == 'Select Date' && is_array($val)) {
         $val = woolman_date_array_to_string($val, '-');
       }
-      if (is_array($val)) {
-        $val = ''.implode('', $val).'';
-      }
-      elseif (in_array($id, $multi)) {
-        $val = ''.$val.'';
+      if (is_array($val) || in_array($id, $multi)) {
+        $val = woolman_multivalue_str($val);
       }
       elseif (is_numeric($val)) {
         $placeholder = '%d';
@@ -287,15 +282,15 @@ function woolman_custom_field_group_fapi_submit($vals, $group, $entity_id) {
     if ($update) {
       $update .= ', ';
     }
-    $update .= $id.' = '.$placeholder;
-    $into .= ', '.$id;
-    $set .= ', '.$placeholder;
+    $update .= $id.' = ' . $placeholder;
+    $into .= ', ' . $id;
+    $set .= ', ' . $placeholder;
     $values[] = $val;
   }
 
   // Search for existing submission if this fieldgroup is single-valued
   if (!$info['is_multiple']) {
-    $query = db_query('SELECT id FROM {'.$info['table_name'].'}
+    $query = db_query('SELECT id FROM {' . $info['table_name'].'}
                           WHERE entity_id = %d', $entity_id);
 
     if ($existing = db_fetch_array($query)) {
@@ -314,7 +309,8 @@ function woolman_custom_field_group_fapi_submit($vals, $group, $entity_id) {
 }
 
 /**
- * Drupal doesn't have a theme function for a single table row. Here it is: (adapted from theme.inc)
+ * Drupal doesn't have a theme function for a single table row. Here it is:
+ * @see theme.inc
  */
 function woolman_table_row($row) {
   $attributes = array();
@@ -349,7 +345,7 @@ function woolman_table_row($row) {
  * Processor for woolman_num_to_words()
  * Recursive fn, converts three digits per pass
  */
-function woolman_convert_triples($num, $tri) {
+function woolman_convert_triples($num, $tri = 0) {
   $ones = array('', ' one', ' two', ' three', ' four', ' five', ' six', ' seven', ' eight', ' nine', ' ten',
     ' eleven', ' twelve', ' thirteen', ' fourteen', ' fifteen', ' sixteen', ' seventeen', ' eighteen', ' nineteen');
 
@@ -384,10 +380,25 @@ function woolman_convert_triples($num, $tri) {
   }
   // continue recursing?
   if ($r > 0) {
-    return woolman_convert_triples($r, $tri+1) . $str;
+    return woolman_convert_triples($r, $tri + 1) . $str;
   }
   else {
     return $str;
+  }
+}
+
+/**
+ * Convert fraction to english string
+ */
+function woolman_num_to_words_remainder($rem) {
+  if ($rem == .25) {
+    return 'a quarter';
+  }
+  if ($rem == .5) {
+    return 'a half';
+  }
+  if ($rem == .75) {
+    return 'three quarters';
   }
 }
 
@@ -411,12 +422,12 @@ function _woolman_contact_match($params, $write_mode='update_all', $return='retu
 
   if (!empty($params['address']['share_with_contact'])) {
     $result = woolman_civicrm_api('address', 'get', array('contact_id' => $params['address']['share_with_contact'], 'is_primary' => 1));
-    if (is_array($result['values'])) {
+    if (!empty($result['values'])) {
       $master_address = array_pop($result['values']);
       if (!$master_address['master_id']) {
         $master_address['master_id'] = $master_address['id'];
       }
-      unset($master_address['id'], $master_address['contact_id']);
+      unset($master_address['id'], $master_address['contact_id'], $master_address['geo_code_1'], $master_address['geo_code_2']);
       $params['address'] = array($master_address);
     }
     else {
@@ -582,6 +593,7 @@ function _woolman_contact_match($params, $write_mode='update_all', $return='retu
   if ($op != 'no_update' && $write_mode != 'search' && $cid && (!empty($params['email']) || !empty($params['address']) || !empty($params['phone']) || !empty($params['website']))) {
     foreach (array('address', 'email', 'phone', 'website') as $location) {
       if (!empty($params[$location]) && is_array($params[$location])) {
+        $existing = woolman_civicrm_api($location, 'get', array('contact_id' => $cid), 'values');
         foreach ($params[$location] as $address_params) {
           $address_params['contact_id'] = $cid;
           if (empty($address_params['location_type_id']) && empty($address_params['location_type']) && $location != 'website') {
@@ -593,20 +605,28 @@ function _woolman_contact_match($params, $write_mode='update_all', $return='retu
           elseif ($location == 'website' && empty($address_params['website_type_id'])) {
             $address_params['website_type_id'] = 1;
           }
-          $result = woolman_civicrm_api($location, 'get', array('contact_id' => $cid));
-          if (!empty($result['values'])) {
-            foreach ($result['values'] as $loc) {
-              if ($loc['location_type_id'] == $address_params['location_type_id'] && ($address_params['phone_type_id'] == $loc['phone_type_id'] || $location != 'phone')) {
-                $address_params['id'] = $loc['id'];
-                // Prevent recursively-shared addresses
-                if ($address_params['master_id'] == $loc['id']) {
-                  $address_params['master_id'] = 'null';
+          $same = FALSE;
+          foreach ($existing as $loc) {
+            if ($loc['location_type_id'] == $address_params['location_type_id'] && ($location != 'phone' || $address_params['phone_type_id'] == $loc['phone_type_id'])) {
+              $address_params['id'] = $loc['id'];
+              // If all params match existing, no need to update
+              $same = TRUE;
+              foreach ($address_params as $k => $v) {
+                if (woolman_aval($loc, $k) != $v) {
+                  $same = FALSE;
+                  break;
                 }
-                break;
               }
+              // Prevent recursively-shared addresses
+              if (woolman_aval($address_params, 'master_id') == $loc['id']) {
+                $address_params['master_id'] = 'null';
+              }
+              break;
             }
           }
-          woolman_civicrm_api($location, 'create', $address_params);
+          if (!$same) {
+            woolman_civicrm_api($location, 'create', $address_params);
+          }
         }
       }
     }

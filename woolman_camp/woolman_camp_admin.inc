@@ -103,7 +103,7 @@ function woolman_camp_rates(&$form_state) {
     $camps = woolman_camp_sort_sessions($sessions[$year]);
     foreach ($programs as $c => $program) {
       $camp = array_values($camps[$c]);
-      $name = $program['event_type'];
+      $name = $program['name'];
       $form["year_$year"][$c] = array(
         '#type' => 'fieldset',
         '#title' => "$year $name Sessions",
@@ -126,7 +126,7 @@ function woolman_camp_rates(&$form_state) {
           '#prefix' => '<div class="session-dates">',
           '#type' => 'textfield',
           '#size' => 24,
-          '#default_value' => woolman_aval($camp, "$i:title", $year . ' ' . trim(str_replace(array('-Camp', 'Camp'), '', $name)) . ' Session ' . $s),
+          '#default_value' => woolman_aval($camp, "$i:title", $year . ' ' . trim(str_replace('Camp', '', $name)) . ' Session ' . $s),
           '#suffix' => '<hr />',
         );
         $form["year_$year"][$c][$s . '_start'] = array(
@@ -271,8 +271,9 @@ function woolman_camp_rates_submit ($form, &$form_state) {
     drupal_write_record('woolman_camp_rates', $vals, 'year');
   }
   $now = date('YmdHis');
-  $sessions = woolman_camp_sort_sessions($form_state['storage']['sessions'][$year]);
+
   // Save camp sessions
+  $sessions = woolman_camp_sort_sessions($form_state['storage']['sessions'][$year]);
   foreach (woolman_camp_event_types() as $type => $program) {
     $camp = array_values($sessions[$type]);
     for ($s = 1; $s <= $vals[$type]['number']; ++$s) {
@@ -304,8 +305,8 @@ function woolman_camp_rates_submit ($form, &$form_state) {
         }
       }
       else {
-        $params['created_date'] = date('YmdHis');
-        $params['summary'] = 'Another incredible session at ' . $program['event_type'];
+        $params['created_date'] = $now;
+        $params['summary'] = 'Another incredible session at ' . $program['name'];
         $params['created_id'] = woolman_user_cid();
       }
       if (!$same) {
@@ -332,15 +333,13 @@ function woolman_camp_rates_submit ($form, &$form_state) {
         'event_type_id' => 10,
         'is_public' => 1,
         'max_participants' => $vals[$dir][$s . '_max'],
-        'start_date' => woolman_date_array_to_string($vals[$dir][$s . '_date']).'120000',
-        'end_date' => woolman_date_array_to_string($vals[$dir][$s . '_date']).'120000',
-        'created_date' => $now,
+        'start_date' => woolman_date_array_to_string($vals[$dir][$s . '_date']) . '120000',
+        'end_date' => woolman_date_array_to_string($vals[$dir][$s . '_date']) . '120000',
         'is_active' => 1,
         'currency' => 'USD',
         'has_waitlist' => 1,
         'contribution_type_id' => 5,
         'payment_processor' => '5',
-        'created_id' => woolman_user_cid(),
         'custom_40' => $dir,
       );
       $same = FALSE;
@@ -355,6 +354,10 @@ function woolman_camp_rates_submit ($form, &$form_state) {
           && ($sess['max_participants'] == $params['max_participants'])) {
           $same = TRUE;
         }
+      }
+      else {
+        $params['created_date'] = $now;
+        $params['created_id'] = woolman_user_cid();
       }
       if (!$same) {
         woolman_civicrm_api('event', 'create', $params);

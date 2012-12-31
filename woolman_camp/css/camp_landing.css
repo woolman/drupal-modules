@@ -1,80 +1,76 @@
-#registration-info{
-padding-left: 422px;
+#registration-info {
+  padding-left: 422px;
 }
 
-#session-outer{
-background-color: #D2F7EC;
-border: 2px solid #234E58;
-color: black;
-float: left;
-font-size: 0.84em;
-width: 400px;
+#session-outer {
+  background-color: #D2F7EC;
+  border: 2px solid #234E58;
+  color: black;
+  float: left;
+  font-size: 0.84em;
+  width: 400px;
 }
 
-#session-outer h3{
-background-color: #FDFFBF;
-margin: 0;
-padding-bottom: 0.7em;
-padding-top: 0.5em;
-text-align: center;
+#session-outer h3 {
+  background-color: #FDFFBF;
+  margin: 0;
+  padding-bottom: 0.7em;
+  padding-top: 0.5em;
+  text-align: center;
 }
 
-#sfc-sessions{
-background-color: #D2FFCC;
+.session-wrapper {
+  width: 50%;
+  float: left;
 }
 
-#sfc-sessions, #tlc-sessions{
-width: 50%;
-float: left;
+.session-wrapper.odd {
+  background-color: #D2FFCC;
 }
 
-#sfc-sessions h4, #tlc-sessions h4{
-margin: 10px 0 0;
-text-align: center;
+.session-wrapper h4 {
+  margin: 10px 0 0;
+  text-align: center;
 }
 
-div.session{
-margin:10px;
-padding: 7px;
-border: 1px solid white;
-border-radius: 7px;
--moz-border-radius: 7px;
--webkit-border-radius: 7px;
-background-color: #DCFFD7;
+div.session {
+  margin:10px;
+  padding: 7px;
+  border: 1px solid white;
+  border-radius: 7px;
+  -moz-border-radius: 7px;
+  -webkit-border-radius: 7px;
+  background-color: #DCFFD7;
 }
 
-#tlc-sessions .session{
-background-color: #E2F9F3;
+.session-title {
+  font-size: 1em;
+  margin-top: 0;
+  margin-bottom: .2em;
 }
 
-.session-title{
-font-size: 1em;
-margin-top: 0;
-margin-bottom: .2em;
+.session-ages {
+  margin:0;
+  text-align:center;
+  font-style:italic;
 }
 
-.session-ages{
-margin:0;
-text-align:center;
-font-style:italic;
+.session-status {
+  margin-top: 3px;
 }
 
-.session-status{
-margin-top: 3px;
+.session-status .open {
+  background-color: #B4FFBB;
 }
 
-.session-status .open{
-background-color: #B4FFBB;
+.session-status .filling {
+  background-color: #FDFFBF;
 }
 
-.session-status .filling{
-background-color: #FDFFBF;
+.session-status .full {
+  background-color: #FFE6B5;
 }
 
-.session-status .full{
-background-color: #FFE6B5;
-}
-
-.session-status .closed{
-background-color: #FFAEAE;
+.session-status .closed {
+  background-color: #FFAEAE;
 }

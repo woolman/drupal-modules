@@ -148,7 +148,7 @@ function woolman_website_form_alter(&$form, $form_state, $form_id) {
       $form['submit']['#value'] = t('Filter');
     }
   }
-  //admissions activity view
+  // Admissions activity view
   elseif ($view_name == 'admissions_activities' && !empty($form['mine'])) {
     $form['mine']['#options'] = array(
       'All' => 'Any outreach person',
@@ -156,7 +156,7 @@ function woolman_website_form_alter(&$form, $form_state, $form_id) {
     );
   }
 
-  //customize text in comment form
+  // Customize text in comment form
   if ($form_id == 'comment_form') {
     if (!empty($form['name']['#default_value'])) {
       $form['name']['#default_value'] = '';
@@ -261,6 +261,8 @@ function woolman_website_civicrm_buildForm($formName, &$form) {
     if ($form->_values['contribution_type_id'] == 1) {
       $allowed = array('annual fund', 'ws scholarship', 'campership', 'seeds of peace');
       foreach ($form->_elements as &$e) {
+        // The following is commented out because it somehow interfered with form validation
+        // So now we are using a cheap css trick to hide the unwanted options
         /*if (!empty($e->_attributes['name']) && $e->_attributes['name'] == 'custom_18') {
           foreach ($e->_options as $oid => $o) {
             if (!in_array(woolman_aval($o, 'attr:value'), $allowed)) {
@@ -453,7 +455,7 @@ function woolman_website_civicrm_post($op, $type, $id, $object) {
     else {
       $addressee_display .= $c->last_name;
       if ($c->suffix) {
-        $addressee_display .= ' '. $c->suffix;
+        $addressee_display .= ' ' . $c->suffix;
       }
     }
     // Use email if no name
@@ -789,10 +791,10 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
       }
       $values[$cid]['transcript.official'] .= '
         <tr>
-          <td>'. $dao->course_name_55 .'</td>
-          <td>'. $dao->course_credits_57 .'</td>
-          <td>'. $earned_credit.'</td>
-          <td>'. $dao->grade_56 .'</td>
+          <td>' . $dao->course_name_55 .'</td>
+          <td>' . $dao->course_credits_57 .'</td>
+          <td>' . $earned_credit.'</td>
+          <td>' . $dao->grade_56 .'</td>
         </tr>';
       if (empty($values[$cid]['transcript.narrative'])) {
         $values[$cid]['transcript.narrative'] = '';
@@ -1009,7 +1011,7 @@ function woolman_website_civicrm_caseSummary($id) {
   if ($data = db_fetch_array($resource)) {
     $dates = woolman_multivalue_arr($data['semesters']);
     foreach ($dates as $count=> $date) {
-      $value .= '<em>'.substr($date, 0, 4).(substr($date,5,2) < 4 ? ' Spring' : ' Fall').'</em> or ';
+      $value .= '<em>'.substr($date, 0, 4).(substr($date,5,2) < 4 ? ' Spring' : ' Fall') . '</em> or ';
       $summary['semester-pref']['value'] = trim($value, ' or ');
     }
     if ($count) $summary['semester-pref']['label'] = '<strong>Semester Preferences:</strong>';
@@ -1041,7 +1043,7 @@ function woolman_website_civicrm_caseSummary($id) {
                         ");
   $i = 1;
   while ($data = db_fetch_array($resource)) {
-    $summary['trip-' . $i++] = array('value' => 'Met ' . $data['display_name'].' at <a title="' . $data['details'].'" href="/civicrm/contact/view/activity?atype=33&action=view&reset=1&id=' . $data['activity_id'].'&cid=' . $data['contact_id'].'">' . $data['subject'].'</a> on '.date('m/d/Y', strtotime($data['activity_date_time']))
+    $summary['trip-' . $i++] = array('value' => 'Met ' . $data['display_name'] . ' at <a title="' . $data['details'] . '" href="/civicrm/contact/view/activity?atype=33&action=view&reset=1&id=' . $data['activity_id'] . '&cid=' . $data['contact_id'] . '">' . $data['subject'] . '</a> on '.date('m/d/Y', strtotime($data['activity_date_time']))
                      );
   }
 
@@ -1059,8 +1061,8 @@ function woolman_website_civicrm_caseSummary($id) {
                         ");
 
   if ($act = db_fetch_array($resource)) {
-    $summary['latest-note']['label'] .= ' <a title="View this activity." href="javascript:viewActivity(' . $act['id'].', ' . $cid.',\'\');">' . $act['subject'].'</a> (by ' . $act['display_name'].' on '.date('m/d/Y', strtotime($act['activity_date_time'])).')';
-    $summary['latest-note']['value'] = strlen($act['details']) > 200 ? _filter_htmlcorrector(substr($act['details'], 0, 190).'... <a title="View this activity." href="javascript:viewActivity(' . $act['id'].', ' . $cid.',\'\');">(more)</a>') : $act['details'];
+    $summary['latest-note']['label'] .= ' <a title="View this activity." href="javascript:viewActivity(' . $act['id'] . ', ' . $cid.',\'\');">' . $act['subject'] . '</a> (by ' . $act['display_name'] . ' on '.date('m/d/Y', strtotime($act['activity_date_time'])) . ')';
+    $summary['latest-note']['value'] = strlen($act['details']) > 200 ? _filter_htmlcorrector(substr($act['details'], 0, 190) . '... <a title="View this activity." href="javascript:viewActivity(' . $act['id'] . ', ' . $cid.',\'\');">(more)</a>') : $act['details'];
   }
   return $summary;
 }
@@ -1425,7 +1427,7 @@ function woolman_aval($haystack, $keys, $default = NULL, $strict = FALSE) {
  */
 function woolman_date_array_to_string($date_array, $sep = '') {
   if (isset($date_array['year']) && isset($date_array['month']) && isset($date_array['day'])) {
-    return $date_array['year'].$sep.substr('0'.$date_array['month'], -2).$sep.substr('0'.$date_array['day'], -2);
+    return $date_array['year'] . $sep.substr('0' . $date_array['month'], -2).$sep.substr('0' . $date_array['day'], -2);
   }
 }
 
@@ -1575,18 +1577,27 @@ function woolman_civi_log_latest() {
 }
 
 /**
- * Returns an integer as an english string
+ * Returns a number as an English string, rounded to the nearest quarter
+ * @param $num: number, will be rounded to the nearest quarter
  */
 function woolman_num_to_words($num) {
-  $num = (int) $num;
-  if ($num == 0) {
-    return 'zero';
-  }
   module_load_include('inc', 'woolman_website', 'woolman_website_utils');
-  if ($num < 0) {
-    return 'negative ' . woolman_convert_triples(-$num, 0);
+  $num = round($num * 4) / 4;
+  $int = (int) $num;
+  $rem = $num - $int;
+  if ($int === 0) {
+    return $rem ? woolman_num_to_words_remainder($rem) : 'zero';
   }
-  return woolman_convert_triples($num, 0);
+  if ($int < 0) {
+    $str = 'negative ' . woolman_convert_triples(-$int);
+  }
+  else {
+    $str = woolman_convert_triples($int);
+  }
+  if ($rem) {
+    $str .= ' and ' . woolman_num_to_words_remainder($rem);
+  }
+  return $str;
 }
 
 /**

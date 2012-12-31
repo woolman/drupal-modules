@@ -62,7 +62,7 @@ function woolman_camp_nav_form(&$form_state, $step = 0) {
     }
     $form['button_' . $i] = array(
       '#type' => 'submit',
-      '#value' => $i.': ' . $t,
+      '#value' => $i . ': ' . $t,
       '#disabled' => ($i >= $step),
       '#attributes' => array('class' => $status, 'title' => ($i < $step ? 'Go back to ' . $t.' form' : 'Please complete the form below first'))
     );
@@ -80,7 +80,7 @@ function woolman_camp_nav_form(&$form_state, $step = 0) {
 function woolman_camp_family_form(&$form_state) {
   drupal_add_js(drupal_get_path('module', 'woolman_camp') . '/js/family_form.js', 'module', 'header', TRUE, FALSE);
 
-  //get info about entire family
+  // Get info about entire family
   $self = woolman_camp_contact_get();
   list($children, $spouse, $e_contact, $prior_reg) = woolman_camp_fetch_relations();
 
@@ -88,12 +88,12 @@ function woolman_camp_family_form(&$form_state) {
   $phones = array('home' => 'Home', 'cell' => 'Cell', 'work' => 'Work');
   $parent_roles = woolman_get_civi_options(83);
 
-  //build form
+  // Build form
   $form = array('#prefix' => '<h3>Welcome to Camp Woolman Registration ' . woolman_camp_next_year() . '</h3>');
   if ($prior_reg)
-    $form['#prefix'] .= '<p>Hi ' . $self['nick_name'].', welcome back to another great year at camp! Since you\'ve registered for camp before, we\'ve filled out most of this form for you (pretty cool, huh?).</p><p><strong>But wait!</strong> Don\'t just scroll to the bottom and press Continue. It\'s important that you read through all this very carefully so that we have accurate emergency contact info, and we don\'t make embarrassing mistakes like misspelling your last name!</p><p>So please <em>check everything</em>, update anything that\'s changed, and fill in any missing info.</p>';
+    $form['#prefix'] .= '<p>Hi ' . $self['nick_name'] . ', welcome back to another great year at camp! Since you\'ve registered for camp before, we\'ve filled out most of this form for you (pretty cool, huh?).</p><p><strong>But wait!</strong> Don\'t just scroll to the bottom and press Continue. It\'s important that you read through all this very carefully so that we have accurate emergency contact info, and we don\'t make embarrassing mistakes like misspelling your last name!</p><p>So please <em>check everything</em>, update anything that\'s changed, and fill in any missing info.</p>';
   else
-    $form['#prefix'] .= '<p>Hi ' . $self['nick_name'].', we\'re so glad your family is joining us this year. '.woolman_camp_next_year().' is shaping up to be a fantastic summer, and with your child at camp, it will be even better!</p><p>To get started, please fill out this form completely. The good news? Next year when you come back to register, this will all be filled out for you!</p>';
+    $form['#prefix'] .= '<p>Hi ' . $self['nick_name'] . ', we\'re so glad your family is joining us this year. ' . woolman_camp_next_year() . ' is shaping up to be a fantastic summer, and with your child at camp, it will be even better!</p><p>To get started, please fill out this form completely. The good news? Next year when you come back to register, this will all be filled out for you!</p>';
 
   $form['self_wrapper'] = array(
     '#prefix' => '<div id="self-wrapper" class="form-wrapper" style="background-color:#C5FAFF;">',
@@ -113,7 +113,7 @@ function woolman_camp_family_form(&$form_state) {
     $form['spouse_wrapper']['not_spouse'] = array(
       '#prefix' => '<div class="change-contact">',
       '#suffix' => '</div>',
-      '#value' => '<p>Our records show that your partner is <strong id="spouse-name">' . $spouse['display_name'].'</strong>. If this is not accurate, please click "Change/remove spouse."</p>',
+      '#value' => '<p>Our records show that your partner is <strong id="spouse-name">' . $spouse['display_name'] . '</strong>. If this is not accurate, please click "Change/remove spouse."</p>',
       'not_spouse_checkbox' => array(
         '#type' => 'checkbox',
         '#return_value' => $spouse['contact_id'],
@@ -121,7 +121,7 @@ function woolman_camp_family_form(&$form_state) {
       ),
       'not_spouse_select' => array(
         '#type' => 'select',
-        '#title' => '<span>Because ' . $spouse['display_name'].' and I</span>',
+        '#title' => '<span>Because ' . $spouse['display_name'] . ' and I</span>',
         '#options' => array('--Please choose an option--','Are now separated or divorced','Are not partners; your records were incorrect'),
       ),
       'spouse_cid' => array('#type' => 'hidden', '#value' => $spouse['contact_id'])
@@ -133,7 +133,7 @@ function woolman_camp_family_form(&$form_state) {
   $form['spouse_wrapper']['spouse']['spouse_na'] = array(
     '#type' => 'checkbox',
     '#title' => 'Not Applicable',
-    '#prefix' => '<div id="spouse-instructions-wrapper"><p id="spouse-instructions">'  .($spouse ? 'Please check and update info for <strong>' . $spouse['display_name'].'</strong></p>':'Please enter your spouse, if applicable.').'</p>',
+    '#prefix' => '<div id="spouse-instructions-wrapper"><p id="spouse-instructions">'  .($spouse ? 'Please check and update info for <strong>' . $spouse['display_name'] . '</strong></p>':'Please enter your spouse, if applicable.') . '</p>',
     '#suffix' => '</div><div class="clear-block"></div>',
     '#default_value' => !$spouse && ($children || $prior_reg)
   );
@@ -147,7 +147,7 @@ function woolman_camp_family_form(&$form_state) {
     $form['e_contact_wrapper']['not_e_contact'] = array(
       '#prefix' => '<div class="change-contact">',
       '#suffix' => '</div>',
-      '#value' => '<p>Your emergency contact is <strong id="e-contact-name">' . $e_contact['display_name'].'</strong>. If you wish to have a different emergency contact this year, please click here:</p>',
+      '#value' => '<p>Your emergency contact is <strong id="e-contact-name">' . $e_contact['display_name'] . '</strong>. If you wish to have a different emergency contact this year, please click here:</p>',
       'not_e_contact_checkbox' => array(
         '#type' => 'checkbox',
         '#return_value' => $e_contact['contact_id'],
@@ -157,13 +157,13 @@ function woolman_camp_family_form(&$form_state) {
   }
   $form['e_contact_wrapper']['e_contact']=array(
       '#type' => 'fieldset',
-      '#description' => ($e_contact?'<p id="e-contact-instructions">Please check and update info for <strong>' . $e_contact['display_name'].'</strong></p>':'<p>All families must provide a secondary emergency contact person in case we are unable to reach you.</p>')
+      '#description' => ($e_contact?'<p id="e-contact-instructions">Please check and update info for <strong>' . $e_contact['display_name'] . '</strong></p>':'<p>All families must provide a secondary emergency contact person in case we are unable to reach you.</p>')
     );
 
   foreach (array('self', 'spouse', 'e_contact') as $p) {
     $person = $$p;
 
-    $form[$p.'_wrapper'][$p][$p.'_first'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_first'] = array(
       '#prefix' => '<div class="all-fields"><div class="subset">',
       '#type' => 'textfield',
       '#title' => 'First name',
@@ -172,27 +172,27 @@ function woolman_camp_family_form(&$form_state) {
       '#size' => 15,
       '#req' => 1,
     );
-    $form[$p.'_wrapper'][$p][$p.'_nick'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_nick'] = array(
       '#type' => 'textfield',
       '#title' => 'Nickname',
-      '#description' => 'Name '.($p=='self'? 'you':'they').' go by (if different)',
+      '#description' => 'Name ' . ($p=='self'? 'you':'they') . ' go by (if different)',
       '#default_value' => woolman_aval($person, 'nick_name') == woolman_aval($person, 'first_name') ? '' : $person['nick_name'],
       '#size' => 15,
     );
-    $form[$p.'_wrapper'][$p][$p.'_middle'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_middle'] = array(
       '#type' => 'textfield',
       '#title' => 'Middle',
       '#default_value' => woolman_aval($person, 'middle_name'),
       '#size' => 6,
     );
-    $form[$p.'_wrapper'][$p][$p.'_last'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_last'] = array(
       '#type' => 'textfield',
       '#title' => 'Last name',
       '#default_value' => woolman_aval($person, 'last_name'),
       '#size' => 20,
       '#req' => 1,
     );
-    $form[$p.'_wrapper'][$p][$p.'_gender'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_gender'] = array(
       '#type' => 'radios',
       '#title' => 'Gender',
       '#default_value' => woolman_aval($person, 'gender_id'),
@@ -201,7 +201,7 @@ function woolman_camp_family_form(&$form_state) {
       '#suffix' => ($p == 'e_contact' ? '</div>' : ''),
     );
     if ($p != 'e_contact') {
-      $form[$p.'_wrapper'][$p][$p.'_dob'] = array(
+      $form[$p . '_wrapper'][$p][$p . '_dob'] = array(
         '#type' => 'date',
         '#title' => 'Birthdate',
         '#default_value' => woolman_aval($person, 'dob', array('year' => 1900,'month' => 1,'day' => 1)),
@@ -220,13 +220,13 @@ function woolman_camp_family_form(&$form_state) {
        $form['spouse_wrapper'][$p]['spouse_relationship']['#options']['0'] = 'Divorced';
     }
     if ($p == 'self') {
-      $form[$p.'_wrapper'][$p][$p.'_first']['#prefix'] .= '<div class="change-msg">NOTE: You are editing the contact info for yourself here (the parent). Feel free to update/correct your own name, etc. but please <strong>do not</strong> enter anyone other you, the parent, in this space.</div>';
+      $form[$p . '_wrapper'][$p][$p . '_first']['#prefix'] .= '<div class="change-msg">NOTE: You are editing the contact info for yourself here (the parent). Feel free to update/correct your own name, etc. but please <strong>do not</strong> enter anyone other you, the parent, in this space.</div>';
     }
     elseif ($person) {
-      $form[$p.'_wrapper'][$p][$p.'_first']['#prefix'] .= '<div class="change-msg">NOTE: You are editing the contact info for ' . $person['display_name'] . ' here. Feel free to update/correct their name, etc. but please don\'t enter a different person without first clicking the "Enter different ' . $p . '" button above.</div>';
+      $form[$p . '_wrapper'][$p][$p . '_first']['#prefix'] .= '<div class="change-msg">NOTE: You are editing the contact info for ' . $person['display_name'] . ' here. Feel free to update/correct their name, etc. but please don\'t enter a different person without first clicking the "Enter different ' . $p . '" button above.</div>';
     }
     foreach ($phones as $ph=> $phone) {
-      $form[$p.'_wrapper'][$p][$p.'_phone_' . $ph] = array(
+      $form[$p . '_wrapper'][$p][$p . '_phone_' . $ph] = array(
         '#type' => 'textfield',
         '#prefix' => ($ph=='home'?'<div class="subset">(Please provide at least one phone number)':''),
         '#title' => $phone.' Phone',
@@ -234,14 +234,14 @@ function woolman_camp_family_form(&$form_state) {
         '#default_value' => woolman_aval($person, "phones:$ph"),
       );
     }
-    $form[$p.'_wrapper'][$p][$p.'_phone_primary'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_phone_primary'] = array(
       '#type' => 'select',
       '#suffix' => '</div>',
       '#title' => 'Primary Phone Number',
       '#options' => $phones,
       '#default_value' => woolman_aval($person, 'phones:primary'),
     );
-    $form[$p.'_wrapper'][$p][$p.'_email_home'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_email_home'] = array(
       '#prefix' => '<div class="subset">(Please provide at least one email address)',
       '#type' => 'textfield',
       '#title' => 'Home Email',
@@ -249,50 +249,50 @@ function woolman_camp_family_form(&$form_state) {
       '#size' => 25,
       '#req' => 1,
     );
-    $form[$p.'_wrapper'][$p][$p.'_email_work'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_email_work'] = array(
       '#type' => 'textfield',
       '#title' => 'Work Email',
       '#default_value' => woolman_aval($person, 'emails:work'),
       '#size' => 25,
       '#req' => 1,
     );
-    $form[$p.'_wrapper'][$p][$p.'_email_primary'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_email_primary'] = array(
       '#type' => 'select',
       '#suffix' => '</div>',
       '#title' => 'Primary Email Address',
       '#options' => array('home' => 'Home', 'work' => 'Work'),
       '#default_value' => woolman_aval($person, 'emails:primary'),
     );
-    $form[$p.'_wrapper'][$p][$p.'_address'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_address'] = array(
       '#type' => 'fieldset',
       '#title' => 'Address',
       '#suffix' => '</div>',
     );
     if ($p != 'self') {
-      $form[$p.'_wrapper'][$p][$p.'_address'][$p.'_same'] = array(
+      $form[$p . '_wrapper'][$p][$p . '_address'][$p . '_same'] = array(
         '#type' => 'checkbox',
         '#title' => 'Same as my address',
-        '#prefix' => '<div id="sameaddress-' . $p.'" style="float:right;">',
+        '#prefix' => '<div id="sameaddress-' . $p . '" style="float:right;">',
         '#suffix' => '</div>',
         '#default_value' => !empty($self['street_address']) && woolman_aval($person, 'street_address') == $self['street_address'],
       );
     }
-    $form[$p.'_wrapper'][$p][$p.'_address'][$p.'_street'] = array(
-      '#prefix' => '<div class="subset hide-address" id="' . $p.'-address">',
+    $form[$p . '_wrapper'][$p][$p . '_address'][$p . '_street'] = array(
+      '#prefix' => '<div class="subset hide-address" id="' . $p . '-address">',
       '#type' => 'textfield',
       '#title' => 'Street Address',
       '#default_value' => woolman_aval($person, 'street_address'),
       '#size' => 45,
       '#req' => 1,
     );
-    $form[$p.'_wrapper'][$p][$p.'_address'][$p.'_city'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_address'][$p . '_city'] = array(
       '#type' => 'textfield',
       '#title' => 'City',
       '#default_value' => woolman_aval($person, 'city'),
       '#size' => 10,
       '#req' => 1,
     );
-    $form[$p.'_wrapper'][$p][$p.'_address'][$p.'_state'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_address'][$p . '_state'] = array(
       '#type' => 'textfield',
       '#title' => 'State',
       '#default_value' => woolman_aval($person, 'state_province'),
@@ -300,14 +300,14 @@ function woolman_camp_family_form(&$form_state) {
       '#maxlength' => 2,
       '#req' => 1,
     );
-    $form[$p.'_wrapper'][$p][$p.'_address'][$p.'_zip'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_address'][$p . '_zip'] = array(
       '#type' => 'textfield',
       '#title' => 'Zip Code',
       '#default_value' => woolman_aval($person, 'postal_code'),
       '#size' => 8,
       '#req' => 1,
     );
-    $form[$p.'_wrapper'][$p][$p.'_address'][$p.'_country'] = array(
+    $form[$p . '_wrapper'][$p][$p . '_address'][$p . '_country'] = array(
       '#type' => 'select',
       '#title' => 'Country',
       '#options' => $countries,
@@ -335,10 +335,10 @@ function woolman_camp_family_form(&$form_state) {
     '#suffix' => 'Please complete the name, etc. for each child. You may list them in any order.'
   );
   //Build fieldset for each child
-  for ($i=1; $i<=9; $i++) {
+  for ($i = 1; $i<=9; $i++) {
     $form['children_wrapper']['child' . $i] = array(
       '#type' => 'fieldset',
-      '#title' => 'Child '. $i,
+      '#title' => 'Child ' . $i,
     );
     if (!empty($children[$i-1])) {
       $child = $children[$i-1];
@@ -347,12 +347,12 @@ function woolman_camp_family_form(&$form_state) {
         $child['dob'] = woolman_date_string_to_array($child['birth_date']);
       }
       $form['children_wrapper']['child' . $i]['#title'] = $child['display_name'];
-      $form['children_wrapper']['child' . $i]['#description'] = '<p>Please verify and update info for <strong>' . $child['display_name'].'</strong>.</p><div class="change-msg">NOTE: You are editing the contact info for ' . $child['display_name'] . ' here. Feel free to update/correct their name, etc. but please <strong>do not</strong> enter a different person in this space. To add more children, increase the number above.</div>';
+      $form['children_wrapper']['child' . $i]['#description'] = '<p>Please verify and update info for <strong>' . $child['display_name'] . '</strong>.</p><div class="change-msg">NOTE: You are editing the contact info for ' . $child['display_name'] . ' here. Feel free to update/correct their name, etc. but please <strong>do not</strong> enter a different person in this space. To add more children, increase the number above.</div>';
     }
     else {
       $child = array();
     }
-    $form['children_wrapper']['child' . $i]['child' . $i.'_first'] = array(
+    $form['children_wrapper']['child' . $i]['child' . $i . '_first'] = array(
       '#prefix' => '<div class="subset">',
       '#type' => 'textfield',
       '#title' => 'First name',
@@ -360,54 +360,54 @@ function woolman_camp_family_form(&$form_state) {
       '#size' => 15,
       '#mark_req' => 1,
     );
-    $form['children_wrapper']['child' . $i]['child' . $i.'_nick'] = array(
+    $form['children_wrapper']['child' . $i]['child' . $i . '_nick'] = array(
       '#type' => 'textfield',
       '#title' => 'Nickname',
       '#default_value' => woolman_aval($child, 'nick_name') == woolman_aval($child, 'first_name') ? '' : $child['nick_name'],
       '#size' => 12,
     );
-    $form['children_wrapper']['child' . $i]['child' . $i.'_middle'] = array(
+    $form['children_wrapper']['child' . $i]['child' . $i . '_middle'] = array(
       '#type' => 'textfield',
       '#title' => 'Middle',
       '#default_value' => woolman_aval($child, 'middle_name'),
       '#size' => 6,
     );
-    $form['children_wrapper']['child' . $i]['child' . $i.'_last'] = array(
+    $form['children_wrapper']['child' . $i]['child' . $i . '_last'] = array(
       '#type' => 'textfield',
       '#title' => 'Last name',
       '#default_value' => woolman_aval($child, 'last_name'),
       '#size' => 20,
       '#mark_req' => 1,
     );
-      $form['children_wrapper']['child' . $i]['child' . $i.'_dob'] = array(
+      $form['children_wrapper']['child' . $i]['child' . $i . '_dob'] = array(
       '#type' => 'date',
       '#title' => 'Birthdate',
       '#default_value' => woolman_aval($child, 'dob', array('year' => 1900, 'month' => 1, 'day' => 1)),
       '#suffix' => '</div>',
       '#mark_req' => 1,
     );
-    $form['children_wrapper']['child' . $i]['child' . $i.'_email'] = array(
+    $form['children_wrapper']['child' . $i]['child' . $i . '_email'] = array(
       '#type' => 'textfield',
       '#title' => 'Email (optional)',
       '#default_value' => woolman_aval($child, 'email'),
       '#size' => 20,
       '#prefix' => '<div class="subset">',
     );
-    $form['children_wrapper']['child' . $i]['child' . $i.'_gender'] = array(
+    $form['children_wrapper']['child' . $i]['child' . $i . '_gender'] = array(
       '#type' => 'radios',
       '#title' => 'Gender',
       '#default_value' => woolman_aval($child, 'gender_id'),
       '#options' => array(1 => 'Female', 2 => 'Male'),
       '#mark_req' => 1,
     );
-    $form['children_wrapper']['child' . $i]['child' . $i.'_relationship'] = array(
+    $form['children_wrapper']['child' . $i]['child' . $i . '_relationship'] = array(
       '#type' => 'select',
       '#title' => 'Your Parental Role',
       '#options' => $parent_roles,
       '#default_value' => woolman_aval($child, 'relationship_custom'),
       '#mark_req' => 1,
     );
-    $form['children_wrapper']['child' . $i]['child' . $i.'_relationship_spouse'] = array(
+    $form['children_wrapper']['child' . $i]['child' . $i . '_relationship_spouse'] = array(
       '#type' => 'select',
       '#title' => '<span class="spouse-name-here">Your Partner/Spouse</span>\'s Parental Role',
       '#options' => $parent_roles,
@@ -433,14 +433,16 @@ function woolman_camp_registration_form(&$form_state) {
   drupal_add_js(drupal_get_path('module', 'woolman_camp') . '/js/reg_form.js', 'module', 'header', TRUE, FALSE);
   module_load_include('inc', 'woolman_website', 'woolman_website_utils');
 
-  // info about entire family
+  // Info about entire family
   list($children, $spouse, $e_contact, $prior_reg) = woolman_camp_fetch_relations();
 
   $year = woolman_camp_next_year();
   $rates = woolman_camp_get_rates($year);
   $session_data = woolman_camp_get_sessions($year);
+  $programs = woolman_camp_event_types();
+  $age_limit = woolman_camp_age_limits(1);
 
-  $form = array('#prefix' => '<h2>Camper Registration Form</h2><p>Thanks for updating your family info. The next step is to decide what dates your '.(count($children)==1 ? 'child is' : 'children are').' coming for camp. Please use the following guidelines:</p><p><strong>Sierra Friends Camp:</strong> for children between the ages of 9 and 14. Campers may stay for 1, 2, 3, or 4 weeks by combining multiple sessions. Note: Campers will need to go home in-between sessions that do not end and start on the same date.</p><p><strong>Woolman Teen Leadership Camp:</strong> for 15 and 16 year-olds. Campers should register for a single 2-week session.</p><p><strong>Age Exceptions:</strong> We can make exceptions for campers who are a little too young or old for a session. If choosing such a session, please indicate why in your application below.</p>');
+  $form = array('#prefix' => '<h2>Camper Registration Form</h2><p>Thanks for updating your family info. The next step is to decide what dates your ' . (count($children)==1 ? 'child is' : 'children are') . ' coming for camp. Please use the following guidelines:</p><p><strong>Sierra Friends Camp:</strong> for children between the ages of 9 and 14. Campers may stay for 1, 2, 3, or 4 weeks by combining multiple sessions. Note: Campers will need to go home in-between sessions that are not part of an A-B combo.</p><p><strong>Woolman Teen Leadership Camp:</strong> for 15 and 16 year-olds. Campers should register for a single 2-week session.</p><p><strong>Age Exceptions:</strong> We can make exceptions for campers who are a little too young or old for a session. If choosing such a session, please indicate why in your application below.</p>');
 
   $form['tabs'] = array('#value' => '<ul id="tab-nav">');
 
@@ -454,24 +456,24 @@ function woolman_camp_registration_form(&$form_state) {
     $he_she = $child['gender_id'] == 1 ? 'she' : 'he';
     $gender = $child['gender_id'] == 1 ? 'girls' : 'boys';
 
-    $form['tabs']['#value'] .= '<li><a href="#child-' . $child['contact_id'].'"><span class="child-name">' . $child['nick_name'].' ' . $child['last_name'] . '</span><span class="registered-for">&nbsp;</span></a></li>';
+    $form['tabs']['#value'] .= '<li><a href="#child-' . $child['contact_id'] . '"><span class="child-name">' . $child['nick_name'] . ' ' . $child['last_name'] . '</span><span class="registered-for">&nbsp;</span></a></li>';
 
     $form[$id] = array(
-      '#prefix' => '<div id="child-' . $child['contact_id'].'" class="child-wrapper">',
-      '#value' => '<div class="child-name">' . $child['nick_name'].' ' . $child['last_name'].'</div><div class="child-age">Age This July: ' . woolman_camp_age($child['birth_date'], $year) . '</div>',
+      '#prefix' => '<div id="child-' . $child['contact_id'] . '" class="child-wrapper">',
+      '#value' => '<div class="child-name">' . $child['nick_name'] . ' ' . $child['last_name'] . '</div><div class="child-age">Age This July: ' . woolman_camp_age($child['birth_date'], $year) . '</div>',
       '#suffix' => '<div style="clear:both"></div></div>',
       '#tree' => TRUE,
       'prior_camp' => array('#type' => 'hidden', '#value' => 0)
     );
-    if ($age > 7 && $age < 18) {
+    if ($age > $age_limit['min'] && $age < $age_limit['max']) {
       $last_year = $current_reg = $submission = NULL;
       $form[$id]['register'] = array(
         '#prefix' => '<div class="register-wrapper">',
         '#suffix' => '<div class="clear-block"></div></div>',
-        '#value' => '<h4>Register for '.($age < 15 ? 'Sierra Friends Camp' : 'Teen Leadership Camp').'</h4>',
+        '#value' => '<h4>Register for Camp</h4>',
       );
       foreach ($session_data as $s) {
-        if (($s['event_type_id'] == 8 && $age > 15) || ($s['event_type_id'] == 9 && $age < 14)) {
+        if (!woolman_camp_age_range($age, $s['event_type_id'], 1)) {
           continue;
         }
         $title = trim(str_replace("$year", '', $s['title']));
@@ -481,9 +483,9 @@ function woolman_camp_registration_form(&$form_state) {
           $status = 'Past';
           $class = 'ended';
         }
-        elseif ($s['full'] || $s[$gender] >= ($rates['gender_balance'] / 100 * $s['max_participants'])) {
+        elseif ($s['full'] || ($rates['gender_balance'] !== '' && $s[$gender] >= ($rates['gender_balance'] / 100 * $s['max_participants']))) {
           $action = 'Join waitlist';
-          $status = 'Sorry, full' . (!$s['full'] && $s[$gender] >= ($rates['gender_balance'] / 100 * $s['max_participants']) ? ' for ' . $gender : '');
+          $status = 'Sorry, full' . ($s['full'] ? '' : ' for ' . $gender);
           $class = 'closed';
         }
         else {
@@ -493,13 +495,12 @@ function woolman_camp_registration_form(&$form_state) {
         }
         $form[$id]['register'][$s['id']] = array(
           '#type' => 'checkbox',
-          '#return_value' => $s['weeks'],
           '#title' => $action,
           '#disabled' => ($class == 'ended'),
-          '#prefix' => '<div class="register-button '. $class .'">
-                          <h5 class="session-title">' . $title.'</h5>
-                          <div class="session-dates">
-                            '.woolman_camp_date_format($s['start_date'], $s['end_date']).'
+          '#prefix' => '<div class="register-button ' . $class . '">
+                          <h5 class="session-title">' . $title . '</h5>
+                          <div class="session-dates">' .
+                            woolman_camp_date_format($s['start_date'], $s['end_date']) . '
                           </div>',
           '#suffix' => '  <div class="session-status">
                             ' . $status.'
@@ -529,7 +530,7 @@ function woolman_camp_registration_form(&$form_state) {
       $form[$id]['questions'] = woolman_custom_field_group_fapi(7, $current_reg);
       $form[$id]['questions']['#prefix'] = '<div class="questions-wrapper">';
       $form[$id]['questions']['#suffix'] = '</div>';
-      $form[$id]['questions']['#value']   = '<h2>Registration Questions</h2>';
+      $form[$id]['questions']['#value'] = '<h2>Registration Questions</h2>';
       $form[$id]['questions']['camper_question_1_10']['#prefix'] = '<h4 style="margin-bottom:0.2em;">For the Camper</h4><em>Please ask ' . $child['nick_name'] . ' to answer these questions (you may skip these and return later if needed):</em>';
       $form[$id]['questions']['camper_question_1_10']['#title'] = 'What are you looking forward to about camp?';
       $form[$id]['questions']['camper_question_2_12']['#title'] = 'Is there anything you are nervous about?';
@@ -544,7 +545,7 @@ function woolman_camp_registration_form(&$form_state) {
       $form[$id]['questions']['parent_question_2_14']['#title'] = "What physical, emotional, social, or dietary needs does {$child['nick_name']} have? Please include any allergies, food restrictions, medications, behavioral issues, physical limitations, or anything else we should know to make sure $he_she gets $his_her needs met at camp.";
       unset($form[$id]['questions']['parent_15'], $form[$id]['questions']['camper_question_1_10']['#description'], $form[$id]['questions']['parent_question_1_13']['#description']);
       foreach ($form[$id]['questions'] as &$q) {
-        if ($q['#default_value']) {
+        if (!empty($q['#default_value'])) {
           $q['#default_value'] = str_replace(array('<br />', '<p>', '</p>'), '', $q['#default_value']);
           $q['#default_value'] = str_replace('  ', ' ', $q['#default_value']);
           if ($p = strrpos($q['#default_value'], '</h5>')) {
@@ -557,11 +558,14 @@ function woolman_camp_registration_form(&$form_state) {
       }
     }
     else {
-      if ($age > 16 && $age < 19) {
-        $message = 'Sadly, ' . $child['nick_name'].' is too old to be a camper, but did you know about our Counselor in Training program?';
+      if ($age > $age_limit['max'] && $age < 19) {
+        $message = 'Sadly, ' . $child['nick_name'] . ' is too old to be a camper, but did you know about our Counselor in Training program?';
       }
-      elseif ($age < 8) {
-        $message = $child['nick_name'].' will be old enough for camp in another ' . (9-$age) . ' years!';
+      elseif ($age == $age_limit['min'] - 1) {
+        $message = $child['nick_name'] . ' will be old enough for camp next year!';
+      }
+      elseif ($age < $age_limit['min']) {
+        $message = $child['nick_name'] . ' will be old enough for camp in another ' . ($age_limit['min'] - $age) . ' years!';
       }
       else {
         $message = 'Sadly, ' . $child['nick_name'] . ' is too old for camp.';
@@ -634,7 +638,7 @@ function woolman_camp_shuttle_form(&$form_state) {
   list($kids, $spouse, $e_contact, $past_reg) = woolman_camp_fetch_relations();
   $sessions = woolman_camp_get_sessions($year);
 
-  $form = array('#prefix' => 'Shuttle service is between the Bay Area and camp. The cost is $' . $rates['shuttle_price'] . ' per ride (one-way).');
+  $form = array('#prefix' => 'Shuttle service is between the Bay Area and camp. The cost is $' . $rates['shuttle_price'] . ' per ride (one-way) . ');
   foreach ($kids as $kid) {
     if (!isset($kid['prior_camp'])) {
       continue;

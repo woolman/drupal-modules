@@ -2,17 +2,21 @@
 
 module_load_include('inc', 'woolman_camp', 'woolman_camp_utils');
 
+/**
+ * First Time Form Submit
+ */
 function woolman_camp_first_time_form_submit($form, &$form_state) {
   $vals = $form_state['values'];
-  //process how parent heard about us
+  // Record how parent heard about us
   woolman_civicrm_api('activity', 'create', array(
     'activity_type_id' => 53,
     'source_contact_id' => woolman_user_cid(),
+    'target_contact_id' => woolman_user_cid(),
     'subject' => $form['self_medium']['#options'][$vals['self_medium']],
     'status_id' => 2,
     'activity_date_time' => date('Ymdhis'),
-    'details' => '<p><em>Entered on the Camps Woolman registration form:</em></p><p>' . $vals['self_details'].'</p>',
-    'custom_6' => 'summer camp',
+    'details' => '<p><em>Entered on the Camps Woolman registration form:</em></p><p>' . $vals['self_details'] . '</p>',
+    'custom_6' => woolman_multivalue_str('summer camp'),
     'custom_7' => $vals['self_medium'],
   ));
 }
@@ -33,6 +37,9 @@ function woolman_camp_nav_form_submit($form, &$form_state) {
   woolman_camp_update_reg_act($status);
 }
 
+/**
+ * Family Info Form Validate
+ */
 function woolman_camp_family_form_validate($form, &$form_state) {
   $vals = $form_state['values'];
   $required = array('first', 'last', 'dob', 'gender');
@@ -47,128 +54,131 @@ function woolman_camp_family_form_validate($form, &$form_state) {
       form_set_error('not_spouse_select', 'Please choose an option regarding your previous spouse/partner.');
     }
     foreach ($required as $req) {
-      if ((empty($vals[$p.'_' . $req]) && !($req == 'dob' && $p == 'e_contact'))
-      || ($req == 'dob' && woolman_aval($vals, $p.'_dob:year') == 1900)) {
+      if ((empty($vals[$p . '_' . $req]) && !($req == 'dob' && $p == 'e_contact'))
+      || ($req == 'dob' && woolman_aval($vals, $p . '_dob:year') == 1900)) {
         if ($p == 'spouse' && $req == 'first') {
           form_set_error('spouse_na', 'Please fill information about your spouse, or else check the "Not Applicable" button.');
           break;$skip = 1;
         }
         else
-          form_set_error($p.'_' . $req, 'Please fill in ' . $w[0].' '.strtolower($form[$p.'_wrapper'][$p][$p.'_' . $req]['#title']).'.');
+          form_set_error($p . '_' . $req, 'Please fill in ' . $w[0] . ' '.strtolower($form[$p . '_wrapper'][$p][$p . '_' . $req]['#title']) . '.');
       }
     }
     if ($skip) {
       continue;
     }
-    if (!$vals[$p.'_phone_home'] && !$vals[$p.'_phone_cell'] && !$vals[$p.'_phone_work']) {
-      form_set_error($p.'_phone_' . $vals[$p.'_phone_primary'], 'Please fill in at least one phone number for ' . $w[1].'.');
+    if (!$vals[$p . '_phone_home'] && !$vals[$p . '_phone_cell'] && !$vals[$p . '_phone_work']) {
+      form_set_error($p . '_phone_' . $vals[$p . '_phone_primary'], 'Please fill in at least one phone number for ' . $w[1] . '.');
     }
-    elseif (!$vals[$p.'_phone_' . $vals[$p.'_phone_primary']]) {
-      form_set_error($p.'_phone_primary', 'You indicated that ' . $w[0].' primary phone number is "' . $vals[$p.'_phone_primary'].'" but didn\'t provide a ' . $vals[$p.'_phone_primary'].' phone number.');
-      form_set_error($p.'_phone_' . $vals[$p.'_phone_primary'], 'Please fill in the ' . $vals[$p.'_phone_primary'].' number for ' . $w[1].' or else choose a different number as the primary one.');
+    elseif (!$vals[$p . '_phone_' . $vals[$p . '_phone_primary']]) {
+      form_set_error($p . '_phone_primary', 'You indicated that ' . $w[0] . ' primary phone number is "' . $vals[$p . '_phone_primary'] . '" but didn\'t provide a ' . $vals[$p . '_phone_primary'] . ' phone number.');
+      form_set_error($p . '_phone_' . $vals[$p . '_phone_primary'], 'Please fill in the ' . $vals[$p . '_phone_primary'] . ' number for ' . $w[1] . ' or else choose a different number as the primary one.');
     }
-    if (!$vals[$p.'_email_home'] && !$vals[$p.'_email_work']) {
-      form_set_error($p.'_email_' . $vals[$p.'_email_primary'], 'Please fill in at least one email address for ' . $w[1].'.');
+    if (!$vals[$p . '_email_home'] && !$vals[$p . '_email_work']) {
+      form_set_error($p . '_email_' . $vals[$p . '_email_primary'], 'Please fill in at least one email address for ' . $w[1] . '.');
     }
-    elseif (!$vals[$p.'_email_' . $vals[$p.'_email_primary']]) {
-      form_set_error($p.'_email_primary', 'You indicated that ' . $w[0].' primary email is "' . $vals[$p.'_email_primary'].'" but didn\'t provide a ' . $vals[$p.'_email_primary'].' email address.');
-      form_set_error($p.'_email_' . $vals[$p.'_email_primary'], 'Please fill in the ' . $vals[$p.'_email_primary'].' email for ' . $w[1].' or else choose a different address as the primary one.');
+    elseif (!$vals[$p . '_email_' . $vals[$p . '_email_primary']]) {
+      form_set_error($p . '_email_primary', 'You indicated that ' . $w[0] . ' primary email is "' . $vals[$p . '_email_primary'] . '" but didn\'t provide a ' . $vals[$p . '_email_primary'] . ' email address.');
+      form_set_error($p . '_email_' . $vals[$p . '_email_primary'], 'Please fill in the ' . $vals[$p . '_email_primary'] . ' email for ' . $w[1] . ' or else choose a different address as the primary one.');
     }
-    if (!$vals[$p.'_same']) {
+    if (!$vals[$p . '_same']) {
       foreach ($address as $req) {
-        if (!$vals[$p.'_' . $req]) {
-          form_set_error($p.'_' . $req, 'Please fill in ' . $w[0].' '.strtolower($form[$p.'_wrapper'][$p][$p.'_address'][$p.'_' . $req]['#title']).'.');
+        if (!$vals[$p . '_' . $req]) {
+          form_set_error($p . '_' . $req, 'Please fill in ' . $w[0] . ' '.strtolower($form[$p . '_wrapper'][$p][$p . '_address'][$p . '_' . $req]['#title']) . '.');
         }
       }
     }
   }
-  //now the kids
-  for ($c=1; $c<=$vals['number_of_children']; $c++) {
+  // Now the kids
+  for ($c = 1; $c <= $vals['number_of_children']; $c++) {
     foreach ($required as $req) {
-      if (!$vals['child' . $c.'_' . $req]) {
-        form_set_error('child' . $c.'_' . $req, 'Please fill in child ' . $c.'\'s '.strtolower($form['children_wrapper']['child' . $c]['child' . $c.'_' . $req]['#title']).'.');
+      if (!$vals['child' . $c . '_' . $req]) {
+        form_set_error('child' . $c . '_' . $req, 'Please fill in child ' . $c . '\'s ' . strtolower($form['children_wrapper']['child' . $c]['child' . $c . '_' . $req]['#title']) . '.');
       }
     }
   }
 }
 
+/**
+ * Family Info Form Submit
+ */
 function woolman_camp_family_form_submit($form, &$form_state) {
   $vals = $form_state['values'];
   $vals['self_cid'] = woolman_user_cid();
 
   // Add or update contacts
-
   foreach (array('self', 'spouse', 'e_contact') as $p) {
-    if ($p=='spouse' && $vals['spouse_na']) {
+    if ($p == 'spouse' && $vals['spouse_na']) {
       continue;
     }
     $params = array(
-      'first_name' => $vals[$p.'_first'],
-      'nick_name' => $vals[$p.'_nick'],
-      'middle_name' => $vals[$p.'_middle'],
-      'last_name' => $vals[$p.'_last'],
-      'gender_id' => $vals[$p.'_gender'],
+      'first_name' => $vals[$p . '_first'],
+      'nick_name' => $vals[$p . '_nick'],
+      'middle_name' => $vals[$p . '_middle'],
+      'last_name' => $vals[$p . '_last'],
+      'gender_id' => $vals[$p . '_gender'],
     );
-    if (!empty($vals[$p.'_dob'])) {
-      $params['birth_date'] = woolman_date_array_to_string($vals[$p.'_dob']);
+    if (!empty($vals[$p . '_dob'])) {
+      $params['birth_date'] = woolman_date_array_to_string($vals[$p . '_dob']);
     }
 
-    if ($vals[$p.'_cid'] && !$vals['not_' . $p.'_checkbox']) {
-      $params['contact_id'] = $vals[$p.'_cid'];
+    if ($vals[$p . '_cid'] && !$vals['not_' . $p . '_checkbox']) {
+      $params['contact_id'] = $vals[$p . '_cid'];
     }
 
     $address = array(array(
       'location_type_id' => 1,
       'is_primary' => 1,
-      'street_address' => $vals[$p.'_street'],
-      'city' => $vals[$p.'_city'],
-      'state_province' => $vals[$p.'_state'],
-      'postal_code' => $vals[$p.'_zip'],
-      'country_id' => $vals[$p.'_country'],
+      'street_address' => $vals[$p . '_street'],
+      'city' => $vals[$p . '_city'],
+      'state_province' => $vals[$p . '_state'],
+      'postal_code' => $vals[$p . '_zip'],
+      'country_id' => $vals[$p . '_country'],
     ));
 
     $phone = array();
-    if ($vals[$p.'_phone_cell']) {
+    if ($vals[$p . '_phone_cell']) {
       $phone[] = array(
-        'phone' => $vals[$p.'_phone_cell'],
+        'phone' => $vals[$p . '_phone_cell'],
         'location_type_id' => 4,
-        'is_primary' => ($vals[$p.'_phone_primary']=='cell'),
+        'is_primary' => ($vals[$p . '_phone_primary']=='cell'),
       );
     }
-    if ($vals[$p.'_phone_home']) {
+    if ($vals[$p . '_phone_home']) {
       $phone[] = array(
-        'phone' => $vals[$p.'_phone_home'],
+        'phone' => $vals[$p . '_phone_home'],
         'location_type_id' => 1,
-        'is_primary' => ($vals[$p.'_phone_primary']=='home'),
+        'is_primary' => ($vals[$p . '_phone_primary']=='home'),
       );
     }
-    if ($vals[$p.'_phone_work']) {
+    if ($vals[$p . '_phone_work']) {
       $phone[] = array(
-        'phone' => $vals[$p.'_phone_work'],
+        'phone' => $vals[$p . '_phone_work'],
         'location_type_id' => 2,
-        'is_primary' => ($vals[$p.'_phone_primary']=='work'),
+        'is_primary' => ($vals[$p . '_phone_primary']=='work'),
       );
     }
     $email = array();
-    if ($vals[$p.'_email_home']) {
-      $email[] = array('email' => $vals[$p.'_email_home'],
+    if ($vals[$p . '_email_home']) {
+      $email[] = array('email' => $vals[$p . '_email_home'],
                         'location_type_id' => 1,
-                        'is_primary' => ($vals[$p.'_email_primary']=='home'),
+                        'is_primary' => ($vals[$p . '_email_primary']=='home'),
                         );
-      $adult_emails[strtolower($vals[$p.'_email_home'])] = TRUE;
+      $adult_emails[strtolower($vals[$p . '_email_home'])] = TRUE;
     }
-    if ($vals[$p.'_email_work'] && $vals[$p.'_email_work'] != $vals[$p.'_email_home'])  {
-      $email[] = array('email' => $vals[$p.'_email_work'],
-                        'location_type_id' => 2,
-                        'is_primary' => ($vals[$p.'_email_primary']=='work'),
-                        );
-      $adult_emails[strtolower($vals[$p.'_email_work'])] = TRUE;
+    if ($vals[$p . '_email_work'] && $vals[$p . '_email_work'] != $vals[$p . '_email_home'])  {
+      $email[] = array(
+        'email' => $vals[$p . '_email_work'],
+        'location_type_id' => 2,
+        'is_primary' => ($vals[$p . '_email_primary']=='work'),
+      );
+      $adult_emails[strtolower($vals[$p . '_email_work'])] = TRUE;
     }
 
     $result = woolman_contact_match(
-    array(
+      array(
         'contact' => $params,
-        'address' => ($vals[$p.'_same'] ? array('share_with_contact' => $cid['self']) : $address),
+        'address' => ($vals[$p . '_same'] ? array('share_with_contact' => $cid['self']) : $address),
         'phone' => $phone,
         'email' => $email
       ),
@@ -180,7 +190,7 @@ function woolman_camp_family_form_submit($form, &$form_state) {
     }
     $exclude .= $cid[$p];
   }
-  //add/update kids
+  // Add/update kids
   $kid_params = array('address' => array('share_with_contact' => $cid['self']));
   if ($vals['self_phone_home']) {
     $kid_params['phone'] = array(array(
@@ -191,22 +201,21 @@ function woolman_camp_family_form_submit($form, &$form_state) {
     ));
   }
   $kids = '';
-  for ($c=1; $c <= $vals['number_of_children']; $c++) {
-
+  for ($c = 1; $c <= $vals['number_of_children']; $c++) {
     $kid_params['contact'] = array(
-      'first_name' => $vals['child' . $c.'_first'],
-      'nick_name' => $vals['child' . $c.'_nick'],
-      'middle_name' => $vals['child' . $c.'_middle'],
-      'last_name' => $vals['child' . $c.'_last'],
-      'gender_id' => $vals['child' . $c.'_gender'],
-      'birth_date' => woolman_date_array_to_string($vals['child' . $c.'_dob']),
+      'first_name' => $vals['child' . $c . '_first'],
+      'nick_name' => $vals['child' . $c . '_nick'],
+      'middle_name' => $vals['child' . $c . '_middle'],
+      'last_name' => $vals['child' . $c . '_last'],
+      'gender_id' => $vals['child' . $c . '_gender'],
+      'birth_date' => woolman_date_array_to_string($vals['child' . $c . '_dob']),
       'contact_id' => woolman_aval($vals, 'child' . $c . '_cid'),
     );
 
     unset($kid_params['email']);
-    if ($vals['child' . $c.'_email'] && !($adult_emails[strtolower($vals['child' . $c.'_email'])])) {
+    if ($vals['child' . $c . '_email'] && !($adult_emails[strtolower($vals['child' . $c . '_email'])])) {
       $kid_params['email'][] = array(
-        'email' => $vals['child' . $c.'_email'],
+        'email' => $vals['child' . $c . '_email'],
         'location_type_id' => 1,
         'is_primary' => 1,
       );
@@ -216,21 +225,21 @@ function woolman_camp_family_form_submit($form, &$form_state) {
     $exclude .= ',' . $result['contact_id'];
     $kids .= ($kids ? ',' : '') . $cid['child' . $c];
 
-    //this kid's relationships
+    // This kid's relationships
     $params = array(
       'contact_id_a' => $cid['child' . $c],
       'contact_id_b' => $cid['self'],
       'relationship_type_id' => 1,
-      'custom_8' => $vals['child' . $c.'_relationship'],
+      'custom_8' => $vals['child' . $c . '_relationship'],
       'is_active' => 1
     );
     woolman_relationship_add_or_update($params, TRUE);
     if ($params['contact_id_b'] = $cid['spouse']) {
-      $params['custom_8'] = $vals['child' . $c.'_relationship_spouse'];
+      $params['custom_8'] = $vals['child' . $c . '_relationship_spouse'];
       woolman_relationship_add_or_update($params, TRUE);
     }
-    //e-contact relationship (we do it twice so start date is only entered for new relationships,
-    //but old inactive ones get updated to be active again)
+    // E-contact relationship (we do it twice so start date is only entered for new relationships,
+    // But old inactive ones get updated to be active again)
     unset($params['custom_8']);
     $params['contact_id_b'] = $cid['e_contact'];
     $params['relationship_type_id'] = 19;
@@ -274,9 +283,9 @@ function woolman_camp_family_form_submit($form, &$form_state) {
       }
     }
   }
-  //end old e-contact relationships
+  // End old e-contact relationships
   if ($vals['not_e_contact_checkbox']) {
-    for ($c=1; $kid=$vals['child' . $c.'_cid']; $c++) {
+    for ($c = 1; $kid=$vals['child' . $c . '_cid']; $c++) {
       if (strpos($kids, $kid) === FALSE)
         $kids .= ',' . $kid;
     }
@@ -300,6 +309,9 @@ function woolman_camp_family_form_submit($form, &$form_state) {
   woolman_camp_update_reg_act(4);
 }
 
+/**
+ * Register Form Validate
+ */
 function woolman_camp_registration_form_validate($form, &$form_state) {
   $vals = $form_state['values'];
   $ok = TRUE;
@@ -344,6 +356,9 @@ function woolman_camp_registration_form_validate($form, &$form_state) {
   return $ok;
 }
 
+/**
+ * Register Form Submit
+ */
 function woolman_camp_registration_form_submit($form, &$form_state) {
   module_load_include('inc', 'woolman_website', 'woolman_website_utils');
   $vals = $form_state['values'];
@@ -367,7 +382,7 @@ function woolman_camp_registration_form_submit($form, &$form_state) {
     $unregistered = array();
     // Registration questions
     foreach ($val['questions'] as $q => &$a) {
-      $a = '<h5> ' . $form['child_' . $cid]['questions'][$q]['#title'].'</h5> ' . nl2br(filter_xss($a));
+      $a = '<h5> ' . $form['child_' . $cid]['questions'][$q]['#title'] . '</h5> ' . nl2br(filter_xss($a));
     }
     $val['questions']['parent_15'] = $parent;
 
@@ -388,8 +403,8 @@ function woolman_camp_registration_form_submit($form, &$form_state) {
           }
         }
         if (!$entity_id || $reenroll) {
-          // register new participant
-          if ($sessions[$eid]['full'] || $sessions[$eid][$gender] >= ($rates['gender_balance'] / 100 * $sessions[$eid]['max_participants'])) {
+          // Register new participant
+          if ($sessions[$eid]['full'] || ($rates['gender_balance'] !== '' && $sessions[$eid][$gender] >= ($rates['gender_balance'] / 100 * $sessions[$eid]['max_participants']))) {
             $params['status_id'] = 7;
           }
           elseif (!empty($val['prior_camp'])) {
@@ -405,7 +420,7 @@ function woolman_camp_registration_form_submit($form, &$form_state) {
         }
         woolman_custom_field_group_fapi_submit($val['questions'], 7, $entity_id);
       }
-      //un-register camper if unchecked
+      // Un-register camper if unchecked
       elseif ($form[$id]['register'][$eid]['#default_value'] && empty($form[$id]['register'][$eid]['#disabled'])) {
         $result = woolman_civicrm_api('participant', 'get', array('contact_id' => $cid, 'event_id' => $eid));
         foreach (woolman_aval($result, 'values', array()) as $par) {
@@ -449,12 +464,12 @@ function woolman_camp_registration_form_submit($form, &$form_state) {
       'to_cid' => $parent,
       'body' => "Hi " . woolman_name('nick') . ",\n\nWe're so happy to welcome "
       . implode(' and ', $approved) . " back to camp this summer.\n\nThis email is to confirm your registration for the summer of "
-      . woolman_camp_next_year() . ". However, please note that your space at camp is not reserved until we receive your deposit. You'll find instructions for making this payment on the same page you registered:\n http://camp.woolman.org/register/status\n\nWe're looking forward to seeing "
+      . woolman_camp_next_year() . ". However, please note that your space at camp is not reserved until we receive your deposit. You'll find instructions for making this payment on the same page you registered:\n http:// Camp.woolman.org/register/status\n\nWe're looking forward to seeing "
       . implode(' and ', $approved) . " again!\n\n");
     if ($waiting) {
       $message['body'] .= "We're also excited that you've registered " . implode(' and ', $waiting) . " for the first time! Please give us a few moments to review your application and we'll get back to you with the next steps.\n\n";
     }
-    $message['body'] .= "Sincerely,\nYour Friendly Camp Woolman Staff\n530-273-3183x3\nhttp://camp.woolman.org";
+    $message['body'] .= "Sincerely,\nYour Friendly Camp Woolman Staff\n530-273-3183x3\nhttp:// Camp.woolman.org";
     drupal_mail('woolman_website', 'create_activity', $to, language_default(), $message, '"Camp Woolman" <camp@woolman.org> ');
   }
   woolman_camp_update_reg_act(2);
@@ -466,7 +481,7 @@ function woolman_camp_registration_form_submit($form, &$form_state) {
 function woolman_camp_med_form_validate($form, &$form_state) {
   $vals = $form_state['values'];
   if (!$vals['permission_for_medical_treatment_35']) {
-    form_set_error('permission_for_medical_treatment_35', 'You must give permission for medical treatment.');
+    form_set_error('permission_for_medical_treatment_35', 'Our safety protocol requires you give permission for medical treatment.');
   }
   if (!$vals['terms_of_agreement_36']) {
     form_set_error('terms_of_agreement_36', 'You must agree to these terms to submit this form.');

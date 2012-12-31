@@ -8,24 +8,23 @@ define('WOOLMAN_CAMP_SHUTTLE', 10);
 /**
  * Returns camp programs (civi event types) managed by this module.
  * TODO: Eventually we will store this in the db and provide a UI
+ * WARNING: Until that happens, be very careful to keep the 'name' listed here
+ *  consistent with the label in the db for each event type
  */
 function woolman_camp_event_types() {
   return array(
     11 => array(
-      'event_type' => 'Mini-Camp',
-      'abbr' => 'mini',
+      'name' => 'Mini Camp',
       'age_min' => 6,
       'age_max' => 9,
     ),
     8 => array(
-      'event_type' => 'Camp Woolman',
-      'abbr' => 'sfc',
+      'name' => 'Camp Woolman',
       'age_min' => 9,
       'age_max' => 14,
     ),
     9 => array(
-      'event_type' => 'Teen Leadership Camp',
-      'abbr' => 'tlc',
+      'name' => 'Teen Leadership Camp',
       'age_min' => 15,
       'age_max' => 16,
     ),
@@ -43,8 +42,11 @@ function woolman_camp_fetch_relations() {
   }
 
   $cid = woolman_user_cid();
-  $children = $spouse = $e_contact = $kids = array();
+  $children = $spouse = $e_contact = $kids = $programs = array();
   $past_reg = FALSE;
+  foreach(woolman_camp_event_types() as $id => $program) {
+    $programs[$program['name']] = $id;
+  }
   if ($relations = woolman_civicrm_api('relationship', 'get', array('contact_id' => $cid), 'values')) {
     //Load contacts and eliminate duplicates
     foreach ($relations as $rel) {
@@ -54,22 +56,21 @@ function woolman_camp_fetch_relations() {
           if (substr($key, 0, 8) == 'custom_8')
             $children[$rel['cid']]['relationship_custom'] = $value;
         }
-        if ($events = woolman_civicrm_api('participant', 'get', array('contact_id' => $rel['cid']), 'values')) {
-          $prior = array();
-          foreach ($events as $event) {
-            if ($event['event_type'] == 'Sierra Friends Camp' || $event['event_type'] == 'Teen Leadership Camp') {
-              $prior[$event['event_start_date'] . $event['event_id']] = $event;
-            }
-          }
-          if (!empty($prior)) {
-            krsort($prior);
-            $children[$rel['cid']]['prior_camp'] = $prior;
-            $past_reg = TRUE;
+        $events = woolman_civicrm_api('participant', 'get', array('contact_id' => $rel['cid']), 'values');
+        $prior = array();
+        foreach ($events as $event) {
+          if (isset($programs[$event['event_type']])) {
+            $prior[$event['event_start_date'] . $event['event_id']] = $event;
           }
         }
+        if (!empty($prior)) {
+          krsort($prior);
+          $past_reg = TRUE;
+        }
+        $children[$rel['cid']]['prior_camp'] = $prior;
       }
       elseif ($rel['relationship_type_id'] == 2) {
-        //If multiple spouses, pick most active relationship
+        // If multiple spouses, pick most active relationship
         if ($spouse) {
           if (!$rel['is_active'] || ($spouse['is_active'] && ($spouse['relationship_custom']=='Married' || $spouse['relationship_custom']=='Partners')) || ($rel['start_date'] && $spouse['start_date'] && ($rel['start_date'] < $spouse['start_date'])) || $rel['end_date'])
             continue;
@@ -84,7 +85,7 @@ function woolman_camp_fetch_relations() {
       }
     }
     if ($children) {
-      //get emergency contact info from kids
+      // Get emergency contact info from kids
       $now = date('Y-m-d');
       $types = array('Emergency Contact is');
       foreach ($children as $child) {
@@ -97,7 +98,7 @@ function woolman_camp_fetch_relations() {
       }
     }
     if ($spouse) {
-      //load spouse's relation to kids
+      // Load spouse's relation to kids
       foreach (woolman_civicrm_api('relationship', 'get', array('contact_id' => $spouse['contact_id']), 'values') as $rel) {
         if ($rel['rtype'] == 'b_a' && $rel['relationship_type_id'] == 1 && !empty($children[$rel['cid']])) {
           foreach ($rel as $key => $value) {
@@ -107,13 +108,13 @@ function woolman_camp_fetch_relations() {
         }
       }
     }
-    //sort kids by age
+    // Sort kids by age
     foreach ($children as $id => $child) {
       $kids[woolman_aval($child, 'birth_date', 0) . $id] = $child;
     }
     krsort($kids);
-    $found = array(array_values($kids), $spouse, $e_contact, $past_reg);
   }
+  $found = array(array_values($kids), $spouse, $e_contact, $past_reg);
   return $found;
 }
 
@@ -138,9 +139,25 @@ function woolman_camp_age($dob, $year, $cid = NULL) {
  */
 function woolman_camp_age_range($age, $program_id, $padding = 0) {
   $programs = woolman_camp_event_types();
-  $min = $programs[$program_id]['age_min'] + $padding;
-  $max = $programs[$program_id]['age_max'] - $padding;
+  $min = $programs[$program_id]['age_min'] - $padding;
+  $max = $programs[$program_id]['age_max'] + $padding;
   return $age >= $min && $age <= $max;
+}
+
+/**
+ * Minimum and maximum ages for camp (all programs)
+ */
+function woolman_camp_age_limits($padding = 0) {
+  $min = $max = NULL;
+  foreach (woolman_camp_event_types() as $event) {
+    if ($min === NULL || $min > $event['age_min']) {
+      $min = $event['age_min'];
+    }
+    if ($max === NULL || $max < $event['age_max']) {
+      $max = $event['age_max'];
+    }
+  }
+  return array('min' => $min - $padding, 'max' => $max + $padding);
 }
 
 /**
@@ -167,7 +184,7 @@ function woolman_camp_get_sessions($year, $get_campers = FALSE) {
       $row['max_participants_not_set'] = TRUE;
     }
     $row['full'] = ($row['campers'] >= $row['max_participants']);
-    $row['weeks'] = (int) round($row['days'] / 7);
+    $row['weeks'] = round($row['days'] * 2 / 7) / 2;
     if ($get_campers) {
       $row['campers'] = array();
     }
@@ -304,13 +321,19 @@ function woolman_camp_get_payments($cid, $year) {
 function woolman_camp_calc_fees($parent_cid, $year) {
   $programs = woolman_camp_event_types();
   $camp_and_shuttle = array_merge(array(WOOLMAN_CAMP_SHUTTLE), array_keys($programs));
-  if (!($rates = woolman_camp_get_rates($year))) {
+  $rates = woolman_camp_get_rates($year);
+  if (!$rates) {
     return;
   }
   $ret = array(
     'total_fees' => 0,
     'total_discount' => 0,
     'total_paid' => 0,
+    'total_approved' => 0,
+    'total_pending' => 0,
+    'total_waitlist' => 0,
+    'weeks' => 0,
+    'sessions' => array_fill_keys(array_keys($programs), array('count' => 0, 'weeks' => 0, 'price' => 0)),
     'rates' => $rates,
     'shuttles' => 0,
     'discounts' => array(),
@@ -344,6 +367,7 @@ function woolman_camp_calc_fees($parent_cid, $year) {
       $ret['campers'][$cid] = array(
         'register_date' => NULL,
         'weeks' => 0,
+        'sessions' => array(),
         'session_names' => '',
       );
     }
@@ -359,6 +383,7 @@ function woolman_camp_calc_fees($parent_cid, $year) {
             'event_id' => $row['event_id'],
             'pid' => $row['pid'],
             'fee_amount' => $row['fee_amount'],
+            'register_date' => $row['register_date'],
           );
         }
       }
@@ -373,11 +398,13 @@ function woolman_camp_calc_fees($parent_cid, $year) {
     if (empty($ret['campers'][$cid]['register_date']) || ($row['register_date'] && $row['register_date'] < $ret['campers'][$cid]['register_date'])) {
       $ret['campers'][$cid]['register_date'] = $row['register_date'];
     }
-    $row['weeks'] = $weeks = (int) round($row['days'] / 7);
-    $camp = $ret['campers'][$cid]['camp'] = ($row['event_type_id']==8?'sfc':'tlc');
+    $row['weeks'] = $weeks = round($row['days'] * 2 / 7) / 2;
+    $ret['weeks'] += $weeks;
     $row['price'] = woolman_camp_event_price_get(array('id' => $row['event_id']));
+    $ret['sessions'][$row['event_type_id']]['weeks'] += $weeks;
+    $ret['sessions'][$row['event_type_id']]['count']++;
+    $ret['sessions'][$row['event_type_id']]['price'] += $row['price'];
     $ret['total_fees'] += $row['price'];
-    $ret[$camp.'_weeks'] += $weeks;
     $ret['campers'][$cid]['weeks'] += $weeks;
     $ret['campers'][$cid]['first_name'] = $row['nick_name'] ? $row['nick_name'] : $row['first_name'];
     $ret['campers'][$cid]['last_name'] = $row['last_name'];
@@ -389,28 +416,32 @@ function woolman_camp_calc_fees($parent_cid, $year) {
     }
     $ret['campers'][$cid]['session_names'] .= trim(str_replace($year, '', $row['title']));
     if ($row['status'] == 'Pending from pay later' || $row['status'] == 'Registered') {
-      $ret['total_approved'] += $row['weeks'];
-      $row['message'] = $row['fee_amount'] >= ($rates['deposit']*$row['weeks']) ? 'Registered.' : 'Registration approved. Please pay deposit to reserve your space in this session.';
+      $ret['total_approved']++;
+      $row['message'] = $row['fee_amount'] >= ($rates['deposit'] * $row['weeks']) ? 'Registered.' : 'Registration approved. Please pay deposit to reserve your space in this session.';
     }
     elseif ($row['status'] == 'Awaiting approval') {
-      $ret['total_pending'] += $row['weeks'];
+      $ret['total_pending']++;
       $row['message'] = 'Our staff are reviewing your application and will contact you soon.';
     }
     elseif ($row['status'] == 'On waitlist') {
-      $ret['total_waitlist'] += $row['weeks'];
+      $ret['total_waitlist']++;
       $row['message'] = 'On waitlist. We will contact you as soon as space becomes available.';
     }
-    $row['camp'] = $row['event_type_id'] == 8 ? 'sfc' : 'tlc';
-    unset($row['nick_name'],$row['first_name'],$row['contact_id'],$row['gender_id'],$row['status_id'],$row['medform_date']);
+    unset($row['nick_name'], $row['first_name'], $row['last_name'], $row['contact_id'], $row['gender_id'], $row['status_id'], $row['medform_date']);
     $ret['campers'][$cid]['sessions'][$row['pid']] = $row;
   }
   if (empty($ret['campers'])) {
     return;
   }
   foreach ($ret['campers'] as $camper) {
-    // Multi-week discount
-    $weeks = $camper['weeks'];
-    if (($multi_week_discount = ($rates['sfc_multi_week_discount']*$weeks)) && $camper['camp']=='sfc' && $weeks>1) {
+    // Multi-week discount - special case for camp woolman (id 8)
+    $weeks = 0;
+    foreach ($camper['sessions'] as $sess) {
+      if ($sess['event_type_id'] == 8) {
+        $weeks += $sess['weeks'];
+      }
+    }
+    if (($multi_week_discount = ($rates['sfc_multi_week_discount'] * $weeks)) && $weeks > 1) {
       $ret['total_discount'] += $multi_week_discount;
       if (empty($ret['discounts']['Multi-Week Discount'])) {
         $ret['discounts']['Multi-Week Discount'] = array(
@@ -421,7 +452,7 @@ function woolman_camp_calc_fees($parent_cid, $year) {
       $ret['discounts']['Multi-Week Discount']['amount'] += $multi_week_discount;
     }
     // Early registration discount
-    if ($rates['early_discount'] && (substr($rates['early_date'],0,10) >= substr($camper['register_date'],0,10))) {
+    if ($rates['early_discount'] && (substr($rates['early_date'], 0, 10) >= substr($camper['register_date'], 0, 10))) {
       $ret['total_discount'] += $rates['early_discount'];
       if (empty($ret['discounts']['Early Registration'])) {
         $ret['discounts']['Early Registration'] = array(
@@ -442,15 +473,15 @@ function woolman_camp_calc_fees($parent_cid, $year) {
   }
   // Other discounts
   $db = db_query('SELECT * FROM {woolman_camp_discounts} WHERE cid = %d AND year = %d', $parent_cid, $year);
-  while ($row=db_fetch_array($db)) {
-    unset($row['cid'],$row['year']);
+  while ($row = db_fetch_array($db)) {
+    unset($row['cid'], $row['year']);
     $ret['total_discount'] += $row['amount'];
     $row['amount'] += $ret['discounts'][$row['type']]['amount'];
     $ret['discounts'][$row['type']] = $row;
   }
   $ret['shuttle_price'] = $ret['shuttles'] * $rates['shuttle_price'];
   $ret['register_date'] = $register_date;
-  $ret['deposit'] = $rates['deposit'] * ($ret['sfc_weeks'] + $ret['tlc_weeks']);
+  $ret['deposit'] = $rates['deposit'] * $ret['weeks'];
   return $ret;
 }
 
@@ -464,15 +495,16 @@ function woolman_camp_date_format($start, $end=NULL, $return_weeks=TRUE) {
   $start = strtotime($start);
   if ($end) {
     $end = strtotime($end);
-    if (date('F',$start) == date('F',$end))
-      $date = date('F j', $start).' - '.date('jS',$end);
+    if (date('F', $start) == date('F', $end))
+      $date = date('F j', $start) . ' - ' . date('jS', $end);
     else
-      $date = date('F j', $start).' - '.date('F j',$end);
+      $date = date('F j', $start) . ' - ' . date('F j', $end);
     $dates = str_replace('August', 'Aug', $date);
-    if (!$return_weeks)
+    if (!$return_weeks) {
       return $dates;
-    $weeks = round(($end-$start)/60/60/24/7);
-    return '<strong>' . $weeks.' week'.($weeks==1?'':'s').':</strong> ' . $dates;
+    }
+    $weeks = round(($end - $start) / 60 / 60 / 24 / 7 * 2) / 2;
+    return '<strong>' . $weeks . ' week' . ($weeks == 1 ? '' : 's') . ':</strong> ' . $dates;
   }
   else {
     return date('F jS', $start);
@@ -482,7 +514,7 @@ function woolman_camp_date_format($start, $end=NULL, $return_weeks=TRUE) {
 /**
  * Loads a contact and parses dob & location info
  */
-function woolman_camp_contact_get($cid=NULL) {
+function woolman_camp_contact_get($cid = NULL) {
 
   $contact = woolman_contact_get($cid, NULL, TRUE);
 
@@ -674,21 +706,23 @@ function woolman_camp_update_totals($reg, $amount) {
   $owed = $reg['total_fees'] - $reg['total_discount'] - $reg['total_paid'];
   $payout = $amount;
   if (isset($reg['discounts']['Multi-Week Discount'])) {
-    $rates['sfc_price'] -= $rates['sfc_multi_week_discount'];
     $reg['total_discount'] -= $reg['discounts']['Multi-Week Discount']['amount'];
   }
-  $discount = $reg['total_discount'] / ($reg['tlc_weeks'] + $reg['sfc_weeks']);
+  $discount = $reg['total_discount'] / $reg['weeks'];
   // First do the camp sessions
   foreach ($reg['campers'] as $kid) {
     foreach ($kid['sessions'] as $sess) {
-      $price = ($rates[$sess['camp'] . '_price'] - $discount) * $sess['weeks'];
+      $price = $sess['price'];
+      if (isset($reg['discounts']['Multi-Week Discount']) && $sess['event_type_id'] == 8) {
+        $price -= $rates['sfc_multi_week_discount'] * $sess['weeks'];
+      }
       if ($sess['fee_amount'] < $price) {
         if ($amount >= $owed - $reg['shuttle_price']) {
           $new_amount = $price;
           $payout -= $price - $sess['fee_amount'];
         }
         else {
-          $portion = ($amount / ($reg['tlc_weeks'] + $reg['sfc_weeks'])) * $sess['weeks'];
+          $portion = ($amount / $reg['weeks']) * $sess['weeks'];
           $new_amount = $sess['fee_amount'] + $portion;
           $payout -= $portion;
         }

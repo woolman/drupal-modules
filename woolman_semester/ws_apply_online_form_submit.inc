@@ -124,7 +124,7 @@ function _ws_apply_form_basic_submit($form, &$form_state) {
     $result = woolman_contact_match($params, 'update_all', 'return_cid', 'strict', $cid);
     $pid[$i] = $result['contact_id'];
 
-    //create relationship
+    // Create relationship
     woolman_civicrm_api('relationship', 'create', array(
       'contact_id_a' => $cid,
       'contact_id_b' => $pid[$i],
@@ -133,7 +133,7 @@ function _ws_apply_form_basic_submit($form, &$form_state) {
       'is_active' => 1
     ));
   }
-  // create parents' relationship
+  // Create parents' relationship
   if ($parent_count == 2 && ($p_r = $vals['parents_relationship'])) {
     $active = 1;
     if ($p_r == 'divorced') {
@@ -193,9 +193,9 @@ function _ws_apply_form_basic_submit($form, &$form_state) {
   elseif ($vals['parent2_same'] && $parent_count == 2) {
     $params['address'] = array('share_with_contact' => $pid[2]);
   }
-
   woolman_contact_match($params);
-  //process how student heard about us
+
+  // Process how student heard about us
   $params = array(
     'activity_type_id' => 53,
     'source_contact_id' => $cid,
@@ -204,7 +204,7 @@ function _ws_apply_form_basic_submit($form, &$form_state) {
     'status_id' => 2,
     'details' => '<p><em>Entered by ' . $vals['self_first'] . ' ' . $vals['self_last'] .
       ' on the Woolman Semester application form:</em></p><p>' . $vals['self_details'] . '</p>',
-    'custom_6' => 'woolman semester',
+    'custom_6' => woolman_multivalue_str('woolman semester'),
     'custom_7' => $vals['self_medium'],
   );
   woolman_civicrm_api('activity', 'create', $params);
@@ -250,7 +250,7 @@ function _ws_apply_form_basic_submit($form, &$form_state) {
           $details .= '<li><b>Address:</b> Same as Student</li>';
         }
       elseif (!$skip) {
-        $details .= '<li><b>' . $form[$set][$key]['#title'].':</b> ';
+        $details .= '<li><b>' . $form[$set][$key]['#title'] . ':</b> ';
         if (is_array($val))
           $details .= implode('/', $val);
         elseif ($form[$set][$key]['#options'])
@@ -283,8 +283,8 @@ function _ws_apply_form_school_submit($form, &$form_state) {
     'contact_type' => 'Individual',
     'custom_4' => $grad_date,
   ));
-  $details = '<p><b>Graduation Date:</b> ' . $m.'/' . $vals['graduation_date']['year'].'</p>
-              <p><b>Student Is:</b> ' . $form['school']['school_type']['#options'][$vals['school_type']].'</p>';
+  $details = '<p><b>Graduation Date:</b> ' . $m.'/' . $vals['graduation_date']['year'] . '</p>
+              <p><b>Student Is:</b> ' . $form['school']['school_type']['#options'][$vals['school_type']] . '</p>';
 
   if ($vals['school_type'] == 'other') {
     $details .= '<p><b>' . $form['school']['education']['#title'] . ':</b></p><p>'. nl2br($vals['education']) . '</p>';
@@ -294,7 +294,7 @@ function _ws_apply_form_school_submit($form, &$form_state) {
     if (($school_id = $vals['school_choice']) != 'none') {
       //school was chosen from list
       $school = $form['school']['school_options']['school_choice_wrapper']['school_choice']['#options'][$vals['school_choice']];
-      $details .= '(selected from existing choices) ' . $school.', ' . $form['school']['school_options']['school_location']['#options'][$vals['school_location']].'</p>';
+      $details .= '(selected from existing choices) ' . $school.', ' . $form['school']['school_options']['school_location']['#options'][$vals['school_location']] . '</p>';
     }
     else {
       $details .= '(manually entered) <ul>';
@@ -303,11 +303,11 @@ function _ws_apply_form_school_submit($form, &$form_state) {
         if (empty($vals[$field])) {
           continue;
         }
-        $details .= '<li><b>' . $info['#title'].':</b> ' . woolman_aval($info, '#options:' . $vals[$field], $vals[$field]) . '</li>';
+        $details .= '<li><b>' . $info['#title'] . ':</b> ' . woolman_aval($info, '#options:' . $vals[$field], $vals[$field]) . '</li>';
       }
       $details .= '</ul></p>';
 
-      //add school to db
+      // Add school to db
       $params = array(
         'contact' => array(
           'organization_name' => $vals['school_name'],
@@ -409,10 +409,10 @@ function _ws_apply_form_school_submit($form, &$form_state) {
         continue;
       }
       if ($field == 'teacher' . $i . '_relationship') {
-        $details .= '<li><b>' . $info['#title'] . ':</b> '.($vals[$field]=='school' ? $school : $vals['teacher' . $i . '_employer_other']).'</li>';
+        $details .= '<li><b>' . $info['#title'] . ':</b> ' . ($vals[$field]=='school' ? $school : $vals['teacher' . $i . '_employer_other']) . '</li>';
       }
       else {
-        $details .= '<li><b>' . $info['#title'].':</b> '
+        $details .= '<li><b>' . $info['#title'] . ':</b> '
           . woolman_aval($info, '#options:' . $vals[$field], $vals[$field]) . '</li>';
       }
     }
@@ -442,7 +442,7 @@ function _ws_apply_form_questions_submit($form, &$form_state) {
   $n = 0;
   foreach ($form_state['values'] as $key=> $value) {
     if (strpos($key, 'apply_question')) {
-      $details .= '<h5>' . $form[$key]['#title'].'</h5><p>'.str_replace(array("\n","\r"), '<br />', $value).'</p>';
+      $details .= '<h5>' . $form[$key]['#title'] . '</h5><p>'.str_replace(array("\n","\r"), '<br />', $value) . '</p>';
       $n++;
     }
   }
@@ -669,7 +669,7 @@ function _ws_apply_form_reference_submit($form, &$form_state) {
     for ($i=1; $i<=6; $i++) {
       if (!$form['rubric']['ws_apply_rubric' . $i])
         continue;
-      $details .= '<li><em>' . $form['rubric']['ws_apply_rubric' . $i]['#title'].':</em> <strong>'.nl2br($values['ws_apply_rubric' . $i]).' out of 5</strong></li>';
+      $details .= '<li><em>' . $form['rubric']['ws_apply_rubric' . $i]['#title'] . ':</em> <strong>'.nl2br($values['ws_apply_rubric' . $i]) . ' out of 5</strong></li>';
       ++$count;
       $total += $values['ws_apply_rubric' . $i];
     }
@@ -765,7 +765,7 @@ admissions@woolman.org
     'date' => date('Y-m-d H-i-s'),
   );
 
-  //check for existing record to update
+  // Check for existing record to update
   if (db_result(db_query('SELECT id FROM {ws_apply_online_drafts} WHERE id = ' . $oid))) {
     drupal_write_record('ws_apply_online_drafts', $record, 'id');
   }
