@@ -257,7 +257,7 @@ function woolman_camp_status() {
                     <h3>Payment Info</h3>
                     <p>You have <strong>' . woolman_num_to_words($c) . '</strong> camper' . ($c == 1 ? '' : 's');
   if ($sessions = $reg['total_approved'] + $reg['total_pending']) {
-    $output .= ' registered for <strong>' . woolman_num_to_words($sessions) . '</strong> session' . ($sessions <= 1 ? '' : 's') . ' at camp';
+    $output .= ' registered for a total of <strong>' . woolman_num_to_words($sessions) . '</strong> session' . ($sessions <= 1 ? '' : 's') . ' at camp';
     if (!empty($reg['total_waitlist'])) {
       $output .= ', and you\'re on the waitlist for an additional <strong>' . woolman_num_to_words($reg['total_waitlist']) . '</strong> session' . ($reg['total_waitlist'] == 1 ? '' : 's');
     }
@@ -282,8 +282,8 @@ function woolman_camp_status() {
   if ($w = $reg['shuttles']) {
     $output .= '<tr><td>' . $w . ' Shuttle Ride' . ($w == 1 ? '' : 's') . ':</td><td class="p">$' . $reg['shuttle_price'] . '</td></tr>';
   }
-  foreach ($reg['discounts'] as $title => $info) {
-    $output .= '<tr style="font-style:italic;"><td>' . $title.':</td><td class="p">-$' . $info['amount'] . '</td></tr>';
+  foreach ($reg['discounts'] as $info) {
+    $output .= '<tr style="font-style:italic;"><td>' . $info['type'] . ':</td><td class="p">-$' . $info['amount'] . '</td></tr>';
   }
 
   $output .= '<tr style="font-weight:bold;"><td>Your Total:</td><td class="p">$' . ($reg['total_fees'] - $reg['total_discount']) . '</td></tr>';
@@ -313,7 +313,7 @@ function woolman_camp_status() {
     elseif (substr($reg['register_date'], 0, 10) != date('Y-m-d')) {
       $output .= '<p>We have not yet received your deposit payment, so your space at camp is not reserved. Please feel free to <a href="/contact?c=3">contact us</a> about this if you have any questions.</p>';
     }
-    $output .= l('Make online payment', 'civicrm/contribute/transact', array('alias' => TRUE, 'query' => array('reset' => 1, 'id' =>7), 'attributes' => array('class' => 'button-style'))) . 
+    $output .= l('Make online payment', 'civicrm/contribute/transact', array('alias' => TRUE, 'query' => array('reset' => 1, 'id' => 7), 'attributes' => array('class' => 'button-style'))) . 
     '<p style="font-size:.85em;"><strong>Or you can mail a check payable to "Camp Woolman" to:</strong><br />Camp Woolman<br />13075 Woolman Ln<br />Nevada City, CA 95959</p>';
   }
   $output .= '  </div>

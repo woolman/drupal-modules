@@ -105,6 +105,7 @@ function woolman_camp_family_form_validate($form, &$form_state) {
 function woolman_camp_family_form_submit($form, &$form_state) {
   $vals = $form_state['values'];
   $vals['self_cid'] = woolman_user_cid();
+  $exclude = '';
 
   // Add or update contacts
   foreach (array('self', 'spouse', 'e_contact') as $p) {
@@ -182,13 +183,10 @@ function woolman_camp_family_form_submit($form, &$form_state) {
         'phone' => $phone,
         'email' => $email
       ),
-      'update_all', 'return_cid', 'strict', $exclude
+      'update_all', 'return_cid', 'strict'
     );
     $cid[$p] = $result['contact_id'];
-    if ($exclude) {
-      $exclude .= ',';
-    }
-    $exclude .= $cid[$p];
+    $exclude .= ($exclude ? ',' : '') . $cid[$p];
   }
   // Add/update kids
   $kid_params = array('address' => array('share_with_contact' => $cid['self']));
@@ -285,9 +283,10 @@ function woolman_camp_family_form_submit($form, &$form_state) {
   }
   // End old e-contact relationships
   if ($vals['not_e_contact_checkbox']) {
-    for ($c = 1; $kid=$vals['child' . $c . '_cid']; $c++) {
-      if (strpos($kids, $kid) === FALSE)
+    for ($c = 1; $kid = $vals['child' . $c . '_cid']; $c++) {
+      if (strpos($kids, $kid) === FALSE) {
         $kids .= ',' . $kid;
+      }
     }
     db_query('UPDATE {civicrm_relationship} SET is_active = 0, end_date = CURDATE()
               WHERE contact_id_a IN (' . $kids.') AND contact_id_b = %d AND is_active = 1 AND relationship_type_id =
@@ -317,17 +316,20 @@ function woolman_camp_registration_form_validate($form, &$form_state) {
   $ok = TRUE;
   $total = 0;
   foreach ($vals as $id => $val) {
-    if (substr($id, 0, 5) != 'child' || empty($val['register'])) {
+    if (substr($id, 0, 5) != 'child' || empty($val['questions'])) {
       continue;
     }
-    if (array_sum($val['register']) > 0) {
-      $total++;
-      foreach ($val['questions'] as $k => $q) {
-        if (!$q && strpos($k, 'parent') !== FALSE) {
-          $ok = FALSE;
-          form_error($form[$id]['questions'][$k], 'Please answer parent registration questions.');
-          break;
+    foreach (woolman_camp_event_types() as $camp => $program) {
+      if (array_sum(woolman_aval($val, "register_$camp", array())) > 0) {
+        $total++;
+        foreach ($val['questions'] as $k => $q) {
+          if (!$q && strpos($k, 'parent') !== FALSE) {
+            $ok = FALSE;
+            form_error($form[$id]['questions'][$k], 'Please answer parent registration questions.');
+            break;
+          }
         }
+        break;
       }
     }
   }
@@ -372,10 +374,9 @@ function woolman_camp_registration_form_submit($form, &$form_state) {
     if (substr($id, 0, 5) != 'child') {
       continue;
     }
-    if (empty($val['register'])) {
+    if (empty($val['questions'])) {
       continue;
     }
-
     $cid = str_replace('child_', '', $id);
     $child = woolman_contact_get($cid);
     $gender = $child['gender_id'] == 1 ? 'girls' : 'boys';
@@ -385,51 +386,52 @@ function woolman_camp_registration_form_submit($form, &$form_state) {
       $a = '<h5> ' . $form['child_' . $cid]['questions'][$q]['#title'] . '</h5> ' . nl2br(filter_xss($a));
     }
     $val['questions']['parent_15'] = $parent;
-
-    foreach ($val['register'] as $eid => $checked) {
-      if ($checked) {
-        $reenroll = FALSE;
-        $result = woolman_civicrm_api('participant', 'get', array('contact_id' => $cid, 'event_id' => $eid));
-        $params = array(
-          'contact_id' => $cid,
-          'event_id' => $eid,
-          'role_id' => 1,
-          'source' => 'Online Registration'
-        );
-        if ($entity_id = woolman_aval($result, 'id')) {
-          if (in_array($result['values'][$entity_id]['participant_status'], $invalid)) {
-            $reenroll = TRUE;
-            $params['id'] = $entity_id;
+    foreach (woolman_camp_event_types() as $camp => $program) {
+      foreach (woolman_aval($val, "register_$camp", array()) as $eid => $checked) {
+        if ($checked) {
+          $reenroll = FALSE;
+          $result = woolman_civicrm_api('participant', 'get', array('contact_id' => $cid, 'event_id' => $eid));
+          $params = array(
+            'contact_id' => $cid,
+            'event_id' => $eid,
+            'role_id' => 1,
+            'source' => 'Online Registration'
+          );
+          if ($entity_id = woolman_aval($result, 'id')) {
+            if (in_array($result['values'][$entity_id]['participant_status'], $invalid)) {
+              $reenroll = TRUE;
+              $params['id'] = $entity_id;
+            }
           }
+          if (!$entity_id || $reenroll) {
+            // Register new participant
+            if ($sessions[$eid]['full'] || ($rates['gender_balance'] !== '' && $sessions[$eid][$gender] >= ($rates['gender_balance'] / 100 * $sessions[$eid]['max_participants']))) {
+              $params['status_id'] = 7;
+            }
+            elseif (!empty($val['prior_camp'])) {
+              $params['status_id'] = 1;
+              $approved[$cid] = $child['nick_name'];
+            }
+            else {
+              $params['status_id'] = 8;
+              $waiting[$cid] = $child['nick_name'];
+            }
+            $result = woolman_civicrm_api('participant', 'create', $params);
+            $entity_id = $result['id'];
+          }
+          woolman_custom_field_group_fapi_submit($val['questions'], 7, $entity_id);
         }
-        if (!$entity_id || $reenroll) {
-          // Register new participant
-          if ($sessions[$eid]['full'] || ($rates['gender_balance'] !== '' && $sessions[$eid][$gender] >= ($rates['gender_balance'] / 100 * $sessions[$eid]['max_participants']))) {
-            $params['status_id'] = 7;
+        // Un-register camper if unchecked
+        elseif ($form[$id]["register_$camp"][$eid]['#default_value'] && empty($form[$id]["register_$camp"][$eid]['#disabled'])) {
+          $result = woolman_civicrm_api('participant', 'get', array('contact_id' => $cid, 'event_id' => $eid));
+          foreach (woolman_aval($result, 'values', array()) as $par) {
+            woolman_civicrm_api('participant', 'create', array(
+              'status_id' => 4,
+              'id' => $par['id'],
+            ));
           }
-          elseif (!empty($val['prior_camp'])) {
-            $params['status_id'] = 1;
-            $approved[$cid] = $child['nick_name'];
-          }
-          else {
-            $params['status_id'] = 8;
-            $waiting[$cid] = $child['nick_name'];
-          }
-          $result = woolman_civicrm_api('participant', 'create', $params);
-          $entity_id = $result['id'];
+          $unregistered[] = $sessions[$eid]['title'];
         }
-        woolman_custom_field_group_fapi_submit($val['questions'], 7, $entity_id);
-      }
-      // Un-register camper if unchecked
-      elseif ($form[$id]['register'][$eid]['#default_value'] && empty($form[$id]['register'][$eid]['#disabled'])) {
-        $result = woolman_civicrm_api('participant', 'get', array('contact_id' => $cid, 'event_id' => $eid));
-        foreach (woolman_aval($result, 'values', array()) as $par) {
-          woolman_civicrm_api('participant', 'create', array(
-            'status_id' => 4,
-            'id' => $par['id'],
-          ));
-        }
-        $unregistered[] = $sessions[$eid]['title'];
       }
     }
     if ($unregistered) {

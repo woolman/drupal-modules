@@ -51,7 +51,7 @@ function woolman_camp_staff() {
     $reg[$c['camper']] = $c['id'];
     $parent_id[$c['camper']] = $c['parent_15'];
     $fees[$c['camper']] = l('+', 'staff/camp/viewform/add-payment/' . $c['parent_15'] . '/' . $year, array('alias' => TRUE, 'attributes' => array('class' => 'popups-form a-p', 'title' => 'New Payment')));
-    $campership[$c['camper']] = l('-', 'staff/camp/viewform/add-discount/' . $c['parent_15'] . '/' . $year, array('alias' => TRUE, 'attributes' => array('class' => 'popups-form a-p', 'title' => 'Add discount/campership')));
+    $campership[$c['camper']] = l('-', 'staff/camp/viewform/discounts/' . $c['parent_15'] . '/' . $year, array('alias' => TRUE, 'attributes' => array('class' => 'popups-form a-p', 'title' => 'Add discount/campership')));
   }
 
   foreach ($sessions as $id => $session) {
@@ -277,38 +277,33 @@ function woolman_camp_viewform() {
       if ($reg = woolman_camp_get_app($id)) {
         $output = $reg[1];
       }
-    break;
+      break;
     case 'review':
       if ($reg = woolman_camp_get_app($id)) {
         list($data, $app) = $reg;
         $output = $app.drupal_get_form('woolman_camp_approval_form', $data);
       }
-    break;
+      break;
     case 'payments':
       $output = woolman_camp_payment_summary($id, $year);
-    break;
+      break;
     case 'age':
       $output = drupal_get_form('woolman_camp_age_adjust', $id, $year);
-    break;
+      break;
     case 'add-payment':
       drupal_set_title('Record A New Payment');
-      if ($reg = woolman_camp_calc_fees($id, $year)) {
+      $reg = woolman_camp_calc_fees($id, $year);
+      if ($reg) {
         $output = drupal_get_form('woolman_camp_add_payment', $id, $reg, $year);
       }
-    break;
-    case 'add-discount':
-      drupal_set_title('Add Discount');
-      if ($reg = woolman_camp_calc_fees($id, $year)) {
-        $output = drupal_get_form('woolman_camp_add_discount', $id, $reg, $year);
-      }
-    break;
+      break;
     case 'discounts':
-      $output = drupal_get_form('woolman_camp_manage_discount');
-    break;
+      $output = drupal_get_form('woolman_camp_manage_discount', $id, $year);
+      break;
     case 'fee-report':
       drupal_set_title($year.' Camp Fee Report');
       $output = woolman_camp_fee_report($year);
-    break;
+      break;
   }
   return '<div id="staff-form" style="min-height:300px;">' . $output . '</div>';
 }
@@ -364,10 +359,10 @@ function woolman_camp_payment_summary($id, $year) {
       '$' . $reg['shuttle_price'],
     );
   }
-  foreach ($reg['discounts'] as $title => $info) {
+  foreach ($reg['discounts'] as $info) {
     $dbody[] = array(
       'data' => array(
-        $title,
+        $info['type'],
         date('M j, Y', strtotime($info['date'])),
         '-$' . $info['amount'],
       ),
@@ -482,7 +477,7 @@ function woolman_camp_age_adjust($form_state, $cid, $year) {
       '#type' => 'textfield',
       '#size' => 50,
       '#title' => 'Camper Name',
-      '#description' => '<em>Note: This person needs to exist in the database before you can grant an age exception - ask the parent to fill out the basic "family info" form if they haven\'t already.</em>',
+      '#description' => '<em>Note: This person needs to exist in the database before you can grant an age exception.<br />If they are new, ask the parent to fill out the basic "family info" form.</em>',
       '#required' => TRUE,
       '#autocomplete_path' => 'staff/js/autocomplete/Individual',
       '#suffix' => '<p style="height:200px;">&nbsp;</p>',
@@ -667,17 +662,21 @@ function woolman_camp_add_payment_submit($form, &$form_state) {
 /**
  * Form builder for staff to manage discounts
  */
-function woolman_camp_manage_discount($form_state) {
+function woolman_camp_manage_discount(&$form_state, $cid, $year) {
   $form = array(
     '#redirect' => array('staff/camp/registration'),
   );
+  if ($cid && $year) {
+    $form_state['storage']['cid'] = $cid;
+    $form_state['storage']['year'] = $year;
+  }
   if (empty($form_state['storage']['cid'])) {
     drupal_set_title('Manage Discounts');
     $form['cid'] = array(
       '#type' => 'textfield',
       '#size' => 50,
       '#title' => 'Parent Name',
-      '#description' => '<em>Note: This parent needs to exist in the database before you can add/edit their discounts. Ask them to fill out the basic "family info" form if they haven\'t already.</em>',
+      '#description' => '<em>Note: This parent needs to exist in the database before you can add/edit their discounts.<br />If they are new, ask them to fill out the basic "family info" form.</em>',
       '#required' => TRUE,
       '#autocomplete_path' => 'staff/js/autocomplete/Individual',
     );
@@ -685,9 +684,9 @@ function woolman_camp_manage_discount($form_state) {
     $form['year'] = array(
       '#type' => 'select',
       '#title' => 'Year',
-      '#description' => 'Which year of camp do you want to add/edit discounts for this person?<br />(select ' . ($now+1) . ' to credit any over-payments from this year)',
+      '#description' => 'Which year of camp do you want to add/edit discounts for this person?<br />(select ' . ($now + 1) . ' to credit any over-payments from this year)',
       '#options' => drupal_map_assoc(range($now - 2, $now + 1)),
-      '#default_value' => $now,
+      '#default_value' => $year,
       '#suffix' => '<p style="height:100px;">&nbsp;</p>',
     );
     $form['submit-cid'] = array(
@@ -696,14 +695,16 @@ function woolman_camp_manage_discount($form_state) {
     );
   }
   else {
-    $contact = woolman_split_name_id($form_state['storage']['cid']);
-    $form_state['storage']['cid'] = $cid = $contact['id'];
+    $cid = $form_state['storage']['cid'];
     $year = $form_state['storage']['year'];
-    drupal_set_title($year . ' Discounts for ' . woolman_name('display', $cid));
+    $reg = $form_state['storage']['reg'] = woolman_camp_calc_fees($cid, $year);
+    $programs = woolman_camp_event_types();
+    $registered = FALSE;
+    $base_fees = $reg['total_fees'];
+    drupal_set_title("Manage $year Discounts for " . woolman_name('display', $cid));
     $form['discounts'] = array(
       '#tree' => TRUE,
-      '#prefix' => '<table><thead><tr><th>Type</th><th>Amount</th><th> </th></tr></thead><tbody>',
-      '#suffix' => '</tbody></table>',
+      '#prefix' => '<table><thead><tr><th>Type</th><th>Amount</th><th>Date</th></tr></thead><tbody>',
     );
     $fields = array(
       '#prefix' => '<tr>',
@@ -717,27 +718,51 @@ function woolman_camp_manage_discount($form_state) {
       'amount' => array(
         '#prefix' => '<td>',
         '#suffix' => '</td>',
+        '#field_prefix' => '$',
         '#type' => 'textfield',
-        '#size' => 10,
+        '#size' => 6,
       ),
       'date' => array(
         '#prefix' => '<td>',
         '#suffix' => '</td>',
-        '#value' => '<span class="today">Given today</span>',
+        '#value' => '<span class="today">Today</span>',
       ),
     );
-    $db = db_query('SELECT * FROM {woolman_camp_discounts} WHERE year = %d AND cid = %d', $year, $cid);
-    $form_state['storage']['discounts'] = array();
-    while ($row = db_fetch_object($db)) {
-      $form_state['storage']['discounts'][$row->id] = (array) $row;
-      $form['discounts'][$row->id] = $fields;
-      $form['discounts'][$row->id]['type']['#default_value'] = $row->type;
-      $form['discounts'][$row->id]['amount']['#default_value'] = $row->amount;
-      $form['discounts'][$row->id]['date']['#value'] = '<span class="date-info">Given on ' . woolman_camp_date_format($row->date) . '</span>';
+    foreach ($reg['sessions'] as $type => $sessions) {
+      if ($s = $sessions['count']) {
+        $registered = TRUE;
+        $form['discounts']['#prefix'] .= '<tr><td>' . $s . ' Session' . ($s == 1 ? '' : 's') . ' of ' . $programs[$type]['name'] . ':</td><td>$' . $sessions['price'] . '</td><td></td></tr>';
+      }
     }
+    if (!$registered) {
+      $form['discounts']['#prefix'] .= "<tr><td><em>No registration for $year</em></td><td></td><td></td></tr>";
+    }
+    elseif ($w = $reg['shuttles']) {
+      $form['discounts']['#prefix'] .= '<tr><td>' . $w . ' Shuttle Ride' . ($w == 1 ? '' : 's') . ':</td><td>$' . $reg['shuttle_price'] . '</td></tr>';
+    }
+    foreach ($reg['discounts'] as $id => $discount) {
+      if ($discount['id']) {
+        $form['discounts'][$id] = $fields;
+        $form['discounts'][$id]['type']['#default_value'] = $discount['type'];
+        $form['discounts'][$id]['amount']['#default_value'] = $discount['amount'];
+        $form['discounts'][$id]['date']['#value'] = '<span class="date-info">' . woolman_camp_date_format($discount['date']) . '</span>';
+      }
+      else {
+        $base_fees -= $discount['amount'];
+        $form['discounts']['#prefix'] .= '<tr style="font-style:italic;"><td>' . $discount['type'] . ':</td><td>-$' . $discount['amount'] . '</td></tr>';
+      }
+    }
+
+    $form['discounts']['#suffix'] = '<tr style="font-weight:bold;"><td>Fees Minus Discounts:</td><td>$<span id="discount-form-subtotal">' . ($reg['total_fees'] - $reg['total_discount']) . '</span></td></tr>';
+
+    $form['discounts']['#suffix'] .= '<tr><td>Paid so far by ' . woolman_name('full', $cid) . ':</td><td>$<span id="discount-form-paid">' . $reg['total_paid'] . '</span></td></tr>';
+
+    $form['discounts']['#suffix'] .= '<tr style="font-weight:bold;"><td>Balance Due:</td><td>$<span id="discount-form-balance">' . ($reg['total_fees']-$reg['total_discount']-$reg['total_paid']) . '</span></td></tr></tbody></table>
+    <div id="discount-form-base" style="display:none;">' . ($reg['total_fees']-$reg['total_discount']) . '</div>';
+    
     $form['discounts'][0] = $fields;
     $form['discounts'][0]['amount']['#prefix'] = '<td class="new">';
-    $form['discounts'][0]['type']['#options'][''] = 'Add New...';
+    $form['discounts'][0]['type']['#options'][''] = 'Add Discount...';
     $form['clear'] = array('#value' => '<p style="clear:both; height:10px;"></p>');
     $form['submit-save'] = array(
       '#type' => 'submit',
@@ -748,19 +773,35 @@ function woolman_camp_manage_discount($form_state) {
 }
 
 /**
+ * Validate handler for staff to manage discounts
+ */
+function woolman_camp_manage_discount_validate($form, &$form_state) {
+  $vals = $form_state['values'];
+  if (!empty($form_state['values']['discounts'])) {
+    foreach ($form_state['values']['discounts'] as $id => $d) {
+      if ($d['type'] && (!is_numeric($d['amount']) || $d['amount'] < 0)) {
+        form_error($form['discounts'][$id]['amount'], 'Sorry, ' . $d['amount'] . ' is not a valid amount');
+      }
+    }
+  }
+}
+
+/**
  * Submit handler for staff to manage discounts
  */
 function woolman_camp_manage_discount_submit($form, &$form_state) {
   if (empty($form_state['storage'])) {
     $form_state['rebuild'] = TRUE;
-    $form_state['storage'] = $form_state['values'];
+    $form_state['storage']['year'] = $form_state['values']['year'];
+    $contact = woolman_split_name_id($form_state['values']['cid']);
+    $form_state['storage']['cid'] = $contact['id'];
     return;
   }
   $cid = $form_state['storage']['cid'];
   $year = $form_state['storage']['year'];
   foreach ($form_state['values']['discounts'] as $id => $d) {
     if ($id) {
-      $existing = $form_state['storage']['discounts'][$id];
+      $existing = $form_state['storage']['reg']['discounts'][$id];
       if (!($d['type'] && $d['amount'])) {
         db_query("DELETE FROM {woolman_camp_discounts} WHERE id = $id");
       }
@@ -780,81 +821,6 @@ function woolman_camp_manage_discount_submit($form, &$form_state) {
   }
   unset($form_state['storage']);
   drupal_set_message($year . ' discounts saved for ' . woolman_name('full', $cid));
-}
-
-/**
- * Form builder for staff to add discounts
- */
-function woolman_camp_add_discount(&$form_state, $id, $reg, $year) {
-  $programs = woolman_camp_event_types();
-  $form_state['storage']['year'] = $year;
-  $form_state['storage']['parent'] = $parent = woolman_contact_get($id);
-  $form = array('#redirect' => array('staff/camp/registration', "year=$year"));
-  $form['type'] = array(
-    '#prefix' => '<table><caption><strong>Fees for ' . $parent['display_name'] . '</strong></caption><tbody>',
-    '#type' => 'select',
-    '#options' => array('' => '- Select Type -') + woolman_camp_discount_types(),
-    '#required' => TRUE,
-    '#suffix' => '</td>'
-  );
-  $form['amount'] = array(
-    '#prefix' => '<td>',
-    '#type' => 'textfield',
-    '#field_prefix' => '-$',
-    '#size' => 5,
-    '#default_value' => 0,
-    '#attributes' => array('onkeyup' => 'campStaff.discountCalc(this.value);', 'onblur' => 'campStaff.discountCalc(this.value);'),
-    '#suffix' => '</td></tr>',
-    '#required' => TRUE,
-  );
-  foreach ($reg['sessions'] as $type => $sessions) {
-    if ($s = $sessions['count']) {
-      $form['type']['#prefix'] .= '<tr><td>' . $s . ' Session' . ($s == 1 ? '' : 's') . ' of ' . $programs[$type]['name'] . ':</td><td>$' . $sessions['price'] . '</td></tr>';
-    }
-  }
-  if ($w = $reg['shuttles']) {
-    $form['type']['#prefix'] .= '<tr><td>' . $w .' Shuttle Ride' . ($w==1?'':'s') . ':</td><td>$' . $reg['shuttle_price'] . '</td></tr>';
-  }
-  foreach ($reg['discounts'] as $title => $info) {
-    $form['type']['#prefix'] .= '<tr style="font-style:italic;"><td>' . $title.':</td><td>-$' . $info['amount'] . '</td></tr>';
-  }
-
-  $form['type']['#prefix'] .= '<tr><td>';
-
-  $form['amount']['#suffix'] .= '<tr style="font-weight:bold;"><td>Fees Minus Discounts:</td><td>$<span id="discount-form-subtotal">' . ($reg['total_fees']-$reg['total_discount']) . '</span></td></tr>';
-
-  $form['amount']['#suffix'] .= '<tr><td>Paid so far by ' . $parent['display_name'] . ':</td><td>$<span id="discount-form-paid">' . $reg['total_paid'] . '</span></td></tr>';
-
-  $form['amount']['#suffix'] .= '<tr style="font-weight:bold;"><td>Balance Due:</td><td>$<span id="discount-form-balance">' . ($reg['total_fees']-$reg['total_discount']-$reg['total_paid']) . '</span></td></tr></tbody></table>
-  <div id="discount-form-base" style="display:none;">' . ($reg['total_fees']-$reg['total_discount']) . '</div>';
-
-  $form['submit-payment'] = array(
-    '#type' => 'submit',
-    '#value' => 'Save'
-  );
-  return $form;
-}
-
-/**
- * Validate handler for staff to add discounts
- */
-function woolman_camp_add_discount_validate($form, &$form_state) {
-  $vals = $form_state['values'];
-  if ($vals['type'] && !is_numeric($vals['amount'])) {
-    form_error($form['amount'], 'Sorry, ' . $vals['amount'] . ' is not a valid amount');
-  }
-}
-
-/**
- * Submit handler for staff to add discounts
- */
-function woolman_camp_add_discount_submit($form, &$form_state) {
-  $year = $form_state['storage']['year'];
-  $parent = $form_state['storage']['parent'];
-  unset($form_state['storage']);
-  $vals = $form_state['values'];
-  db_query('INSERT INTO {woolman_camp_discounts} (cid,amount,date,year,type) VALUES (' . $parent['contact_id'] . ',' . $vals['amount'] . ',CURDATE(),' . $year.',\'' . $vals['type'] . '\')');
-  drupal_set_message('Added ' . $vals['type'] . ' discount of $' . $vals['amount'] . ' for ' . $parent['display_name']);
 }
 
 /**

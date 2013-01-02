@@ -5,7 +5,7 @@ $(document).ready(function () {
   tally();
 
   $("input:checkbox").change(function() {
-    if($(this).attr("checked")==true) {
+    if($(this).attr("checked") == true) {
       $(this).parents('.child-wrapper').find('.questions-wrapper').show(500);
     }else {
       $(this).parents('.register-button').removeClass('selected');
@@ -32,9 +32,9 @@ function tally() {
         $(this).find('.registered-for').html('<span class="unselected-text">Click to Register</span><span class="selected-text">Choose sessions &gt;&gt;</span>');
         $(cid+' .questions-wrapper').hide();
       }else if(sessions == 1) {
-        $(this).find('.registered-for').html('Registered for: <strong>1</strong> session');
+        $('.registered-for', this).html('Registered for: <strong>1</strong> session');
       }else {
-        $(this).find('.registered-for').html('Registered for: <strong>'+sessions+'</strong> sessions');
+        $('.registered-for', this).html('Registered for: <strong>' + sessions + '</strong> sessions');
       }
     }
   });
@@ -45,7 +45,7 @@ function tally() {
     var msg = "You're registering <strong>1</strong> camper";
     $('#edit-submit').removeAttr('disabled');
   }else {
-    var msg = "You're registering <strong>"+total+"</strong> campers";
+    var msg = "You're registering <strong>" + total + "</strong> campers";
     $('#edit-submit').removeAttr('disabled');
   }
   $('#total').html(msg);

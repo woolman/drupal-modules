@@ -1,17 +1,4 @@
-var campStaff = function($, D) {
-
-  var pub = {};
-
-  pub.discountCalc = function(amount) {
-    var base = parseFloat($('#discount-form-base').html());
-    var paid = parseFloat($('#discount-form-paid').html());
-    var subTotal = base-amount;
-    if (subTotal==0) { subTotal = '0'; }
-    var balance = base-amount-paid;
-    if (balance==0) { balance = '0'; }
-    $('#discount-form-subtotal').html(subTotal);
-    $('#discount-form-balance').html(balance );
-  };
+(function($, D) {
 
   // parser to order name field by last name (requires <i></i> in-between the first, middle & last names)
   $.tablesorter.addParser({
@@ -145,17 +132,36 @@ var campStaff = function($, D) {
     $('#woolman-camp-manage-discount [name$="[type]"]:not(".ready")', context).addClass('ready').change(function() {
       var row = $(this).parents('tr');
       if ($(this).val() == '') {
-        $('.new input[type=text], .today', row).hide();
+        $('.new > .form-item, .today', row).css('visibility', 'hidden');
         $('input[type=text]', row).attr('disabled', 'disabled');
         $('.date-info', row).css('text-decoration', 'line-through');
       }
       else {
-        $('.new input[type=text], .today', row).show();
+        $('.new > .form-item, .today', row).css('visibility', 'visible');
         $('input[type=text]', row).removeAttr('disabled');
         $('.date-info', row).removeAttr('style');
       }
+      discountCalc();
     }).change();
+    $('#woolman-camp-manage-discount input[type=text]:not(".ready")', context).addClass('ready').change(discountCalc).keyup(discountCalc);
+
+    function discountCalc() {
+      var base = parseFloat($('#discount-form-base').html());
+      var paid = parseFloat($('#discount-form-paid').html());
+      var subTotal = base;
+      $('input[type=text]:not(:disabled)', '#woolman-camp-manage-discount').each(function() {
+        subTotal -= $(this).val();
+      });
+      if (subTotal == 0) {
+        subTotal = '0';
+      }
+      var balance = subTotal - paid;
+      if (balance == 0) {
+        balance = '0';
+      }
+      $('#discount-form-subtotal').html(subTotal);
+      $('#discount-form-balance').html(balance);
+    }
 
   };
-  return pub;
-}(jQuery, Drupal);
+})(jQuery, Drupal);

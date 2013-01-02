@@ -438,11 +438,11 @@ function woolman_camp_registration_form(&$form_state) {
 
   $year = woolman_camp_next_year();
   $rates = woolman_camp_get_rates($year);
-  $session_data = woolman_camp_get_sessions($year);
+  $session_data = woolman_camp_sort_sessions(woolman_camp_get_sessions($year));
   $programs = woolman_camp_event_types();
   $age_limit = woolman_camp_age_limits(1);
 
-  $form = array('#prefix' => '<h2>Camper Registration Form</h2><p>Thanks for updating your family info. The next step is to decide what dates your ' . (count($children)==1 ? 'child is' : 'children are') . ' coming for camp. Please use the following guidelines:</p><p><strong>Sierra Friends Camp:</strong> for children between the ages of 9 and 14. Campers may stay for 1, 2, 3, or 4 weeks by combining multiple sessions. Note: Campers will need to go home in-between sessions that are not part of an A-B combo.</p><p><strong>Woolman Teen Leadership Camp:</strong> for 15 and 16 year-olds. Campers should register for a single 2-week session.</p><p><strong>Age Exceptions:</strong> We can make exceptions for campers who are a little too young or old for a session. If choosing such a session, please indicate why in your application below.</p>');
+  $form = array('#prefix' => '<h2>Camper Registration Form</h2><p>Thanks for updating your family info. The next step is to decide what dates your ' . (count($children)==1 ? 'child is' : 'children are') . ' coming for camp. Please use the following guidelines:</p><p><strong>Mini Camp:</strong>. A 2-day experience for 6 to 9 year-olds.</p><p><strong>Camp Woolman:</strong> for children between the ages of 9 and 14. Campers may stay for 1, 2, 3, or 4 weeks by combining multiple sessions. Note: Campers will need to go home in-between sessions that are not part of an A-B combo.</p><p><strong>Woolman Teen Leadership Camp:</strong> for 15 and 16 year-olds. Campers should register for a single 2-week session.</p><p><strong>Age Exceptions:</strong> We can make exceptions for campers who are a little too young or old for a session. If choosing such a session, please indicate why in your application below.</p>');
 
   $form['tabs'] = array('#value' => '<ul id="tab-nav">');
 
@@ -466,58 +466,18 @@ function woolman_camp_registration_form(&$form_state) {
       'prior_camp' => array('#type' => 'hidden', '#value' => 0)
     );
     if ($age > $age_limit['min'] && $age < $age_limit['max']) {
-      $last_year = $current_reg = $submission = NULL;
-      $form[$id]['register'] = array(
-        '#prefix' => '<div class="register-wrapper">',
-        '#suffix' => '<div class="clear-block"></div></div>',
-        '#value' => '<h4>Register for Camp</h4>',
-      );
-      foreach ($session_data as $s) {
-        if (!woolman_camp_age_range($age, $s['event_type_id'], 1)) {
-          continue;
-        }
-        $title = trim(str_replace("$year", '', $s['title']));
-
-        if (substr($s['start_date'], 0, 10) < date('Y-m-d')) {
-          $action = 'Register';
-          $status = 'Past';
-          $class = 'ended';
-        }
-        elseif ($s['full'] || ($rates['gender_balance'] !== '' && $s[$gender] >= ($rates['gender_balance'] / 100 * $s['max_participants']))) {
-          $action = 'Join waitlist';
-          $status = 'Sorry, full' . ($s['full'] ? '' : ' for ' . $gender);
-          $class = 'closed';
-        }
-        else {
-          $action = 'Register';
-          $status = 'Space Available';
-          $class = 'open';
-        }
-        $form[$id]['register'][$s['id']] = array(
-          '#type' => 'checkbox',
-          '#title' => $action,
-          '#disabled' => ($class == 'ended'),
-          '#prefix' => '<div class="register-button ' . $class . '">
-                          <h5 class="session-title">' . $title . '</h5>
-                          <div class="session-dates">' .
-                            woolman_camp_date_format($s['start_date'], $s['end_date']) . '
-                          </div>',
-          '#suffix' => '  <div class="session-status">
-                            ' . $status.'
-                          </div>
-                        </div>',
-        );
-      }
+      $last_year = $participant_id = $submission = NULL;
+      $current_reg = array();
       if (!empty($child['prior_camp'])) {
         foreach ($child['prior_camp'] as $d => $e) {
           $y = substr($d, 0, 4);
           if ($y == $year && !in_array($e['participant_status'], $invalid)) {
-            $form[$id]['register'][$e['event_id']]['#default_value'] = TRUE;
-            $current_reg = $e['participant_id'];
+            $current_reg[] = $e['event_id'];
+            $participant_id = $e['participant_id'];
           }
           elseif ($y < $year && !in_array($e['participant_status'], $invalid)) {
             $form[$id]['prior_camp']['#value'] = 1;
-            if ($y == $year-1) {
+            if ($y == $year - 1) {
               $last_year = 'last summer';
             }
             else {
@@ -527,7 +487,51 @@ function woolman_camp_registration_form(&$form_state) {
           }
         }
       }
-      $form[$id]['questions'] = woolman_custom_field_group_fapi(7, $current_reg);
+
+      foreach ($session_data as $camp => $sessions) {
+        if (!woolman_camp_age_range($age, $camp, 1)) {
+          continue;
+        }
+        $form[$id]["register_$camp"] = array(
+          '#prefix' => '<div class="register-wrapper">',
+          '#suffix' => '<div class="clear-block"></div></div>',
+          '#value' => '<h4>' . $programs[$camp]['name'] . ' (ages ' . $programs[$camp]['age_min'] . '-' . $programs[$camp]['age_max'] . ')</h4>',
+        );
+        foreach ($sessions as $s) {
+          $title = trim(str_replace("$year", '', $s['title']));
+          if (substr($s['start_date'], 0, 10) < date('Y-m-d')) {
+            $action = 'Register';
+            $status = 'Past';
+            $class = 'ended';
+          }
+          elseif ($s['full'] || ($rates['gender_balance'] !== '' && $s[$gender] >= ($rates['gender_balance'] / 100 * $s['max_participants']))) {
+            $action = 'Join waitlist';
+            $status = 'Sorry, full' . ($s['full'] ? '' : ' for ' . $gender);
+            $class = 'closed';
+          }
+          else {
+            $action = 'Register';
+            $status = 'Space Available';
+            $class = 'open';
+          }
+          $form[$id]["register_$camp"][$s['id']] = array(
+            '#type' => 'checkbox',
+            '#title' => $action,
+            '#disabled' => $class == 'ended',
+            '#default_value' => in_array($s['id'], $current_reg),
+            '#prefix' => '<div class="register-button ' . $class . '">
+                            <h5 class="session-title">' . $title . '</h5>
+                            <div class="session-dates">' .
+                              woolman_camp_date_format($s['start_date'], $s['end_date']) . '
+                            </div>',
+            '#suffix' => '  <div class="session-status">
+                              ' . $status.'
+                            </div>
+                          </div>',
+          );
+        }
+      }
+      $form[$id]['questions'] = woolman_custom_field_group_fapi(7, $participant_id);
       $form[$id]['questions']['#prefix'] = '<div class="questions-wrapper">';
       $form[$id]['questions']['#suffix'] = '</div>';
       $form[$id]['questions']['#value'] = '<h2>Registration Questions</h2>';
@@ -561,11 +565,11 @@ function woolman_camp_registration_form(&$form_state) {
       if ($age > $age_limit['max'] && $age < 19) {
         $message = 'Sadly, ' . $child['nick_name'] . ' is too old to be a camper, but did you know about our Counselor in Training program?';
       }
-      elseif ($age == $age_limit['min'] - 1) {
-        $message = $child['nick_name'] . ' will be old enough for camp next year!';
+      elseif ($age == $age_limit['min']) {
+        $message = 'Almost there! ' . $child['nick_name'] . ' will be old enough for mini camp next year.';
       }
       elseif ($age < $age_limit['min']) {
-        $message = $child['nick_name'] . ' will be old enough for camp in another ' . ($age_limit['min'] - $age) . ' years!';
+        $message = $child['nick_name'] . ' will be old enough for mini camp in another ' . ($age_limit['min'] - $age) . ' years!';
       }
       else {
         $message = 'Sadly, ' . $child['nick_name'] . ' is too old for camp.';
