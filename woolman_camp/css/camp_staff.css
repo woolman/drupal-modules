@@ -115,20 +115,26 @@ font-size:.9em;
 text-decoration: none;
 }
 
-#camp-staff a.a-p{
+#camp-staff .acn {
+width: 30px;
+}
+
+#camp-staff .acn a {
 border-radius:2px;
 background:none repeat scroll 0 0 #E6E6FF;
 border:1px solid gray;
 color:blue;
-display:block;
-float:right;
+display:inline-block;
 height:9px;
 line-height:9px;
-margin-left:10px;
 padding:0;
 text-align:center;
 text-decoration:none;
 width:9px;
+}
+
+#camp-staff .acn a + a {
+margin-left: 6px;
 }
 
 #camp-staff a.a-p:hover{
@@ -242,9 +248,12 @@ border:1px solid #FFF;
 font-size:8pt;
 padding:4px;
 }
+table.tablesorter thead tr:hover .header,
+#camp-staff .sticky-header th:hover {
+background-image:url("bg.gif");
+}
 table.tablesorter thead tr .header,
 #camp-staff .sticky-header th {
-background-image:url(bg.gif);
 background-repeat:no-repeat;
 background-position:center right;
 cursor:pointer;
@@ -288,14 +297,6 @@ background-color:#7DB2CF;
 }
 
 /* Popups */
-form a.cancel-link{
--moz-appearance:button;
-color:#700000;
-font-size:0.8em;
-font-weight:normal;
-padding:0.2em;
-text-decoration:none;
-}
 .popups-box h5{
 font-size:1em;
 }

@@ -85,8 +85,9 @@
 
     $(".tablesorter").not('.sorted').tablesorter({
       headers: {
-        0: { sorter: 'lastName'},
-        5: { sorter: 'lastName'}
+        0: {sorter: 'lastName'},
+        5: {sorter: 'lastName'},
+        10: {sorter: false}
       },
       widgets: ["zebra"],
     }).bind("sortEnd", function() {

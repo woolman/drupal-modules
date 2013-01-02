@@ -50,8 +50,8 @@ function woolman_camp_staff() {
     $parents[$c['camper']] = '<a target="_blank" href="/civicrm/contact/view?reset=1&cid=' . $c['parent_15'] . '">' . $c['first_name'] . '<i></i>' . ($c['nick_name'] ? ' (' . $c['nick_name'] . ')' : '') . ' <i></i>' . $c['last_name'] .'</a>';
     $reg[$c['camper']] = $c['id'];
     $parent_id[$c['camper']] = $c['parent_15'];
-    $fees[$c['camper']] = l('+', 'staff/camp/viewform/add-payment/' . $c['parent_15'] . '/' . $year, array('alias' => TRUE, 'attributes' => array('class' => 'popups-form a-p', 'title' => 'New Payment')));
-    $campership[$c['camper']] = l('-', 'staff/camp/viewform/discounts/' . $c['parent_15'] . '/' . $year, array('alias' => TRUE, 'attributes' => array('class' => 'popups-form a-p', 'title' => 'Add discount/campership')));
+    $fees[$c['camper']] = l('+', 'staff/camp/viewform/add-payment/' . $c['parent_15'] . '/' . $year, array('alias' => TRUE, 'attributes' => array('class' => 'popups-form', 'title' => 'New Payment')));
+    $campership[$c['camper']] = l('-', 'staff/camp/viewform/discounts/' . $c['parent_15'] . '/' . $year, array('alias' => TRUE, 'attributes' => array('class' => 'popups-form', 'title' => 'Add discount/campership')));
   }
 
   foreach ($sessions as $id => $session) {
@@ -127,6 +127,7 @@ function woolman_camp_staff() {
     array('data' => 'Status'),
     array('data' => 'Forms'),
     array('data' => 'Paid'),
+    array('data' => ''),
   );
   foreach ($camper_sort as $program => $kids) {
     ksort($kids);
@@ -164,7 +165,7 @@ function woolman_camp_staff() {
         $forms .= ' ' . l('Med', 'civicrm/contact/view', array('query' => 'reset=1&cid=' . $cid . '&selectedChild=custom_9', 'alias' => TRUE, 'attributes' => array('target' => '_blank', 'title' => 'View Medical Form')));
       }
       $paid = '';
-      if ($c['fee_amount'] || $year>=2011) {
+      if ($c['fee_amount'] || $year >= 2011) {
         $paid = '$' . number_format($c['fee_amount'], 2);
         if ($parent_id[$cid])
           $paid = l($paid, 'staff/camp/viewform/payments/' . $parent_id[$cid] . '/' . $year, array('alias' => TRUE, 'attributes' => array('class' => 'popups')));
@@ -180,7 +181,8 @@ function woolman_camp_staff() {
         implode(', ',$c['sessions']),
         $status,
         $forms,
-        $paid . ' ' . $fees[$cid] . $campership[$cid],
+        $paid,
+        array('data' => $campership[$cid] . $fees[$cid], 'class' => 'acn'),
       ));
     }
     $table = theme('table', $thead, $tbody, array('class' => 'tablesorter'));
@@ -194,7 +196,7 @@ function woolman_camp_staff() {
   }
 
   // Shuttles
-  $output .= '<div class="shuttles-outer">';
+  $output .= '<div class="shuttles-outer"><h2 class="underline">Shuttles</h2>';
   foreach (woolman_camp_get_shuttle($year, TRUE) as $dir => $sh) {
     $output .= '<div class="shuttles ' . $dir . '">
                   <h4>' . ($dir == 'coming' ? 'Shuttles to Camp (Session Start)' : 'Shuttles from Camp (Session End)') . '</h4>';
@@ -281,7 +283,7 @@ function woolman_camp_viewform() {
     case 'review':
       if ($reg = woolman_camp_get_app($id)) {
         list($data, $app) = $reg;
-        $output = $app.drupal_get_form('woolman_camp_approval_form', $data);
+        $output = $app . drupal_get_form('woolman_camp_approval_form', $data);
       }
       break;
     case 'payments':
@@ -322,7 +324,7 @@ function woolman_camp_get_app($id) {
     $data['parent_name'] = woolman_name('full', $data['pid']);
     $date = date('M j Y', strtotime($data['register_date']));
     drupal_set_title('Application for ' . $data['camper_name']);
-    $text = '<em>Submitted by ' . $data['parent_name'] . ' on ' . $date.'</em>
+    $text = '<em>Submitted by ' . $data['parent_name'] . ' on ' . $date . '</em>
       <h4>Camper Questions</h4>'
       .nl2br(html_entity_decode($data['camper_question_1_10']))
       .nl2br(html_entity_decode($data['camper_question_2_12']))
@@ -428,7 +430,7 @@ function woolman_camp_approval_form(&$form_state, $data) {
     'reject' => array(
       '#type' => 'submit',
       '#value' => 'Deny Application',
-      '#suffix' => '<a class="cancel-link" href="/staff/camp/registration" onclick="$(\'.popups-close\').click(); return false;">Cancel (do nothing)</a>'
+      '#suffix' => '<button type="buttopn" class="cancel" onclick="$(\'.popups-close\').click(); return false;">Cancel (do nothing)</button>'
     ),
   );
 }
@@ -466,7 +468,7 @@ function woolman_camp_approval_form_submit($form, &$form_state) {
 /**
  * Form builder for staff to adjust camper age
  */
-function woolman_camp_age_adjust($form_state, $cid, $year) {
+function woolman_camp_age_adjust(&$form_state, $cid, $year) {
   $form = array(
     '#prefix' => '<p><em>This allows campers to register for a session that they are otherwise too old or too young for.</em></p>',
     '#redirect' => array('staff/camp/registration', "year=$year"),
@@ -493,15 +495,16 @@ function woolman_camp_age_adjust($form_state, $cid, $year) {
     $camper = woolman_contact_get($cid);
     $real_age = woolman_camp_age($camper['birth_date'], $year);
     drupal_set_title('Age Adjustment for ' . $camper['display_name']);
-    $form['#prefix'] .= '
+    $form['prefix'] = array('#value' => '
       <table><tbody>
         <tr><td>Birth Date:</td><td>' . date('M j Y', strtotime($camper['birth_date'])) . '</td></tr>
         <tr><td>Real Age (as of July 1 ' . $year . '):</td><td>' . $real_age . '</td></tr>
-        <tr><td>Adjusted Age:</td>';
-    $form['age'] = array(
+        <tr><td>Adjusted Age:</td>'
+    );
+    $form['delta'] = array(
       '#type' => 'select',
-      '#options' => drupal_map_assoc(range($real_age - 2, $real_age + 2)),
-      '#default_value' => woolman_camp_age($camper['birth_date'], $year, $cid),
+      '#options' => array_combine(range(-2, 2), range($real_age - 2, $real_age + 2)),
+      '#default_value' => woolman_camp_age($camper['birth_date'], $year, $cid) - $real_age,
       '#prefix' => '<td>',
       '#suffix' => '</td></tr>',
     );
@@ -518,7 +521,8 @@ function woolman_camp_age_adjust($form_state, $cid, $year) {
  * Submit handler for staff to adjust camper age
  */
 function woolman_camp_age_adjust_submit($form, &$form_state) {
-  if (!($cid = woolman_aval($form_state, 'storage:cid'))) {
+  $cid = woolman_aval($form_state, 'storage:cid');
+  if (!$cid) {
     $camper = woolman_split_name_id($form_state['values']['camper']);
     $form_state['storage']['cid'] = $camper['id'];
     $form_state['rebuild'] = TRUE;
@@ -527,10 +531,8 @@ function woolman_camp_age_adjust_submit($form, &$form_state) {
   else {
     $year = $form_state['storage']['year'];
     unset($form_state['storage']);
-    $camper = woolman_contact_get($cid);
-    $real_age = woolman_camp_age($camper['birth_date'], $year);
-    $delta = $form_state['values']['age'] - $real_age;
-    if ($delta === 0) {
+    $delta = $form_state['values']['delta'];
+    if ($delta == 0) {
       db_query("DELETE FROM {woolman_camp_age_exception} WHERE year = %d AND cid = %d", $year, $cid);
       return;
     }

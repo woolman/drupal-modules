@@ -464,8 +464,8 @@ var wsStaff = function($, D, undefined) {
 
     $("table.tablesorter").tablesorter({
       headers: {
-        0: { sorter: false},
-        1: { sorter: 'lastName'}
+        0: {sorter: false},
+        1: {sorter: 'lastName'}
       },
       widgets: ["zebra"],
     }).bind("sortEnd", function() {
