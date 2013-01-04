@@ -14,7 +14,7 @@
 #session-outer h3 {
   background-color: #FDFFBF;
   margin: 0;
-  padding-bottom: 0.7em;
+  padding-bottom: 0.6em;
   padding-top: 0.5em;
   text-align: center;
 }
@@ -26,6 +26,14 @@
 
 .session-wrapper.odd {
   background-color: #D2FFCC;
+}
+
+.session-wrapper.even {
+  float: right;
+}
+
+.session-wrapper.program-11 {
+  background-color: #F5E2F1;
 }
 
 .session-wrapper h4 {
@@ -41,6 +49,14 @@ div.session {
   -moz-border-radius: 7px;
   -webkit-border-radius: 7px;
   background-color: #DCFFD7;
+}
+
+.program-11 div.session {
+  background-color: #FAEBF7;
+}
+
+.even div.session {
+  background-color: #E9FAF5;
 }
 
 .session-title {

@@ -164,7 +164,6 @@ function _ws_apply_form_type_form($form_state) {
       '#default_value' => woolman_multivalue_arr(woolman_aval($self, 'custom_59')),
       '#options' => woolman_get_civi_options(118),
       '#description' => 'Check all that apply. (This optional information is kept confidential and has no bearing on your application.)',
-      '#req' => 1,
       '#prefix' => '<div class="subset">',
       '#suffix' => '</div>',
     );

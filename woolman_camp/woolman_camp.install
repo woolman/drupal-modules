@@ -240,7 +240,7 @@ function woolman_camp_update_6102() {
 /**
  * First steps toward abstraction.
  */
-function FIXME_woolman_camp_update_6103() {
+function woolman_camp_update_6103() {
   $ret = array();
   db_drop_field($ret, 'woolman_camp_rates', 'sfc_price');
   db_drop_field($ret, 'woolman_camp_rates', 'tlc_price');

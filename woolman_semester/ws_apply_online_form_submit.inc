@@ -52,7 +52,7 @@ function _ws_apply_form_get_started_submit($form, &$form_state) {
       }
     }
     $params = array(
-      'case_id' => $new_case['values']['id'],
+      'case_id' => $new_case['id'],
       'activity_type_id' => 47,
       'source_contact_id' => $cid,
       'status_id' => 2,

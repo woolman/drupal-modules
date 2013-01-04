@@ -94,7 +94,7 @@ function woolman_camp_landing() {
       </div>
     ';
   }
-  $content = '<div id="session-outer"> <h3>This Year\'s Sessions</h3>';
+  $content = '<div id="session-outer"> <h3>' . $year . ' Sessions</h3>';
   $classes = array('even' => 'odd', 'odd' => 'even');
   $class = 'odd';
   foreach ($programs as $type => $program) {
