@@ -16,7 +16,7 @@ $(document).ready(function () {
     $(".spouse-name-here").html($("#spouse-name").html());
     if ($("#edit-not-spouse-checkbox").attr("checked")==false) {
       $("#edit-spouse-na-wrapper").hide().checked=false;
-      }
+    }
   }
 
   if ($("#edit-spouse-na").is(":checked")) {
@@ -115,10 +115,10 @@ $(document).ready(function () {
   });
 
   $('select[name$="primary"]').change(function() {
-    $(this).parents('.subset').find('span.primary').remove();
+    $(this).parents('.subset').find('span.primary, span.form-required').remove();
     var primary = $(this).val();
     var label = $(this).parents('.subset').find('label[for*="'+primary+'"]').html();
-    $(this).parents('.subset').find('label[for*="'+primary+'"]').html(label+'<span class="primary">PRIMARY</span>');
+    $(this).parents('.subset').find('label[for*="'+primary+'"]').html(label+' <span class="form-required" title="This field is required.">*</span> <span class="primary">PRIMARY</span>');
   }).change();
 
   preventEnterSubmit('#woolman-camp-family-form');

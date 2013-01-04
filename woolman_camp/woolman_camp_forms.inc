@@ -247,14 +247,12 @@ function woolman_camp_family_form(&$form_state) {
       '#title' => 'Home Email',
       '#default_value' => woolman_aval($person, 'emails:home'),
       '#size' => 25,
-      '#req' => 1,
     );
     $form[$p . '_wrapper'][$p][$p . '_email_work'] = array(
       '#type' => 'textfield',
       '#title' => 'Work Email',
       '#default_value' => woolman_aval($person, 'emails:work'),
       '#size' => 25,
-      '#req' => 1,
     );
     $form[$p . '_wrapper'][$p][$p . '_email_primary'] = array(
       '#type' => 'select',
