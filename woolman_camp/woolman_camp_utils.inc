@@ -382,9 +382,6 @@ function woolman_camp_calc_fees($parent_cid, $year) {
       }
       continue;
     }
-    if ($row['is_counted']) {
-      $counted[$cid] = $cid;
-    }
     if (empty($register_date) || $row['register_date'] < $register_date) {
       $register_date = $row['register_date'];
     }
@@ -404,6 +401,9 @@ function woolman_camp_calc_fees($parent_cid, $year) {
     $ret['campers'][$cid]['gender_id'] = $row['gender_id'];
     $ret['campers'][$cid]['medform_date'] = $row['medform_date'];
     $ret['campers'][$cid]['total_paid'] += $row['fee_amount'];
+    if ($row['is_counted'] && (int) $weeks) {
+      $counted[$cid] = $cid;
+    }
     if ($ret['campers'][$cid]['session_names']) {
       $ret['campers'][$cid]['session_names'] .= ', ';
     }
@@ -425,27 +425,8 @@ function woolman_camp_calc_fees($parent_cid, $year) {
   }
   // Calculate discounts
   foreach ($ret['campers'] as $camper) {
-    // Multi-week discount - special case for camp woolman (id 8)
-    $weeks = 0;
-    foreach ($camper['sessions'] as $sess) {
-      if ($sess['event_type_id'] == 8) {
-        $weeks += $sess['weeks'];
-      }
-    }
-    if ($weeks > 1 && ($multi_week_discount = ($rates['sfc_multi_week_discount'] * $weeks))) {
-      $ret['total_discount'] += $multi_week_discount;
-      if (empty($ret['discounts']['sfc_multi_week_discount'])) {
-        $ret['discounts']['sfc_multi_week_discount'] = array(
-          'date' => $register_date,
-          'amount' => 0,
-          'type' => 'Multi-Week Discount',
-          'id' => NULL,
-        );
-      }
-      $ret['discounts']['sfc_multi_week_discount']['amount'] += $multi_week_discount;
-    }
     // Early registration discount
-    if (!empty($rates['early_discount']) && (substr($rates['early_date'], 0, 10) >= substr($camper['register_date'], 0, 10))) {
+    if (!empty($rates['early_discount']) && (int) $camper['weeks'] && (substr($rates['early_date'], 0, 10) >= substr($camper['register_date'], 0, 10))) {
       $ret['total_discount'] += $rates['early_discount'];
       if (empty($ret['discounts']['early_discount'])) {
         $ret['discounts']['early_discount'] = array(
@@ -457,6 +438,18 @@ function woolman_camp_calc_fees($parent_cid, $year) {
       }
       $ret['discounts']['early_discount']['amount'] += $rates['early_discount'];
     }
+  }
+  // Multi-week discount - special case for camp woolman (id 8)
+  $weeks = $ret['sessions'][8]['weeks'];
+  $multi_week_discount = $rates['sfc_multi_week_discount'] * $weeks;
+  if ($weeks > 1 && $multi_week_discount) {
+    $ret['total_discount'] += $multi_week_discount;
+    $ret['discounts']['sfc_multi_week_discount'] = array(
+      'date' => $register_date,
+      'amount' => $multi_week_discount,
+      'type' => 'Multi-Week Discount',
+      'id' => NULL,
+    );
   }
   // Family discount -- check if there's more than one child registered
   if (!empty($rates['family_discount']) && count($counted) > 1) {
@@ -487,7 +480,7 @@ function woolman_camp_calc_fees($parent_cid, $year) {
  * @param str: end date
  * @return Weeks, Date(s)
  */
-function woolman_camp_date_format($start, $end=NULL, $return_weeks=TRUE) {
+function woolman_camp_date_format($start, $end = NULL, $return_length = TRUE) {
   $start = strtotime($start);
   if ($end) {
     $end = strtotime($end);
@@ -496,11 +489,16 @@ function woolman_camp_date_format($start, $end=NULL, $return_weeks=TRUE) {
     else
       $date = date('F j', $start) . ' - ' . date('F j', $end);
     $dates = str_replace('August', 'Aug', $date);
-    if (!$return_weeks) {
+    if (!$return_length) {
       return $dates;
     }
-    $weeks = round(($end - $start) / 60 / 60 / 24 / 7 * 2) / 2;
-    return '<strong>' . $weeks . ' week' . ($weeks == 1 ? '' : 's') . ':</strong> ' . $dates;
+    $length = round(($end - $start) / 60 / 60 / 24 / 7 * 2) / 2;
+    $unit = 'week';
+    if ($length < 1) {
+      $length = round(($end - $start) / 60 / 60 / 24);
+      $unit = 'day';
+    }
+    return "<strong>$length $unit" . ($length == 1 ? '' : 's') . ':</strong> ' . $dates;
   }
   else {
     return date('F jS', $start);

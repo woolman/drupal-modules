@@ -2,25 +2,30 @@ $(document).ready(function () {
 
   var spouseDefault = $(".spouse-name-here").html();
 
-  if ($("#edit-spouse-same").attr("checked")==true) {
-    $("#spouse-address").hide();
-  }
-  if ($("#edit-e-contact-same").attr("checked")==true) {
-    $("#e_contact-address").hide();
-  }
+  $("input.same-address:checked").each(function() {
+    $fs = $(this).parents('fieldset');
+    $(".hide-address", $fs[0]).hide();
+  });
+
   if ($("#edit-not-spouse-checkbox").attr("checked")==false) {
     $("#edit-not-spouse-select-wrapper").css('display','none');
   }
 
   if($("#spouse-name").length) {
     $(".spouse-name-here").html($("#spouse-name").html());
-    if ($("#edit-not-spouse-checkbox").attr("checked")==false) {
+    if ($("#edit-not-spouse-checkbox").attr("checked") == false) {
       $("#edit-spouse-na-wrapper").hide().checked=false;
     }
   }
 
   if ($("#edit-spouse-na").is(":checked")) {
     $("#spouse-wrapper .all-fields, div[id$='relationship-spouse-wrapper']").hide();
+    $("#edit-e-contact-na").attr('disabled', 'disabled');
+  }
+
+  if ($("#edit-e-contact-na").is(":checked")) {
+    $("#e-contact-wrapper .all-fields").hide();
+    $("#edit-spouse-na").attr('disabled', 'disabled');
   }
 
   var kids = $("#edit-number-of-children").val();
@@ -32,39 +37,34 @@ $(document).ready(function () {
     spouseName(spouseDefault);
   });
 
-  $("#edit-spouse-na").change(function() {
-    if ($(this).attr("checked")==true) {
-      $("#spouse-wrapper .all-fields").hide(600);
+  $(".na-instructions-wrapper input:checkbox").change(function() {
+    $fs = $(this).parents('fieldset');
+    if ($(this).is(":checked")) {
+      $(".all-fields", $fs[0]).hide(600);
+      $(".na-instructions-wrapper input:checkbox").not(this).attr('disabled', 'disabled');
     }
     else {
-      $("#spouse-wrapper .all-fields").show(600);
+      $(".all-fields", $fs[0]).show(600);
+      $(".na-instructions-wrapper input:checkbox").not(this).removeAttr('disabled');
     }
     spouseName(spouseDefault);
   });
 
-  $("#edit-spouse-same").change(function() {
-    if ($(this).attr("checked")==true) {
-      $("#spouse-address").hide(600);
+  $("input.same-address").change(function() {
+    $fs = $(this).parents('fieldset');
+    if ($(this).is(':checked')) {
+      $(".hide-address", $fs[0]).hide(600);
     }
     else {
-      $("#spouse-address").show(600);
-    }
-  });
-
-  $("#edit-e-contact-same").change(function() {
-    if ($(this).attr("checked")==true) {
-      $("#e_contact-address").hide(600);
-    }
-    else {
-      $("#e_contact-address").show(600);
+      $(".hide-address", $fs[0]).show(600);
     }
   });
 
   $("#edit-number-of-children").change(function() {
-    if($(this).val()> kids) {
+    if($(this).val() > kids) {
       $("#children-wrapper fieldset:lt("+($(this).val())+")").show(600);
     }
-    else if($(this).val()< kids) {
+    else if($(this).val() < kids) {
       $("#children-wrapper fieldset:gt("+($(this).val()-1)+")").hide(600);
     }
     kids = $(this).val();
@@ -92,7 +92,7 @@ $(document).ready(function () {
     }
   });
   $("#edit-not-e-contact-checkbox").change(function() {
-    if ($(this).attr("checked")==true) {
+    if ($(this).attr("checked") == true) {
       if(confirm("This will change your family's emergency contact from "+$('#e-contact-name').html()+" to a different person. Continue?")) {
         $("#edit-not-e-contact-checkbox-wrapper").addClass("selected");
         $("#e-contact-instructions").html('Please enter information about your new emergency contact person.');
@@ -109,7 +109,7 @@ $(document).ready(function () {
     }
   });
 
-  $('input[name$="st"]').keyup(function() {
+  $('input[name$="first"], input[name$="last"]').keyup(function() {
     $(this).parents('fieldset').find('.change-msg').show(200);
     $(this).unbind('keyup');
   });
@@ -123,38 +123,51 @@ $(document).ready(function () {
 
   preventEnterSubmit('#woolman-camp-family-form');
 
-});
 
-function spouseName(spouseDefault) {
-  if($("#edit-spouse-last").val() != '' && $("#edit-spouse-na").attr("checked")!=true) {
-    $('div[id$="relationship-spouse-wrapper"]').show();
-    if($("#edit-spouse-nick").val() != '') {
-      var firstName = $("#edit-spouse-nick").val();
+  function spouseName(spouseDefault) {
+    if($("#edit-spouse-last").val() != '' && $("#edit-spouse-na").attr("checked")!=true) {
+      $('div[id$="relationship-spouse-wrapper"]').show();
+      if($("#edit-spouse-nick").val() != '') {
+        var firstName = $("#edit-spouse-nick").val();
+      }else {
+        var firstName = $("#edit-spouse-first").val();
+      }
+      $(".spouse-name-here").html(firstName+" "+$("#edit-spouse-last").val() );
     }else {
-      var firstName = $("#edit-spouse-first").val();
+      $(".spouse-name-here").html(spouseDefault );
+      $('div[id$="relationship-spouse-wrapper"]').hide();
     }
-    $(".spouse-name-here").html(firstName+" "+$("#edit-spouse-last").val() );
-  }else {
-    $(".spouse-name-here").html(spouseDefault );
-    $('div[id$="relationship-spouse-wrapper"]').hide();
   }
-}
 
-function clear_form_elements(ele) {
-  $(ele).find(':input').each(function() {
-    switch(this.type) {
-      case 'select-one':
-        $(this).val('1228');
-        break;
-      case 'select-multiple':
-      case 'text':
-      case 'textarea':
-        $(this).val('');
-        break;
-      case 'checkbox':
-      case 'radio':
-        this.checked = false;
-    }
-  });
-  $(ele+" .hide-address").show();
-}
+  function clear_form_elements(ele) {
+    $(ele).find(':input').each(function() {
+      switch(this.type) {
+        case 'checkbox':
+        case 'radio':
+          this.checked = false;
+          break;
+        case 'select-one':
+          $(this).val('1228');
+          break;
+        default:
+          $(this).val('');
+      }
+    });
+    $(ele + " .hide-address").show();
+  }
+
+  function restore_form_elements(ele) {
+    $(ele).find(':input').each(function() {
+      switch(this.type) {
+        case 'checkbox':
+        case 'radio':
+          this.checked = $(this).prop('defaultChecked');
+          break;
+        default:
+          $(this).val($(this).attr('value'));
+      }
+    });
+    $(ele + " .same-address").change();
+  }
+
+});

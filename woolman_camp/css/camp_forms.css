@@ -103,7 +103,7 @@ margin:0 1em;
 background-color:#FDFFBF;
 }
 
-#spouse-instructions-wrapper p, #spouse-instructions-wrapper div{
+.na-instructions-wrapper p, .na-instructions-wrapper div{
 margin: 0em 1em 1em 0em;
 float: left;
 }

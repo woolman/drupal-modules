@@ -47,7 +47,7 @@ function woolman_camp_family_form_validate($form, &$form_state) {
 
   foreach (array('self' => array('your','yourself'), 'spouse' => array('your spouse\'s','your spouse'), 'e_contact' => array('your emergency contact\'s','your emergency contact')) as $p => $w) {
     $skip = 0;
-    if ($p=='spouse' && $vals['spouse_na']) {
+    if (!empty($vals[$p . '_na'])) {
       continue;
     }
     if ($p=='spouse' && $vals['not_spouse_checkbox'] && !$vals['not_spouse_select']) {
@@ -109,7 +109,7 @@ function woolman_camp_family_form_submit($form, &$form_state) {
 
   // Add or update contacts
   foreach (array('self', 'spouse', 'e_contact') as $p) {
-    if ($p == 'spouse' && $vals['spouse_na']) {
+    if (!empty($vals[$p . '_na'])) {
       continue;
     }
     $params = array(
@@ -236,25 +236,28 @@ function woolman_camp_family_form_submit($form, &$form_state) {
       $params['custom_8'] = $vals['child' . $c . '_relationship_spouse'];
       woolman_relationship_add_or_update($params, TRUE);
     }
-    // E-contact relationship (we do it twice so start date is only entered for new relationships,
-    // But old inactive ones get updated to be active again)
-    unset($params['custom_8']);
-    $params['contact_id_b'] = $cid['e_contact'];
-    $params['relationship_type_id'] = 19;
-    $params['start_date'] = date('Ymd');
-    woolman_relationship_add_or_update($params);
-    unset($params['start_date']);
-    woolman_relationship_add_or_update($params, TRUE);
+    // E-contact relationship
+    // we do it twice so start date is only entered for new relationships,
+    // but old inactive ones get updated to be active again
+    if (empty($vals['e_contact_na'])) {
+      unset($params['custom_8']);
+      $params['contact_id_b'] = $cid['e_contact'];
+      $params['relationship_type_id'] = 19;
+      $params['start_date'] = date('Ymd');
+      woolman_relationship_add_or_update($params);
+      unset($params['start_date']);
+      woolman_relationship_add_or_update($params, TRUE);
+    }
   }
 
   // Spouse relationship
   $params = array(
-      'contact_id_a' => $cid['self'],
-      'contact_id_b' => $cid['spouse'],
-      'relationship_type_id' => 2,
-      'custom_9' => $vals['spouse_relationship'],
-      'is_active' => (bool) $vals['spouse_relationship']
-      );
+    'contact_id_a' => $cid['self'],
+    'contact_id_b' => $cid['spouse'],
+    'relationship_type_id' => 2,
+    'custom_9' => $vals['spouse_relationship'],
+    'is_active' => (bool) $vals['spouse_relationship']
+  );
   if (empty($vals['spouse_na'])) {
     woolman_relationship_add_or_update($params, TRUE);
   }
@@ -288,9 +291,9 @@ function woolman_camp_family_form_submit($form, &$form_state) {
         $kids .= ',' . $kid;
       }
     }
-    db_query('UPDATE {civicrm_relationship} SET is_active = 0, end_date = CURDATE()
-              WHERE contact_id_a IN (' . $kids.') AND contact_id_b = %d AND is_active = 1 AND relationship_type_id =
-                (SELECT id FROM {civicrm_relationship_type} WHERE name_a_b = \'Emergency Contact is\')', $vals['e_contact_cid']);
+    db_query("UPDATE {civicrm_relationship} SET is_active = 0, end_date = CURDATE()
+              WHERE contact_id_a IN ($kids) AND contact_id_b = %d AND is_active = 1 AND relationship_type_id =
+                (SELECT id FROM {civicrm_relationship_type} WHERE name_a_b = 'Emergency Contact is')", $vals['e_contact_cid']);
   }
 
   // Add to camp mailing list

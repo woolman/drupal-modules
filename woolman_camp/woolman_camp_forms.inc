@@ -133,9 +133,9 @@ function woolman_camp_family_form(&$form_state) {
   $form['spouse_wrapper']['spouse']['spouse_na'] = array(
     '#type' => 'checkbox',
     '#title' => 'Not Applicable',
-    '#prefix' => '<div id="spouse-instructions-wrapper"><p id="spouse-instructions">'  .($spouse ? 'Please check and update info for <strong>' . $spouse['display_name'] . '</strong></p>':'Please enter your spouse, if applicable.') . '</p>',
+    '#prefix' => '<div class="na-instructions-wrapper"><p class="na-instructions">' . ($spouse ? 'Please check and update info for <strong>' . $spouse['display_name'] . '</strong></p>':'Please enter your spouse, if applicable.') . '</p>',
     '#suffix' => '</div><div class="clear-block"></div>',
-    '#default_value' => !$spouse && ($children || $prior_reg)
+    '#default_value' => !$spouse && ($children || $prior_reg),
   );
   $form['e_contact_wrapper'] = array(
     '#prefix' => '<div id="e-contact-wrapper" class="form-wrapper" style="background-color:#C3E67C;">',
@@ -155,10 +155,16 @@ function woolman_camp_family_form(&$form_state) {
       ),
     );
   }
-  $form['e_contact_wrapper']['e_contact']=array(
-      '#type' => 'fieldset',
-      '#description' => ($e_contact?'<p id="e-contact-instructions">Please check and update info for <strong>' . $e_contact['display_name'] . '</strong></p>':'<p>All families must provide a secondary emergency contact person in case we are unable to reach you.</p>')
-    );
+  $form['e_contact_wrapper']['e_contact'] = array(
+    '#type' => 'fieldset',
+  );
+  $form['e_contact_wrapper']['e_contact']['e_contact_na'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Same as my spouse/partner',
+    '#prefix' => '<div class="na-instructions-wrapper"><p class="na-instructions">' . ($e_contact ? 'Please check and update info for <strong>' . $e_contact['display_name'] . '</strong></p>':'Please enter your family\'s emergency contact, if different from your spouse/partner.') . '</p>',
+    '#suffix' => '</div><div class="clear-block"></div>',
+    '#default_value' => !$e_contact && ($children || $prior_reg),
+  );
 
   foreach (array('self', 'spouse', 'e_contact') as $p) {
     $person = $$p;
@@ -273,6 +279,7 @@ function woolman_camp_family_form(&$form_state) {
         '#prefix' => '<div id="sameaddress-' . $p . '" style="float:right;">',
         '#suffix' => '</div>',
         '#default_value' => !empty($self['street_address']) && woolman_aval($person, 'street_address') == $self['street_address'],
+        '#attributes' => array('class' => 'same-address'),
       );
     }
     $form[$p . '_wrapper'][$p][$p . '_address'][$p . '_street'] = array(
