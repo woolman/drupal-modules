@@ -28,6 +28,11 @@ function woolman_camp_event_types() {
       'age_min' => 15,
       'age_max' => 16,
     ),
+    12 => array(
+      'name' => 'CIT',
+      'age_min' => 17,
+      'age_max' => 18,
+    ),
   );
 }
 

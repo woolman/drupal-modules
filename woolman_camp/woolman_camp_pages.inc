@@ -97,6 +97,10 @@ function woolman_camp_landing() {
   $content = '<div id="session-outer"> <h3>' . $year . ' Sessions</h3>';
   $classes = array('even' => 'odd', 'odd' => 'even');
   $class = 'odd';
+
+  // Hack to hide CIT
+  unset($programs[12]);
+
   foreach ($programs as $type => $program) {
     if ($sessions[$type]) {
       $content .= "
