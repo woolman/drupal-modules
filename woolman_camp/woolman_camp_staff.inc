@@ -450,7 +450,7 @@ function woolman_camp_approval_form_submit($form, &$form_state) {
       $to = '"' . $parent['display_name'] . '" <' . $parent['email'] . '>';
       $from = '"Woolman Camps" <camp@woolman.org>';
       $message['subject'] = 'Your camp application has been accepted';
-      $message['body'] = "Hello {$parent['nick_name']}\n\nWe've got good news for you! Your camper application for {$data['camper_first']} has been accepted. You are now ready to finalize your registration online by completing med forms and paying your deposit and fees. You'll find everything you need at:\nhttp:// Camp.woolman.org/register/status\n\nRemember, {$data['camper_first']}'s place at camp is not reserved until your deposit is received. You can find out details about making this payment by clicking the above link.\n\nWe're so excited to see {$data['camper_first']} at camp this summer!\n\nSincerely,\nYour Friendly Woolman Camp Staff\n530-273-3183x3\nhttp:// Camp.woolman.org";
+      $message['body'] = "Hello {$parent['nick_name']}\n\nWe've got good news for you! Your camper application for {$data['camper_first']} has been accepted. You are now ready to finalize your registration online by completing med forms and paying your deposit and fees. You'll find everything you need at:\nhttp://camp.woolman.org/register/status\n\nRemember, {$data['camper_first']}'s place at camp is not reserved until your deposit is received. You can find out details about making this payment by clicking the above link.\n\nWe're so excited to see {$data['camper_first']} at camp this summer!\n\nSincerely,\nYour Friendly Woolman Camp Staff\n530-273-3183x11\nhttp://camp.woolman.org";
       $message['to_cid'] = $parent['contact_id'];
       drupal_mail('woolman_website', 'create_activity', $to, language_default(), $message, $from);
       drupal_set_message($data['camper_name'] . '\'s application has been accepted. A friendly email has been sent to ' . $parent['display_name'] . ' with further instructions.');
@@ -654,7 +654,7 @@ function woolman_camp_add_payment_submit($form, &$form_state) {
     $to = '"' . $parent['display_name'] . '" <' . $parent['email'] . '>';
     $from = '"Woolman Camps" <camp@woolman.org>';
     $message['subject'] = 'Payment Received';
-    $message['body'] = "Hello {$parent['nick_name']}\n\nThis is to acknowledge that we have received your payment of \${$vals['amount']}. Camp will be here before you know it, so double-check that you have everything on the packing list: http:// Camp.woolman.org/packing-list\n\nAs always, please don't hesitate to contact us with any questions.\n\nWe're looking forward to a great summer with $children!\n\nSincerely,\nYour Friendly Woolman Camp Staff\n530-273-3183\nhttp:// Camp.woolman.org";
+    $message['body'] = "Hello {$parent['nick_name']}\n\nThis is to acknowledge that we have received your payment of \${$vals['amount']}. Camp will be here before you know it, so double-check that you have everything on the packing list: http://camp.woolman.org/packing-list\n\nAs always, please don't hesitate to contact us with any questions.\n\nWe're looking forward to a great summer with $children!\n\nSincerely,\nYour Friendly Woolman Camp Staff\n530-273-3183x11\nhttp://camp.woolman.org";
     $message['to_cid'] = $parent['contact_id'];
     drupal_mail('woolman_website', 'create_activity', $to, language_default(), $message, $from);
     drupal_set_message('An email acknowledgment has been sent to ' . $parent['display_name']);
