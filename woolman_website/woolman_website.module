@@ -194,8 +194,8 @@ function woolman_website_nodeapi(&$node, $op, $teaser, $page) {
       civicrm_initialize();
       $params = array(
         'event_type_id' => 3,
-        'start_date' => date('Ymdhis', strtotime($node->field_event_date[0]['value']) + $node->field_event_date[0]['offset']),
-        'end_date' => date('Ymdhis', strtotime($node->field_event_date[0]['value2']) + $node->field_event_date[0]['offset2']),
+        'start_date' => date('YmdHis', strtotime($node->field_event_date[0]['value']) + $node->field_event_date[0]['offset']),
+        'end_date' => date('YmdHis', strtotime($node->field_event_date[0]['value2']) + $node->field_event_date[0]['offset2']),
         'is_public' => 1,
         'is_active' => 1,
         'title' => $node->title,
