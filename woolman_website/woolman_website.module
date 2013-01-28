@@ -188,41 +188,37 @@ function woolman_website_form_alter(&$form, $form_state, $form_id) {
  * Implements hook_nodeapi().
  */
 function woolman_website_nodeapi(&$node, $op, $teaser, $page) {
-
   // Sync CiviCRM events to drupal event nodes and rsvp webform
-  if (isset($node->type) && $node->type == 'event'
-  && isset($node->field_event_type[0]['value']) && $node->field_event_type[0]['value'] == 'Woolman Semester') {
-    switch ($op) {
-      case 'presave':
-        civicrm_initialize();
-        $params = array(
-          'event_type_id' => 3,
-          'start_date' => $node->field_event_date[0]['value'],
-          'end_date' => $node->field_event_date[0]['value2'],
-          'is_public' => 1,
-          'is_active' => 1,
-          'title' => $node->title,
-          'description' => $node->body,
-        );
-        if (!empty($node->field_civicrm_event_id[0]['value'])) {
-          $params['id'] = $node->field_civicrm_event_id[0]['value'];
-        }
-        else {
-          $node->body .= '<p><a href="/events/rsvp">Click Here to RSVP</a></p>';
-        }
-        $result = woolman_civicrm_api('event', 'create', $params);
-        $node->field_civicrm_event_id[0]['value'] = $result['id'];
-        break;
-
-      case 'delete':
-        civicrm_initialize();
-        if (!empty($node->field_civicrm_event_id[0]['value'])) {
-          woolman_civicrm_api('event', 'delete', array('id' => $node->field_civicrm_event_id[0]['value']));
-        }
-        break;
+  if (isset($node->type) && $node->type == 'event') {
+    if ($node->field_event_type[0]['value'] == 'Woolman Semester' && $op == 'presave') {
+      civicrm_initialize();
+      $params = array(
+        'event_type_id' => 3,
+        'start_date' => date('Ymdhis', strtotime($node->field_event_date[0]['value']) + $node->field_event_date[0]['offset']),
+        'end_date' => date('Ymdhis', strtotime($node->field_event_date[0]['value2']) + $node->field_event_date[0]['offset2']),
+        'is_public' => 1,
+        'is_active' => 1,
+        'title' => $node->title,
+        'description' => $node->body,
+      );
+      if (!empty($node->field_civicrm_event_id[0]['value'])) {
+        $params['id'] = $node->field_civicrm_event_id[0]['value'];
+      }
+      else {
+        $node->body .= '<p><a href="/events/rsvp">Click Here to RSVP</a></p>';
+      }
+      $result = woolman_civicrm_api('event', 'create', $params);
+      $node->field_civicrm_event_id[0]['value'] = $result['id'];
+      woolman_website_cron(TRUE);
     }
-    woolman_website_cron(TRUE);
+    elseif (($op == 'presave' || $op == 'delete') && !empty($node->field_civicrm_event_id[0]['value'])) {
+      civicrm_initialize();
+      woolman_civicrm_api('event', 'delete', array('id' => $node->field_civicrm_event_id[0]['value']));
+      $node->field_civicrm_event_id[0]['value'] = NULL;
+      woolman_website_cron(TRUE);
+    }
   }
+
   // Respond to a new blog entry being created
   if ($op == 'insert' && isset($node->type) && $node->type == 'blog_entry') {
     module_load_include('inc', 'woolman_website', 'woolman_blog');
