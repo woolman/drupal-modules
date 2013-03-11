@@ -52,5 +52,5 @@ function _woolman_blog_insert($node) {
   $message['body'] = 'Title: ' . $node->title . "\n" .
   'Author: ' . $node->field_journal_author[0]['value'] . "\n" .
   'View entry at '. url('node/' . $node->nid, array('absolute' => TRUE));
-  drupal_mail('woolman_website', 'blog', 'webmaster@woolman.org, emilyz@woolman.org, grace.oedel@gmail.com', language_default(), $message, '"' . woolman_name('full') . ' [Woolman Blog]" <' . $user->mail . '>');
+  drupal_mail('woolman_website', 'blog', 'webmaster@woolman.org, emilyz@woolman.org', language_default(), $message, '"' . woolman_name('full') . ' [Woolman Blog]" <' . $user->mail . '>');
 }
