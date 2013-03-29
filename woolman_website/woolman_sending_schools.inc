@@ -38,7 +38,7 @@ function woolman_sending_schools() {
   while ($school = db_fetch_array($resource)) {
     $display_name = htmlspecialchars($school['display_name']);
     if ($school['url']) {
-      $display_name = '<a href="' . $school['url'] . '" title="Visit the website of ' . $display_name . '">' . $display_name . '</a>';
+      $display_name = '<a href="' . $school['url'] . '" title="Visit the website of ' . $display_name . '" target="_blank">' . $display_name . '</a>';
     }
     if (!$school['country'] && $school['st_co_id'] == USA) {
       $school['country'] = 'United States';
