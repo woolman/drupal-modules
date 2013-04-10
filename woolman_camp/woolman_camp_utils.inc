@@ -302,7 +302,7 @@ function woolman_camp_get_payments($cid, $year) {
     SELECT con.display_name, pay.receive_date, pay.total_amount, pay.check_number, ov.label AS type
     FROM {civicrm_contact} con, {civicrm_contribution} pay
     LEFT JOIN {civicrm_option_value} ov ON ov.option_group_id = 10 AND ov.value = pay.payment_instrument_id
-    WHERE con.id = pay.contact_id AND pay.source = %d AND pay.contribution_type_id = 5 AND pay.is_test = 0 AND (con.id = %d OR pay.id IN (SELECT sof.contribution_id FROM {civicrm_contribution_soft} sof WHERE sof.contact_id = %d)) AND pay.contribution_status_id = 1
+    WHERE con.id = pay.contact_id AND pay.source = %d AND pay.financial_type_id = 5 AND pay.is_test = 0 AND (con.id = %d OR pay.id IN (SELECT sof.contribution_id FROM {civicrm_contribution_soft} sof WHERE sof.contact_id = %d)) AND pay.contribution_status_id = 1
     ORDER BY pay.receive_date", $year, $cid, $cid);
   while($row = db_fetch_array($query)) {
     if ($row['check_number'] && $row['type'] == 'Check') {
@@ -758,7 +758,7 @@ function woolman_camp_process_payments($cron) {
   $db = db_query("SELECT c.id, c.contact_id, s.contact_id AS soft_credit_to, c.contribution_page_id, c.total_amount
     FROM {civicrm_contribution} c
     LEFT JOIN {civicrm_contribution_soft} s ON c.id = s.contribution_id
-    WHERE c.contribution_type_id = 5 AND c.contribution_status_id = 1 AND (c.source IS NULL OR c.source NOT LIKE '20%')");
+    WHERE c.financial_type_id = 5 AND c.contribution_status_id = 1 AND (c.source IS NULL OR c.source NOT LIKE '20%')");
   while ($info = db_fetch_object($db)) {
     $year = woolman_camp_next_year();
     $cid = empty($info->soft_credit_to) ? $info->contact_id : $info->soft_credit_to;

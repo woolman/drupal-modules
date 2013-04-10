@@ -252,9 +252,9 @@ function woolman_website_civicrm_buildForm($formName, &$form) {
 
   // Alter contribution forms
   if ($formName == 'CRM_Contribute_Form_Contribution_Main'
-  && !empty($form->_values['contribution_type_id'])) {
+  && !empty($form->_values['financial_type_id'])) {
     // Limit options of donation Payment Forms
-    if ($form->_values['contribution_type_id'] == 1) {
+    if ($form->_values['financial_type_id'] == 1) {
       $allowed = array('annual fund', 'ws scholarship', 'campership', 'seeds of peace');
       foreach ($form->_elements as &$e) {
         // The following is commented out because it somehow interfered with form validation
@@ -799,8 +799,8 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
         <div>
           <div>
             <h3>' . $dao->course_name_55 . '</h3>
-            <strong>Grade Earned:</strong> ' . $dao->grade_56 .'<br />
-            <strong>Credits Earned:</strong> ' . $earned_credit .'<br />' .
+            <strong>Grade Earned:</strong> &nbsp; ' . $dao->grade_56 .'<br />
+            <strong>Credits Earned:</strong> &nbsp; ' . $earned_credit .'<br />' .
           '</div>
           <div>' .
             $dao->evaluation_58 .
@@ -874,13 +874,13 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
     if (in_array('clear_thank_you', $tokens['donor'])) {
       CRM_Core_DAO::executeQuery("
         UPDATE civicrm_contribution SET thankyou_date = NULL
-        WHERE is_test = 0 AND contribution_type_id IN (1,9) AND contribution_status_id = 1
+        WHERE is_test = 0 AND financial_type_id IN (1,9) AND contribution_status_id = 1
         AND DATE(thankyou_date) + INTERVAL 2 DAY > CURDATE() AND contact_id IN ($contacts_and_spouses)"
       );
     }
     if (in_array('unthanked', $tokens['donor'])) {
       $dao = &CRM_Core_DAO::executeQuery("
-        SELECT cc.contact_id, cc.total_amount, cc.receive_date, cc.check_number, cc.contribution_type_id, con.display_name, hon.display_name as honoree, ac.label AS account, pi.label AS payment_instrument, ht.label AS honor_type, ca.designation_60 AS designation, n.note
+        SELECT cc.contact_id, cc.total_amount, cc.receive_date, cc.check_number, cc.financial_type_id, con.display_name, hon.display_name as honoree, ac.label AS account, pi.label AS payment_instrument, ht.label AS honor_type, ca.designation_60 AS designation, n.note
         FROM civicrm_contribution cc
         INNER JOIN civicrm_contact con ON con.id = cc.contact_id
         LEFT JOIN civicrm_contact hon ON hon.id = cc.honor_contact_id
@@ -889,7 +889,7 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
         LEFT JOIN civicrm_option_value pi ON cc.payment_instrument_id = pi.value AND pi.option_group_id = (SELECT id FROM civicrm_option_group WHERE name = 'payment_instrument')
         LEFT JOIN civicrm_option_value ht ON cc.honor_type_id = ht.value AND ht.option_group_id = (SELECT id FROM civicrm_option_group WHERE name = 'honor_type')
         LEFT JOIN civicrm_note n ON n.entity_table = 'civicrm_contribution' AND n.entity_id = cc.id
-        WHERE cc.is_test = 0 AND cc.contribution_type_id IN (1,9) AND cc.contribution_status_id = 1
+        WHERE cc.is_test = 0 AND cc.financial_type_id IN (1,9) AND cc.contribution_status_id = 1
         AND cc.contact_id IN ($contacts_and_spouses) AND cc.thankyou_date IS NULL
         ORDER BY cc.receive_date"
       );
@@ -931,7 +931,7 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
     if (in_array('set_thank_you', $tokens['donor'])) {
       CRM_Core_DAO::executeQuery("
         UPDATE civicrm_contribution SET thankyou_date = NOW()
-        WHERE is_test = 0 AND contribution_type_id IN (1,9) AND contribution_status_id = 1
+        WHERE is_test = 0 AND financial_type_id IN (1,9) AND contribution_status_id = 1
         AND contact_id IN ($contacts_and_spouses) AND thankyou_date IS NULL"
       );
     }

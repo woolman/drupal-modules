@@ -627,7 +627,7 @@ function woolman_camp_add_payment_submit($form, &$form_state) {
   }
 
   $params = array(
-    'contribution_type_id' => 5,
+    'financial_type_id' => 5,
     'contact_id' => $payer['id'],
     'receive_date' => woolman_date_array_to_string($vals['date']),
     'total_amount' => $vals['amount'],

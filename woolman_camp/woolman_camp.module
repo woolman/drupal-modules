@@ -133,8 +133,8 @@ function woolman_camp_civicrm_buildForm($formName, &$form) {
  */
 function woolman_camp_civicrm_pre($op, $type, $id, &$c) {
   if (($op == 'update' || $op == 'edit') && $type == 'Contribution'
-  && isset($c['source']) && isset($c['contribution_type_id'])
-  && $c['source'] == '20??' && $c['contribution_type_id'] == 5) {
+  && isset($c['source']) && isset($c['financial_type_id'])
+  && $c['source'] == '20??' && $c['financial_type_id'] == 5) {
     $c['source'] = 'Unprocessed';
   }
 }
@@ -145,8 +145,8 @@ function woolman_camp_civicrm_pre($op, $type, $id, &$c) {
  */
 function woolman_camp_civicrm_post($op, $type, $id, $c) {
   if (($op == 'create' || $op == 'update' || $op == 'edit') && $type == 'Contribution'
-  && isset($c->contribution_status_id) && isset($c->contribution_type_id)
-  && $c->contribution_status_id == 1 && $c->contribution_type_id == 5) {
+  && isset($c->contribution_status_id) && isset($c->financial_type_id)
+  && $c->contribution_status_id == 1 && $c->financial_type_id == 5) {
     if (empty($c->source) || substr($c->source, 0, 2) != '20') {
       module_load_include('inc', 'woolman_camp', 'woolman_camp_utils');
       woolman_camp_process_payments(FALSE);

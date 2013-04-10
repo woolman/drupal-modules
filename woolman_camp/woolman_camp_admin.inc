@@ -288,8 +288,8 @@ function woolman_camp_rates_submit ($form, &$form_state) {
         'end_date' => woolman_date_array_to_string($vals[$type][$s . '_end']) . '120000',
         'is_active' => 1,
         'is_monetary' => 1,
-        'contribution_type_id' => 5,
-        'payment_processor' => '5',
+        'financial_type_id' => 5,
+        'payment_processor' => 5,
         'currency' => 'USD',
         'has_waitlist' => 1,
       );
@@ -338,8 +338,8 @@ function woolman_camp_rates_submit ($form, &$form_state) {
         'is_active' => 1,
         'currency' => 'USD',
         'has_waitlist' => 1,
-        'contribution_type_id' => 5,
-        'payment_processor' => '5',
+        'financial_type_id' => 5,
+        'payment_processor' => 5,
         'custom_40' => $dir,
       );
       $same = FALSE;
