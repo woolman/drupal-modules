@@ -717,7 +717,7 @@ function woolman_camp_contribution_form($formName, &$form) {
       $intro .= '<tr><td>Paid to-date</td><td>$' . $reg['total_paid'] . '</td></tr>';
       $intro .= '<tr style="font-weight:bold;"><td>Balance Due</td><td>$' . $balance . '</td></tr>';
       $intro .= '</tbody></table><p>';
-      $defaults = array('amount_other' => $balance);
+      $defaults = array('price_16' => $balance);
       $form->setDefaults($defaults);
       if ($balance <= 0) {
         $intro .= 'Thank you, your tuition and fees are already paid in full. ' . l('Click here to return to your camp registration page.', '~camp/register/status', array('alias' => TRUE));

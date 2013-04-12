@@ -982,6 +982,8 @@ function woolman_format_address($obj, $sep = "<br />\n") {
  * Implements hook_civicrm_caseSummary().
  */
 function woolman_website_civicrm_caseSummary($id) {
+  drupal_add_css(drupal_get_path('theme', 'woolman') . '/css/civicase.css', 'module', 'all', FALSE);
+
   if (!($cid = woolman_aval($_GET, 'cid'))) {
     $cid = db_result(db_query("SELECT contact_id FROM {civicrm_case_contact} WHERE case_id = $id LIMIT 0, 1"));
   }
