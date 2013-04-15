@@ -191,17 +191,17 @@ var wsStaff = function($, D, undefined) {
   /**
    * In-place editing select menu
    */
-  function selectMenu(ele) {
-    ele.unbind('click').removeClass('ready').wrapInner('<span style="display:none" />');
-    var id = ele.attr('data-id');
-    var type = ele.attr('data-type');
+  function selectMenu() {
+    $(this).unbind('click').removeClass('ready').wrapInner('<span style="display:none" />');
+    var id = $(this).attr('data-id');
+    var type = $(this).attr('data-type');
     var options = D.settings.ws_staff[type];
     var items = '';
     for (var o in options) {
       items += '<option ' + (id == o ? 'selected="selected"' : '') + ' value="' + o + '">' + options[o] + '</option>';
     }
-    ele.prepend('<select>' + items + '</select>');
-    $('select', ele).change(function() {
+    $(this).prepend('<select>' + items + '</select>');
+    $('select', this).change(function() {
       var ele = $(this).parent();
       var id = $(this).val();
       var label = $('option:selected', this).text();
@@ -226,9 +226,7 @@ var wsStaff = function($, D, undefined) {
         // Reset on user cancel
         $('select', ele).remove();
         $('span', ele).replaceWith($('span', ele).text());
-        ele.addClass('ready').click(function() {
-          selectMenu($(this));
-        });
+        ele.addClass('ready').click(selectMenu);
       }
     });
   }
@@ -442,7 +440,7 @@ var wsStaff = function($, D, undefined) {
   /**
   * Initialize some stuff
   */
-  $(document).ready(function() {
+  $(function() {
     timeStamp = D.settings.ws_staff.timeStamp;
 
     // Fetch updates from server every 5 min
@@ -494,9 +492,7 @@ var wsStaff = function($, D, undefined) {
   * Attach behaviors to ajax elements
   */
   D.behaviors.ws_staff = function(context) {
-    $('div.sel', context).not('.ready').addClass('ready').click(function() {
-      selectMenu($(this));
-    });
+    $('div.sel', context).not('.ready').addClass('ready').click(selectMenu);
 
     $('a[href="#"]', context).not('.ready').addClass('ready').click(function() {
       var fn = $(this).attr('data-fn');
@@ -513,7 +509,7 @@ var wsStaff = function($, D, undefined) {
   };
 
   /**
-  * Todo - there seems to be a bug in D6 that broke tablesorter when attaching its behavior,
+  * FIXME - there seems to be a bug in D6 that broke tablesorter when attaching its behavior,
   * So here's a workaround (modified version of Drupal.attachBehaviors())
   */
   function attachBehaviors(context) {
