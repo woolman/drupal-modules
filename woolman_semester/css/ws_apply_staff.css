@@ -104,8 +104,11 @@ form#-ws-apply-form-report .subset div.form-checkboxes {
   background-position: -64px 0;
 }
 
-.app-report-table span.icon {
-  height: 12px;
+.app-report-table a.icon {
+  background-image:url("/sites/all/modules/civicrm/i/icons/jquery-ui-3E3E3E.png");
+}
+.app-report-table a.icon:hover {
+  background-image:url("/sites/all/modules/civicrm/i/icons/jquery-ui-2786C2.png");
 }
 
 .js .abs-dt {
@@ -222,6 +225,7 @@ form#-ws-apply-form-report .subset div.form-checkboxes {
 .app-report-container a.new-note {
   background-position: 0px -193px;
   height: 14px;
+  width: 14px;
   position: absolute;
   right: 0px;
   bottom: 0px;
