@@ -773,11 +773,11 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
 
   // Transcript tokens
   if (!empty($tokens['transcript'])) {
-    $dao = &CRM_Core_DAO::executeQuery('
+    $dao = CRM_Core_DAO::executeQuery("
       SELECT *
       FROM civicrm_value_transcript_16
-      WHERE entity_id IN (' . $contacts . ')
-      ORDER BY course_credits_57 DESC, course_name_55 ASC'
+      WHERE entity_id IN ($contacts)
+      ORDER BY IF(grade_56 IN ('P', 'F'), 1, 0), course_credits_57 DESC, course_name_55 ASC"
     );
     while ($dao->fetch()) {
       $cid = $dao->entity_id;
@@ -787,10 +787,10 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
       }
       $values[$cid]['transcript.official'] .= '
         <tr>
-          <td>' . $dao->course_name_55 .'</td>
-          <td>' . $dao->course_credits_57 .'</td>
-          <td>' . $earned_credit.'</td>
-          <td>' . $dao->grade_56 .'</td>
+          <td>' . $dao->course_name_55 . '</td>
+          <td>' . $dao->course_credits_57 . '</td>
+          <td>' . $earned_credit . '</td>
+          <td>' . $dao->grade_56 . '</td>
         </tr>';
       if (empty($values[$cid]['transcript.narrative'])) {
         $values[$cid]['transcript.narrative'] = '';
