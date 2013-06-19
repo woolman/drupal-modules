@@ -760,7 +760,7 @@ function woolman_camp_manage_discount(&$form_state, $cid, $year) {
     $form['discounts']['#suffix'] .= '<tr><td>Paid so far by ' . woolman_name('full', $cid) . ':</td><td>$<span id="discount-form-paid">' . $reg['total_paid'] . '</span></td></tr>';
 
     $form['discounts']['#suffix'] .= '<tr style="font-weight:bold;"><td>Balance Due:</td><td>$<span id="discount-form-balance">' . ($reg['total_fees']-$reg['total_discount']-$reg['total_paid']) . '</span></td></tr></tbody></table>
-    <div id="discount-form-base" style="display:none;">' . ($reg['total_fees']-$reg['total_discount']) . '</div>';
+    <div id="discount-form-base" style="display:none;">' . ($reg['total_fees']) . '</div>';
     
     $form['discounts'][0] = $fields;
     $form['discounts'][0]['amount']['#prefix'] = '<td class="new">';
