@@ -682,8 +682,8 @@ function woolman_camp_shuttle_form(&$form_state) {
             '#return_value' => woolman_aval($shuttle, "campers:$cid:participant_id", 1),
           );
           if(count($shuttle['campers']) >= $shuttle['max_participants']) {
-            $form[$cid][$shuttle['event_id']]['#disabled'] = TRUE;
-            $form[$cid][$shuttle['event_id']]['#description'] = 'Sorry, there is no more room on this shuttle';
+            $form[$cid][$shuttle['event_id']]['#disabled'] = !isset($shuttle['campers'][$cid]);
+            $form[$cid][$shuttle['event_id']]['#description'] = '<em>This shuttle is full.</em>';
           }
         }
       }
