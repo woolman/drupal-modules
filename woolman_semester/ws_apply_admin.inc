@@ -84,7 +84,7 @@ function ws_apply_staff_dates_submit($form, &$form_state) {
           'name' => $name,
           'is_active' => 1,
         );
-
+        // Update existing semester dates
         if ($sem = woolman_aval($sems, $name)) {
           if ($start != $sem['start'] || $end != $sem['end']) {
             woolman_civicrm_api('option_value', 'create', $params + array('id' => $sem['id']));
@@ -93,6 +93,8 @@ function ws_apply_staff_dates_submit($form, &$form_state) {
               AND relationship_type_id = 10 AND contact_id_b = " . WOOLMAN,
               $start, $end, $sem['start'], $sem['end']
             );
+            db_query("UPDATE {civicrm_value_semester_choices_3} SET semesters_5 = REPLACE(semesters_5, '%s', '%s')",
+              "{$sem['start']}--{$sem['end']}", "{$start}--{$end}");
             drupal_set_message($params['label'] . ' Dates Updated');
           }
         }
