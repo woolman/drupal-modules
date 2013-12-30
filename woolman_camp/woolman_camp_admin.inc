@@ -44,8 +44,8 @@ function woolman_camp_rates(&$form_state) {
       '#type' => 'textfield',
       '#size' => 5,
       '#field_prefix' => '$',
-      '#title' => 'SFC multi-week discount',
-      '#description' => 'Discount per week for SFC campers coming for 2 or more weeks',
+      '#title' => 'Multi-week discount',
+      '#description' => 'Discount per week for Camp Woolman campers attending for 2 or more weeks',
       '#default_value' => $pricedefault['sfc_multi_week_discount'],
     );
     $form["year_$year"]['family_discount'] = array(
@@ -299,7 +299,7 @@ function woolman_camp_rates_submit ($form, &$form_state) {
         if ((strtotime($sess['start_date']) == strtotime($params['start_date']))
         && (strtotime($sess['end_date']) == strtotime($params['end_date']))
         && ($sess['title'] == $params['title'])
-        && ($sess['price'] == $params['price'])
+        && ($form["year_$year"][$type]["{$s}_price"]['#default_value'] == $vals[$type][$s . '_price'])
         && ($sess['max_participants'] == $params['max_participants'])) {
           $same = TRUE;
         }
