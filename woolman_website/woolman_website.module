@@ -155,6 +155,14 @@ function woolman_website_form_alter(&$form, $form_state, $form_id) {
       1 => 'Only my trips'
     );
   }
+  // Student Projects
+  elseif ($view_name == 'student_projects' && !empty($form['semester'])) {
+    module_load_include('inc', 'woolman_website', 'woolman_website_utils');
+    $form['semester']['#type'] = 'select';
+    $form['semester']['#multiple'] = FALSE;
+    $form['semester']['#options'] = array('' => '-any-') + woolman_semesters_list_as_integers();
+    unset($form['semester']['#size']);
+  }
 
   // Customize text in comment form
   if ($form_id == 'comment_form') {
@@ -1609,3 +1617,4 @@ function woolman_split_name_id($params) {
   }
   return $contact;
 }
+

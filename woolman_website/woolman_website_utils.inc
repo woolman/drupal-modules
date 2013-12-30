@@ -637,3 +637,35 @@ function _woolman_contact_match($params, $write_mode='update_all', $return='retu
   $contact = woolman_civicrm_api('contact', 'get', array('contact_id' => $cid));
   return array('op' => $op, 'contact_id' => $cid, 'contact' => $contact['values'][$cid], 'is_error' => FALSE);
 }
+
+/**
+ * This is legacy code used in "Student Project" nodes
+ * Generate list of semesters from 2005 to *now*
+ * Please resist the temptation to limit this list to more recent semesters here,
+ * as it will break the display of older entries. Try using hook_form_alter on the node form instead.
+ */
+function woolman_semesters_list_as_integers() {
+  $month = date('m');
+  $semester = ($month < 9 ? 1 : 2);
+  $year = date('Y');
+
+  $y = 2005;
+  $s = 1;
+  $value = array();
+
+  while ($y <= $year){
+
+    $sem = ($s == 1 ? 'Spring ' : 'Fall ');
+
+    $value[10*$y+$s] = $sem.$y;
+
+    $s++;
+    if ($s >= 3){
+      $s = 1;
+      $y++;
+    }
+    if ($y >= $year && $s > $semester) $y++;
+  }
+
+  return $value;
+}
