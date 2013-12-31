@@ -160,8 +160,35 @@ function woolman_website_form_alter(&$form, $form_state, $form_id) {
     module_load_include('inc', 'woolman_website', 'woolman_website_utils');
     $form['semester']['#type'] = 'select';
     $form['semester']['#multiple'] = FALSE;
-    $form['semester']['#options'] = array('' => '-any-') + woolman_semesters_list_as_integers();
+    $form['semester']['#options'] = array('' => '-Any-') + woolman_semesters_list_as_integers();
     unset($form['semester']['#size']);
+
+    // Add a fake form item to switch urls
+    $item = '
+      <div style="float:left;padding-right:1em;">
+        <label for="edit-project-type">Type</label>
+        <div class="form-item">
+          <select id="edit-project-type" class="form-select">
+            <option value="">-Any-</option>';
+    foreach(taxonomy_get_tree(19) as $term) {
+      $key = str_replace(' ', '-', strtolower($term->name));
+      if (arg(2) == $term->tid) {
+        $key .= '" selected="selected';
+      }
+      $item .= '<option value="/' . $key . '">' . $term->name . '</option>';
+    }
+    $item .= '
+          </select>
+        </div>
+      </div>';
+    $form = array('project_type_markup' => array('#value' => $item)) + $form;
+    drupal_add_js('jQuery(function($) {
+      $("#edit-project-type").change(function() {
+        var $form = $(this).parents("form");
+        var action = $form.attr("action").split("/projects");
+        $form.attr("action", action[0] + "/projects" + $(this).val());
+      });
+    });', 'inline');
   }
 
   // Customize text in comment form
