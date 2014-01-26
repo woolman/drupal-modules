@@ -9,7 +9,7 @@ function _ws_apply_page_one() {
   drupal_add_css(drupal_get_path('module', 'woolman_semester') . '/css/ws_apply_online.css');
 
   if (!user_is_logged_in()) {
-    return views_embed_view('embed_image', 'attachment_1', 111, '3+4+5')._ws_apply_settings('ws_apply_blurb').'<div class="instructions"><h5>Ready to get started?</h5><p>In order to begin the application process, please '.l('log in','user', array('query' => array('destination' => 'semester/admissions/apply'), 'alias' => TRUE)).'. If you don\'t yet have a Woolman.org account, it only takes a moment to '.l('register', 'user/register', array('query' => array('destination' => 'semester/admissions/apply'), 'alias' => TRUE)). '.</p>'.l('Apply Now', 'user/register', array('query' => array('destination' => 'semester/admissions/apply'), 'alias' => TRUE, 'attributes' => array('class' => 'button-style'))). '</div><div class="instruction-bottom"></div>';
+    return _ws_apply_settings('ws_apply_blurb').'<div class="instructions"><h5>Ready to get started?</h5><p>In order to begin the application process, please '.l('log in','user', array('query' => array('destination' => 'semester/admissions/apply'), 'alias' => TRUE)).'. If you don\'t yet have a Woolman.org account, it only takes a moment to '.l('register', 'user/register', array('query' => array('destination' => 'semester/admissions/apply'), 'alias' => TRUE)). '.</p>'.l('Apply Now', 'user/register', array('query' => array('destination' => 'semester/admissions/apply'), 'alias' => TRUE, 'attributes' => array('class' => 'button-style'))). '</div><div class="instruction-bottom"></div>';
   }
   else {
     module_load_include('inc', 'woolman_semester', 'ws_apply_online_forms');
@@ -17,7 +17,7 @@ function _ws_apply_page_one() {
 
   // Load the application case, if it exists. Else display "get started" button.
   if (!($case = _ws_apply_get_case())) {
-    return views_embed_view('embed_image', 'attachment_1', 111, '3+4+5')._ws_apply_settings('ws_apply_blurb').'<div class="instructions"><h5>Ready to get started? Click here for our online application forms:</h5>'.drupal_get_form(_ws_apply_form_get_started).'</div><div class="instruction-bottom"></div>';
+    return _ws_apply_settings('ws_apply_blurb').'<div class="instructions"><h5>Ready to get started? Click here for our online application forms:</h5>'.drupal_get_form(_ws_apply_form_get_started).'</div><div class="instruction-bottom"></div>';
   }
 
   drupal_set_title(woolman_name('nick') . "'s Application");
