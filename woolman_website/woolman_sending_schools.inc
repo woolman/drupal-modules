@@ -56,8 +56,8 @@ function woolman_sending_schools() {
 
   ksort($schools);
 
-  // Add a page image
-  $output = views_embed_view('embed_image', 'attachment_1', 111, '3+4+5') .theme_woolman_sending_schools($schools);
+  // Render output
+  $output = theme_woolman_sending_schools($schools);
   //cache this output for 20 days
   cache_set('woolman_sending_schools', $output, 'cache', time() + (20 * 24 * 60 * 60));
   return $output;
