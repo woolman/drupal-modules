@@ -82,7 +82,7 @@ function _ws_apply_page_one() {
     37 => array(
       'name' => 'Interview',
       'text' => 'Interview with the admissions staff, by phone or in person. We will schedule it with you once your application forms are complete.',
-      'ready' => 'Now that you have completed the application forms, please contact us (<a href="mailto:admissions@woolman.org">admissions@woolman.org</a> or 530-273-3183) to schedule an interview.',
+      'ready' => 'Now that you have completed the application forms, we will contact you to schedule an interview.',
       'scheduled' => 'Your interview is scheduled for %datetime.',
     ),
   );
