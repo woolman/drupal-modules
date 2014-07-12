@@ -217,14 +217,15 @@ function ws_admissions_db_new_cases() {
  */
 function ws_admissions_db_followups($reps) {
   unset($reps[0]);
-  $rep_query = 'COUNT(IF(act.source_contact_id NOT IN ('.implode(',', array_keys($reps)).'),1,NULL)) AS acts_0';
+  $totals = array();
+  $rep_query = 'COUNT(IF(ac.contact_id NOT IN ('.implode(',', array_keys($reps)).'),1,NULL)) AS acts_0';
   foreach($reps as $rep_id => $rep_name) {
-    $rep_query .= ', COUNT(IF(act.source_contact_id=' . $rep_id.',1,NULL)) AS acts_' . $rep_id;
+    $rep_query .= ', COUNT(IF(ac.contact_id=' . $rep_id.',1,NULL)) AS acts_' . $rep_id;
   }
   $db = db_query("
     SELECT act.activity_date_time AS date, $rep_query
-    FROM {civicrm_activity} act
-    WHERE activity_date_time >= (date_sub(curdate(),interval 1 year)) AND is_current_revision = 1 AND status_id IN (2,3) AND is_deleted = 0 AND activity_type_id IN (14,29) AND id IN (SELECT activity_id FROM {civicrm_case_activity} ca, {civicrm_case} cas WHERE cas.id = ca.case_id AND cas.case_type_id = '1' AND cas.is_deleted = 0)
+    FROM {civicrm_activity} act, {civicrm_activity_contact} ac
+    WHERE ac.activity_id = act.id AND ac.record_type_id = 2 AND activity_date_time >= (date_sub(curdate(),interval 1 year)) AND is_current_revision = 1 AND status_id IN (2,3) AND is_deleted = 0 AND activity_type_id IN (14,29) AND act.id IN (SELECT activity_id FROM {civicrm_case_activity} ca, {civicrm_case} cas WHERE cas.id = ca.case_id AND cas.case_type_id = '1' AND cas.is_deleted = 0)
     GROUP BY YEAR(act.activity_date_time), MONTH(act.activity_date_time)");
   $reps[0] = 'Others';
   while($row = db_fetch_array($db)) {
