@@ -242,7 +242,8 @@ function ws_admissions_prospective_form($form_state, $reps, $stats, $states, $tr
     FROM  {civicrm_activity} act
     JOIN  {civicrm_case_activity} ca ON ca.activity_id = act.id
     JOIN  {civicrm_case_contact} cc ON ca.case_id = cc.case_id
-    JOIN  {civicrm_contact} con ON act.source_contact_id = con.id
+    JOIN  {civicrm_activity_contact} ac ON ac.activity_id = act.id AND ac.record_type_id = 2
+    JOIN  {civicrm_contact} con ON ac.contact_id = con.id
     LEFT JOIN {civicrm_option_value} av ON av.option_group_id = 2 AND av.value = act.activity_type_id
     LEFT JOIN {civicrm_option_value} ov ON ov.option_group_id = 25 AND ov.value = act.status_id
     LEFT JOIN {civicrm_value_semester_choices_3} sem ON sem.entity_id = ca.activity_id
