@@ -126,7 +126,7 @@ function _ws_apply_page_one() {
         $row['description'] = str_replace($token, $date, $row['description']);
       }
       if (strpos($row['description'], '%target') !== FALSE &&
-      $target = db_result(db_query('SELECT target_contact_id FROM {civicrm_activity_target} WHERE activity_id = %d LIMIT 0, 1', $act['id']))) {
+      $target = db_result(db_query('SELECT contact_id FROM {civicrm_activity_contact} WHERE activity_id = %d AND record_type_id = 3 LIMIT 0, 1', $act['id']))) {
         $row['description'] = str_replace('%target', woolman_name('full', $target), $row['description']);
       }
       $table[] = $row;
@@ -240,8 +240,8 @@ function _ws_apply_reference_handler() {
   // Security check: make sure all args match correct db values
   $query = db_query(
     'SELECT tar.activity_id, tar.target_contact_id, cc.contact_id
-      FROM {civicrm_activity_target} tar, {civicrm_case_activity} ca, {civicrm_case_contact} cc
-      WHERE tar.id = %d AND tar.activity_id = ca.activity_id AND ca.case_id = cc.case_id', $target_id);
+      FROM {civicrm_activity_contact} tar, {civicrm_case_activity} ca, {civicrm_case_contact} cc
+      WHERE tar.id = %d AND tar.activity_id = ca.activity_id AND tar.record_type = 3 AND ca.case_id = cc.case_id', $target_id);
   $db = db_fetch_array($query);
   if (empty($db) || $db['activity_id'] != $aid || $db['target_contact_id'] != $self || $db['contact_id'] != $student) {
     return drupal_not_found();

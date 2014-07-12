@@ -1070,9 +1070,10 @@ function woolman_website_civicrm_caseSummary($id) {
   $resource = db_query("SELECT  con.first_name, con.display_name, con.id AS contact_id,
                                 act.subject, act.activity_date_time, act.details, act.id AS activity_id
                         FROM  {civicrm_contact} con
-                        INNER JOIN  {civicrm_activity} act ON act.source_contact_id = con.id
+                        INNER JOIN {civicrm_activity_contact} ac ON ac.contact_id = con.id AND ac.record_type_id = 2
+                        INNER JOIN {civicrm_activity} act ON act.id = ac.activity_id
                         WHERE act.activity_type_id = 33 AND act.id IN
-                        (SELECT tar.activity_id FROM {civicrm_activity_target} tar WHERE tar.target_contact_id = $cid)
+                          (SELECT tar.activity_id FROM {civicrm_activity_contact} tar WHERE tar.contact_id = $cid AND tar.record_type_id = 3)
                         ");
   $i = 1;
   while ($data = db_fetch_array($resource)) {
@@ -1086,7 +1087,8 @@ function woolman_website_civicrm_caseSummary($id) {
                                  );
   $resource = db_query("SELECT act.id, act.activity_date_time, act.details, act.subject, con.display_name
                         FROM  {civicrm_activity} act
-                        INNER JOIN  {civicrm_contact} con ON act.source_contact_id = con.id
+                        INNER JOIN {civicrm_activity_contact} ac ON ac.activity_id = act.id AND ac.record_type_id = 2
+                        INNER JOIN  {civicrm_contact} con ON ac.contact_id = con.id
                         WHERE act.id IN (SELECT ca.activity_id FROM {civicrm_case_activity} ca WHERE ca.case_id = $id)
                         AND act.is_current_revision = 1 AND act.is_deleted = 0 AND act.details IS NOT NULL
                         ORDER BY act.activity_date_time DESC

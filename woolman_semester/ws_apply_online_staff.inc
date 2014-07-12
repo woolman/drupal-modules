@@ -321,8 +321,9 @@ function ws_apply_staff_get_cases($params) {
 function ws_apply_get_case_activities(&$cases) {
   if ($cases) {
     $now = date('Y-m-d H:i:s');
-    $query = "SELECT ca.case_id, act.activity_type_id, act.id, act.subject, act.activity_date_time, ov.name AS status, av.label AS type, act.source_contact_id AS contact_id
+    $query = "SELECT ca.case_id, act.activity_type_id, act.id, act.subject, act.activity_date_time, ov.name AS status, av.label AS type, ac.contact_id AS contact_id
       FROM  {civicrm_activity} act
+      INNER JOIN  {civicrm_activity_contact} ac ON ac.activity_id = act.id AND ac.record_type_id = 2
       INNER JOIN  {civicrm_case_activity} ca ON ca.activity_id = act.id
       LEFT JOIN {civicrm_option_value} av ON av.option_group_id = 2 AND av.value = act.activity_type_id
       LEFT JOIN  {civicrm_option_value} ov ON ov.option_group_id = 25 AND ov.value = act.status_id

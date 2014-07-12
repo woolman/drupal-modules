@@ -80,7 +80,7 @@ function ws_admissions_prospective_form($form_state, $reps, $stats, $states, $tr
     LEFT JOIN {civicrm_value_additional_info_2} grad ON grad.entity_id = cc.contact_id
     LEFT JOIN {civicrm_relationship} rel ON rel.case_id = cas.id AND rel.relationship_type_id = 13 AND rel.is_active = 1
     LEFT JOIN {civicrm_activity} act ON act.activity_type_id = 33 AND act.is_current_revision = 1 AND act.is_deleted = 0
-    AND act.id IN (SELECT tar.activity_id FROM {civicrm_activity_target} tar WHERE tar.target_contact_id = cc.contact_id)
+    AND act.id IN (SELECT tar.activity_id FROM {civicrm_activity_contact} tar WHERE tar.contact_id = cc.contact_id AND tar.record_type_id = 3)
     WHERE cas.case_type_id = '1' AND cas.is_deleted = 0 AND cas.status_id IN ($status)";
   $args = array();
 

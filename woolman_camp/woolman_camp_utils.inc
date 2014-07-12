@@ -235,10 +235,11 @@ function woolman_camp_get_reg_act() {
     return $act;
   }
   $query = db_query('
-    SELECT id, status_id
-    FROM {civicrm_activity}
-    WHERE source_contact_id = %d AND activity_type_id = 56 AND is_deleted <> 1 AND is_test <> 1
-    AND is_current_revision = 1 AND YEAR(activity_date_time + INTERVAL 4 month) = ' . woolman_camp_next_year(),
+    SELECT a.id, a.status_id
+    FROM {civicrm_activity} a, {civicrm_activity_contact} c
+    WHERE c.contact_id = %d AND a.activity_type_id = 56 AND a.is_deleted <> 1 AND a.is_test <> 1
+    AND a.id = c.activity_id AND c.record_type_id = 2
+    AND a.is_current_revision = 1 AND YEAR(a.activity_date_time + INTERVAL 4 month) = ' . woolman_camp_next_year(),
     woolman_user_cid());
   if ($act = db_fetch_array($query)) {
     return $act;
