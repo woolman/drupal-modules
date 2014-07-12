@@ -230,21 +230,22 @@ function _ws_apply_reference_handler() {
   if (empty($_GET['id'])) {
     return drupal_not_found();
   }
-  list($student, $self, $aid, $target_id) = explode('-', $_GET['id']);
+  list($student, $self, $aid) = explode('-', $_GET['id']);
 
   // Check url for valid arguments
-  if (!(is_numeric($student) && is_numeric($self) && is_numeric($aid) && is_numeric($target_id))) {
+  if (!(is_numeric($student) && is_numeric($self) && is_numeric($aid))) {
     return drupal_not_found();
   }
 
   // Security check: make sure all args match correct db values
   $query = db_query(
-    'SELECT tar.activity_id, tar.target_contact_id, cc.contact_id
-      FROM {civicrm_activity_contact} tar, {civicrm_case_activity} ca, {civicrm_case_contact} cc
-      WHERE tar.id = %d AND tar.activity_id = ca.activity_id AND tar.record_type = 3 AND ca.case_id = cc.case_id', $target_id);
-  $db = db_fetch_array($query);
-  if (empty($db) || $db['activity_id'] != $aid || $db['target_contact_id'] != $self || $db['contact_id'] != $student) {
-    return drupal_not_found();
+    'SELECT ac.activity_id
+      FROM {civicrm_activity_contact} ac, {civicrm_case_activity} ca, {civicrm_case_contact} cc
+      WHERE ac.activity_id = %d AND cc.contact_id = %d AND ac.contact_id = %d
+        AND ac.activity_id = ca.activity_id AND ac.record_type_id = 3 AND ca.case_id = cc.case_id',
+    $aid, $student, $self);
+  if (!db_result($query)) {
+    return drupal_access_denied();
   }
 
   if (arg(3) == 'thank-you') {
