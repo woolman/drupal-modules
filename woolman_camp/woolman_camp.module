@@ -87,7 +87,13 @@ function woolman_camp_user($type, &$edit, &$account) {
     global $user;
     if ($user->uid == $account->uid) {
       civicrm_initialize();
-      if ($date = db_result(db_query('SELECT YEAR(activity_date_time + INTERVAL 4 month) FROM {civicrm_activity} WHERE source_contact_id = %d AND activity_type_id = 56 ORDER BY activity_date_time DESC LIMIT 1', woolman_user_cid()))) {
+      if ($date = db_result(db_query('
+        SELECT YEAR(a.activity_date_time + INTERVAL 4 month)
+        FROM {civicrm_activity} a, {civicrm_activity_contact} c
+        WHERE c.contact_id = %d AND a.activity_type_id = 56 AND a.id = c.activity_id AND c.record_type_id = 2
+        ORDER BY a.activity_date_time DESC LIMIT 1',
+        woolman_user_cid()
+      ))) {
         if ($date == woolman_camp_next_year()) {
           $val = l('>> Camp Registration Forms', '~camp/register/form') . '</li>
           <li>' . l('>> Pay Camp Tuition', 'civicrm/contribute/transact', array('query' => array('reset' => 1, 'id' => 7)));

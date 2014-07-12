@@ -179,9 +179,10 @@ function woolman_camp_page() {
 
   // Look for "how did you hear about us" activity
   $query = db_query('
-    SELECT id
-    FROM {civicrm_activity}
-    WHERE source_contact_id = %d AND activity_type_id = 53 AND is_deleted <> 1 AND is_test <> 1', woolman_user_cid()
+    SELECT a.id
+    FROM {civicrm_activity} a, {civicrm_activity_contact} c
+    WHERE c.contact_id = %d AND activity_type_id = 53 AND a.id = c.activity_id AND c.record_type_id = 2 AND a.is_deleted <> 1 AND a.is_test <> 1',
+    woolman_user_cid()
   );
   if (db_fetch_array($query)) {
     return drupal_get_form('woolman_camp_nav_form', 1) . drupal_get_form('woolman_camp_family_form');

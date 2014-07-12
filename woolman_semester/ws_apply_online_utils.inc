@@ -304,7 +304,7 @@ function _ws_apply_send_reference($key, $student, $contact, $case) {
   $result = woolman_civicrm_api('activity', 'create', $params);
   $act = $params['id'] = $result['id'];
 
-  $query = db_query("SELECT id FROM {civicrm_activity_target} WHERE activity_id = $act AND target_contact_id = {$contact['contact_id']}");
+  $query = db_query("SELECT id FROM {civicrm_activity_contact} WHERE activity_id = $act AND record_type_id = 3 AND contact_id = {$contact['contact_id']}");
   $target = db_fetch_array($query);
   $link = 'http://semester.woolman.org/admissions/reference?id=' . $student['contact_id'] . '-' . $contact['contact_id'] . '-' . $act . '-' . $target['id'];
 
