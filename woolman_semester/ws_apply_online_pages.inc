@@ -126,7 +126,7 @@ function _ws_apply_page_one() {
         $row['description'] = str_replace($token, $date, $row['description']);
       }
       if (strpos($row['description'], '%target') !== FALSE &&
-      $target = db_result(db_query('SELECT contact_id FROM {civicrm_activity_contact} WHERE activity_id = %d AND record_type_id = 3 LIMIT 0, 1', $act['id']))) {
+        $target = db_result(db_query('SELECT contact_id FROM {civicrm_activity_contact} WHERE activity_id = %d AND contact_id <> %d LIMIT 0, 1', $act['id'], woolman_user_cid()))) {
         $row['description'] = str_replace('%target', woolman_name('full', $target), $row['description']);
       }
       $table[] = $row;
