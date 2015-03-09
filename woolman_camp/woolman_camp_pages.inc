@@ -35,6 +35,7 @@ function woolman_camp_landing() {
       <li>Complete your registration by paying $100 deposit per week (we also accept cash and checks if you prefer not to pay online).</li>
       <li>That\'s it! We\'ll send you an email to confirm your registration.</li>
     </ul>
+    <p>If the only session that works for your family is full, or only available for boys or girls, please register to get on the waitlist. There is always movement and changes with campers as the summer draws near.</p>
     <p>More information can be found on our <a href="/parents/questions">FAQ</a> page. Prices are here: <a href="/dates-rates">Dates &amp; Rates</a>. Need to know more? Please don\'t hesitate to <a href="/contact?c=3">contact us</a>.</p>
   ';
   $session_data = woolman_camp_get_sessions($year);

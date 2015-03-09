@@ -816,7 +816,7 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
     );
     while ($dao->fetch()) {
       $cid = $dao->entity_id;
-      $earned_credit = ($dao->grade_56 && $dao->grade_56 != 'F' && $dao->grade_56 != 'I') ? $dao->course_credits_57 : '0';
+      $earned_credit = ($dao->grade_56 && $dao->grade_56 != 'W' && $dao->grade_56 != 'F' && $dao->grade_56 != 'I') ? $dao->course_credits_57 : '0.0';
       if (empty($values[$cid]['transcript.official'])) {
         $values[$cid]['transcript.official'] = '<table class="transcript"><thead><tr><th>Course Name</th><th>Credits Attempted</th><th>Credits Earned</th><th>Grade</th></tr></thead><tbody>';
       }
@@ -834,8 +834,8 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
         <div>
           <div>
             <h3>' . $dao->course_name_55 . '</h3>
-            <strong>Grade Earned:</strong> &nbsp; ' . $dao->grade_56 .'<br />
-            <strong>Credits Earned:</strong> &nbsp; ' . $earned_credit .'<br />' .
+            <strong>Grade:</strong> &nbsp; ' . $dao->grade_56 .'<br />
+            <strong>Credits Earned:</strong> ' . $earned_credit . ' <br />' .
           '</div>
           <div>' .
             $dao->evaluation_58 .
