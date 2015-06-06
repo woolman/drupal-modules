@@ -637,13 +637,14 @@ function woolman_camp_event_price_create($event_id, $price) {
     }
   }
   $params['price_field_id'] = $field['id'];
-  $price = woolman_civicrm_api('price_field_value', 'create', $params);
+  woolman_civicrm_api('price_field_value', 'create', $params);
 }
 
 /**
  * Fetch the price field of an event
  *
- * @param array: $event
+ * @param array : $event
+ * @return array
  */
 function woolman_camp_event_price_field_get($event) {
   if (empty($event['price_set_id'])) {

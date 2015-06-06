@@ -355,9 +355,13 @@ table.tablesorter thead tr th.headerSortDown,
 #activity-content {
   overflow: auto;
   height: 479px;
-  padding: 4px 10px;
+  padding: 0 10px;
   font-size: .73em;
   position: relative;
+}
+
+#activity-content table {
+  width: 100%;
 }
 
 #activity-content input,

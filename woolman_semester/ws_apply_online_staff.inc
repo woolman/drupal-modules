@@ -141,7 +141,7 @@ function _ws_apply_report($arg) {
     </div>' .
     $output . $pager .
     '<div id="view-activity" style="display:none;">
-        <div id="activity-content""></div>
+        <div id="activity-content"></div>
     </div>';
 }
 

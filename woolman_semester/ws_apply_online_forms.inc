@@ -466,13 +466,11 @@ function _ws_apply_form_type_school($form_state) {
   }
 
   $params = array(
-    'contact_type' => 'Organization',
     'contact_sub_type' => 'High_School',
-    'sort' => 'organization_name ASC',
-    'return.organization_name' => 1,
-    'return.city' => 1,
-    'return.state_province' => 1,
-    'return.country' => 1,
+    'return' => array('organization_name', 'city', 'state_province', 'country'),
+    'options' => array(
+      'sort' => 'organization_name ASC',
+    ),
   );
   list($sch_country, $sch_state) = explode('-', $location);
   if ($sch_country) {
@@ -944,7 +942,7 @@ function _ws_apply_form_semester_pref(&$form_state) {
 }
 
 /**
- * A custom "required field" validator to accomodate "back" and "save draft" buttons
+ * A custom "required field" validator to accommodate "back" and "save draft" buttons
  * TODO: Use #limit_validation_errors in D7
  */
 function _ws_apply_submit_validate($form, &$form_state) {
@@ -962,18 +960,19 @@ function _ws_apply_submit_validate($form, &$form_state) {
   $required = array();
 
   foreach ($form as $field=> $value) {
-    if (!$value['#type'] || $value['#type'] == 'hidden' || !is_array($value) || strpos($field, '#')!==FALSE)
+    if (!is_array($value) || strpos($field, '#') !== FALSE || empty($value['#type']) || $value['#type'] == 'hidden')
       continue;
     if ($value['#type'] == 'fieldset') {
       foreach ($value as $f=> $v) {
-        if (!$v['#type'] || $v['#type'] == 'hidden' || !is_array($v) || strpos($field, '#')!==FALSE)
+        if (!is_array($v) || strpos($field, '#') !== FALSE || empty($v['#type']) || $v['#type'] == 'hidden')
           continue;
-        if ($v['#req'] && is_array($value))
+        if (!empty($v['#req']) && is_array($value))
           $required[$f] = $value['#title'].': ' . $v['#title'];
       }
     }
-    elseif ($value['#req'])
+    elseif ($value['#req']) {
       $required[$field] = $value['#title'];
+    }
   }
 
   foreach ($required as $field=> $title) {

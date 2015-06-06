@@ -3,6 +3,22 @@ var wsStaff = function($, D, undefined) {
   var pub = {};
   var timeStamp;
 
+  function reloadDialog(dialog, url) {
+    $(dialog).load(url, function(response, status) {
+      if (status == "error") {
+        $(dialog).dialog("close");
+      }
+      else {
+        $('.ui-dialog-buttonpane button').show();
+        $('.button.cancel', dialog).remove();
+        $('a', dialog).click(function() {
+          reloadDialog(dialog, this.href + '&snippet=4');
+          return false;
+        });
+      }
+    });
+  }
+
   /**
   * Display view box for an activity
   */
@@ -12,7 +28,7 @@ var wsStaff = function($, D, undefined) {
     $("#view-activity").dialog({
       title: actTitle(ele, row),
       modal: true,
-      width : "680px",
+      width : "800px",
       height: "590px",
       resizable: false,
       bgiframe: false,
@@ -31,14 +47,7 @@ var wsStaff = function($, D, undefined) {
         $('.ui-dialog-buttonpane button + button').hide();
         var cid = row.attr('data-contact-id');
         var aid = ele.attr('data-aid');
-        $("#activity-content").load("/civicrm/case/activity/view?snippet=4&cid=" + cid + "&aid=" + aid, function(response, status) {
-          if (status == "error") {
-            $("#view-activity").dialog("close");
-          }
-          else {
-            $('.ui-dialog-buttonpane button').show();
-          }
-        });
+        reloadDialog('#activity-content', "/civicrm/case/activity/view?snippet=4&cid=" + cid + "&aid=" + aid);
       },
 
       buttons: {
@@ -52,7 +61,7 @@ var wsStaff = function($, D, undefined) {
       }
 
     });
-  }
+  };
 
   /**
   * Display edit box for an activity
@@ -122,7 +131,7 @@ var wsStaff = function($, D, undefined) {
     $("#view-activity").dialog({
       title: actTitle(ele, row),
       modal: true,
-      width : "680px",
+      width : "800px",
       height: "590px",
       resizable: false,
       bgiframe: false,
@@ -166,7 +175,7 @@ var wsStaff = function($, D, undefined) {
 
       buttons: buttons
     });
-  }
+  };
 
   /**
    * Actions menu
@@ -186,7 +195,7 @@ var wsStaff = function($, D, undefined) {
     ele.after(menu + '</ul>');
     attachBehaviors('#action-menu');
     $('#action-menu').fadeIn(190);
-  }
+  };
 
   /**
    * In-place editing select menu

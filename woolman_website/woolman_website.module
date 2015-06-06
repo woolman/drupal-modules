@@ -1112,6 +1112,11 @@ function woolman_civicrm_api($entity, $operation, $params, $to_return = NULL) {
     'check_permissions' => FALSE,
     'version' => 3,
   );
+  // Work around default api limit of 25
+  if ($operation === 'get') {
+    $params += array('options' => array());
+    $params['options'] += array('limit' => 0);
+  }
   // Avoid errors caused by passing in empty ids
   if ($operation == 'create') {
     $ids = array('id', 'case_id', 'contact_id', 'activity_id', 'participant_id');

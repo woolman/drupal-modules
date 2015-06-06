@@ -567,8 +567,7 @@ function _woolman_contact_match($params, $write_mode='update_all', $return='retu
     $params['contact']['contact_id'] = $cid;
     unset($params['contact']['source']);
     if ($write_mode == 'fill_empty_fields') {
-      $contact = woolman_civicrm_api('contact', 'get', array('contact_id' => $cid));
-      $contact = $contact['values'][$cid];
+      $contact = woolman_civicrm_api('contact', 'getsingle', array('id' => $cid));
       foreach ($params['contact'] as $pid => $pvalue) {
         if ($pid != 'contact_id' && $pid != 'contact_type' && !empty($contact[$pid])) {
           unset($params['contact'][$pid]);
