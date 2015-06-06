@@ -272,6 +272,7 @@ function _ws_apply_form_school_submit($form, &$form_state) {
   $vals = $form_state['values'];
   $student = woolman_contact_get(NULL, array(4));
   $case = _ws_apply_get_case($student['contact_id']);
+  $links = array();
 
   //graduation date
   if (($m = $vals['graduation_date']['month']) < 10) {
@@ -291,7 +292,8 @@ function _ws_apply_form_school_submit($form, &$form_state) {
   }
   else {
     $details .= '<p><b>High School:</b> ';
-    if (($school_id = $vals['school_choice']) != 'none') {
+    $school_id = $vals['school_choice'];
+    if ($school_id != 'none') {
       //school was chosen from list
       $school = $form['school']['school_options']['school_choice_wrapper']['school_choice']['#options'][$vals['school_choice']];
       $details .= '(selected from existing choices) ' . $school.', ' . $form['school']['school_options']['school_location']['#options'][$vals['school_location']] . '</p>';
@@ -366,7 +368,7 @@ function _ws_apply_form_school_submit($form, &$form_state) {
         ),
       ),
       'phone' => array(array(
-        'email' => $vals['teacher' . $i . '_phone'],
+        'phone' => $vals['teacher' . $i . '_phone'],
         'location_type_id' => $vals['teacher' . $i . '_phone_location'],
         'phone_type_id' => 1,
         'is_primary' => 1
@@ -377,7 +379,7 @@ function _ws_apply_form_school_submit($form, &$form_state) {
       $params['contact']['employer_id'] = $school_id;
     }
     else {
-      'Teacher at ' . $vals['teacher' . $i . '_employer_other'];
+      $params['contact']['job_title'] = 'Teacher at ' . $vals['teacher' . $i . '_employer_other'];
     }
     $result = woolman_contact_match($params);
     $tid = $result['contact_id'];
