@@ -431,14 +431,14 @@ function woolman_website_civicrm_pre($op, $type, $id, &$p) {
 function woolman_website_civicrm_post($op, $type, $id, $object) {
   // Build a "smart" name & greeting
   if (($op == 'create' || $op == 'edit') && $type == 'Individual' && !empty($id)) {
-    $db = db_query("
+    $c = CRM_Core_DAO::executeQuery("
       SELECT con.first_name, con.middle_name, con.last_name, con.nick_name, con.display_name, con.sort_name, con.postal_greeting_display, con.email_greeting_display, con.addressee_display, con.postal_greeting_id, con.email_greeting_id, con.addressee_id, s.label as suffix, spouse.first_name AS spouse_first, spouse.nick_name AS spouse_nick, spouse.last_name AS spouse_last, spouse.id AS spouse_id
-      FROM {civicrm_contact} con
-      LEFT JOIN {civicrm_option_value} s ON s.value = con.suffix_id AND s.option_group_id = (SELECT id FROM {civicrm_option_group} WHERE name = 'individual_suffix')
-      LEFT JOIN {civicrm_contact} spouse ON (spouse.id IN (SELECT contact_id_a FROM {civicrm_relationship} WHERE contact_id_b = con.id AND relationship_type_id = 2 AND is_active = 1 AND end_date IS NULL) OR spouse.id IN (SELECT contact_id_b FROM {civicrm_relationship} WHERE contact_id_a = con.id AND relationship_type_id = 2 AND is_active = 1 AND end_date IS NULL)) AND spouse.is_deceased = 0 AND spouse.is_deleted = 0
+      FROM civicrm_contact con
+      LEFT JOIN civicrm_option_value s ON s.value = con.suffix_id AND s.option_group_id = (SELECT id FROM civicrm_option_group WHERE name = 'individual_suffix')
+      LEFT JOIN civicrm_contact spouse ON (spouse.id IN (SELECT contact_id_a FROM civicrm_relationship WHERE contact_id_b = con.id AND relationship_type_id = 2 AND is_active = 1 AND end_date IS NULL) OR spouse.id IN (SELECT contact_id_b FROM civicrm_relationship WHERE contact_id_a = con.id AND relationship_type_id = 2 AND is_active = 1 AND end_date IS NULL)) AND spouse.is_deceased = 0 AND spouse.is_deleted = 0
       WHERE con.id = $id
       LIMIT 0, 1");
-    $c = db_fetch_object($db);
+    $c->fetch();
     if (strtolower($c->first_name) == strtolower($c->nick_name) && $c->nick_name) {
       $samename = TRUE;
       $c->nick_name = NULL;
@@ -488,26 +488,31 @@ function woolman_website_civicrm_post($op, $type, $id, $object) {
     // Use email if no name
     if (!trim($display_name)) {
       $postal_greeting_display = $email_greeting_display = 'friend';
-      $edb = db_query('SELECT email FROM {civicrm_email} WHERE is_primary = 1 AND contact_id =' . $id);
-      if ($e = db_fetch_object($edb)) {
-        $sort_name = $display_name = $addressee_display = $e->email;
+      $email = CRM_Core_DAO::singleValueQuery("SELECT email FROM civicrm_email WHERE is_primary = 1 AND contact_id = $id");
+      if ($email) {
+        $sort_name = $display_name = $addressee_display = $email;
       }
     }
     if ($display_name !== $c->display_name || $sort_name !== $c->sort_name || $addressee_display !== $c->addressee_display || $postal_greeting_display !== $c->postal_greeting_display || !$c->addressee_id || !$c->postal_greeting_id || !$c->email_greeting_id || $samename) {
-      $q = "UPDATE {civicrm_contact} SET display_name = '%s', sort_name = '%s'";
-      $a = array($display_name, $sort_name);
+      $q = "UPDATE civicrm_contact SET display_name = %1, sort_name = %2";
+      $args = array(
+        1 => array($display_name, 'String'),
+        2 => array($sort_name, 'String'),
+      );
+      $x = 3;
       foreach (array('addressee', 'postal_greeting', 'email_greeting') as $n) {
         if ((${$n . '_display'} !== $c->{$n . '_display'} && $c->{$n . '_id'} == 1) || !$c->{$n . '_id'}) {
-          $q .= ", {$n}_id = 1, {$n}_display = '%s'";
-          $a[] = ${$n . '_display'};
+          $q .= ", {$n}_id = 1, {$n}_display = %$x";
+          $args[$x] = array(${$n . '_display'}, 'String');
+          ++$x;
         }
       }
       if ($samename) {
         $q .= ", nick_name = NULL";
       }
-      $q .= ' WHERE id = %d';
-      $a[] = $id;
-      db_query($q, $a);
+      $q .= " WHERE id = %$x";
+      $args[$x] = array($id, 'Integer');
+      CRM_Core_DAO::executeQuery($q, $args);
     }
     // Clear cache if user changes own name
     if ($id === woolman_aval($_SESSION, 'CiviCRM:userID')) {
