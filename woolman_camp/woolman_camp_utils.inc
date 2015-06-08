@@ -223,7 +223,7 @@ function woolman_camp_sort_sessions($sessions) {
   foreach ($sessions as $id => $session) {
     $sorted[$session['event_type_id']][$id] = $session;
   }
-  return $sorted;
+  return array_filter($sorted);
 }
 
 /**
