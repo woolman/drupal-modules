@@ -7,7 +7,7 @@
  */
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema.
  */
 function woolman_camp_schema() {
   $schema['woolman_camp_rates'] = array(
@@ -153,14 +153,14 @@ function woolman_camp_schema() {
 }
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install.
  */
 function woolman_camp_install() {
   drupal_install_schema('woolman_camp');
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall.
  */
 function woolman_camp_uninstall() {
   drupal_uninstall_schema('woolman_camp');

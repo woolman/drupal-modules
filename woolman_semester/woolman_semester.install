@@ -6,14 +6,14 @@
  */
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install.
  */
 function woolman_semester_install() {
   // drupal_install_schema('woolman_semester');
 }
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema.
  */
 function woolman_semester_schema() {
   $schema['ws_apply_online_drafts'] = array(
@@ -43,7 +43,7 @@ function woolman_semester_schema() {
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall.
  */
 function woolman_semester_uninstall() {
   drupal_uninstall_schema('woolman_semester');

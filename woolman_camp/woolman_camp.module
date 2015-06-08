@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Implementation of hook_menu()
+ * Implements hook_menu.
  */
 function woolman_camp_menu() {
   $items = array();
@@ -70,7 +70,7 @@ function woolman_camp_menu() {
 
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter.
  */
 function woolman_camp_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'user_register' && $_GET['q'] == '~camp/register/form') {
@@ -80,7 +80,7 @@ function woolman_camp_form_alter(&$form, $form_state, $form_id) {
 }
 
 /**
- * Implementation of hook_user().
+ * Implements hook_user.
  */
 function woolman_camp_user($type, &$edit, &$account) {
   if ($type == 'view') {
@@ -112,7 +112,7 @@ function woolman_camp_user($type, &$edit, &$account) {
 }
 
 /**
- * Implementation of hook_civicrm_merge().
+ * Implements hook_civicrm_merge.
  * Update data to reflect new cid when contacts are merged.
  */
 function woolman_camp_civicrm_merge($type, $data, $new_id = NULL, $old_id = NULL, $tables = NULL) {
@@ -123,7 +123,7 @@ function woolman_camp_civicrm_merge($type, $data, $new_id = NULL, $old_id = NULL
 }
 
 /**
- * Implementation of hook_civicrm_buildForm().
+ * Implements hook_civicrm_buildForm.
  */
 function woolman_camp_civicrm_buildForm($formName, &$form) {
   // Add camp payment info
@@ -134,7 +134,7 @@ function woolman_camp_civicrm_buildForm($formName, &$form) {
 }
 
 /**
- * Implementation of hook_civicrm_pre().
+ * Implements hook_civicrm_pre.
  * Reset source when editing an unprocessed payment
  */
 function woolman_camp_civicrm_pre($op, $type, $id, &$c) {
@@ -146,7 +146,7 @@ function woolman_camp_civicrm_pre($op, $type, $id, &$c) {
 }
 
 /**
- * Implementation of hook_civicrm_post().
+ * Implements hook_civicrm_post.
  * Trigger processing of a camp payment
  */
 function woolman_camp_civicrm_post($op, $type, $id, $c) {
@@ -161,7 +161,7 @@ function woolman_camp_civicrm_post($op, $type, $id, $c) {
 }
 
 /**
- * Implementation of hook_cron().
+ * Implements hook_cron.
  */
 function woolman_camp_cron() {
   module_load_include('inc', 'woolman_camp', 'woolman_camp_utils');

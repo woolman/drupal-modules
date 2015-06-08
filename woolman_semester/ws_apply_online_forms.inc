@@ -428,7 +428,7 @@ function _ws_apply_form_type_school($form_state) {
     if (!empty($student['custom_4'])) {
       $grad_date = explode('-', $student['custom_4']);
       $grad_default = array('month' => intval($grad_date[1]), 'year' => intval($grad_date[0]));
-      if ($grad_date[0] . $grade_date[1] >= date('Ym')) {
+      if ($grad_date[0] . $grad_date[1] >= date('Ym')) {
         $type_default = 'grad';
       }
     }

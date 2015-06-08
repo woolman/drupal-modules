@@ -10,7 +10,7 @@ define('WOOLMAN', 243);
 define('USA', 1228);
 
 /**
- * Implements hook_menu()
+ * Implements hook_menu.
  */
 function woolman_website_menu() {
   $items = array();
@@ -53,7 +53,7 @@ function woolman_website_menu() {
 }
 
 /**
- * Implements hook_theme()
+ * Implements hook_theme.
  */
 function woolman_website_theme() {
   return array(
@@ -69,7 +69,7 @@ function woolman_website_theme() {
 
 
 /**
- * Implements hook_perm().
+ * Implements hook_perm.
  * Define the permissions this module uses.
  */
 function woolman_website_perm() {
@@ -107,7 +107,7 @@ function woolman_website_mail($key, &$msg, $params) {
 
 
 /**
- * Implements hook_form_alter().
+ * Implements hook_form_alter.
  */
 function woolman_website_form_alter(&$form, $form_state, $form_id) {
 
@@ -220,7 +220,7 @@ function woolman_website_form_alter(&$form, $form_state, $form_id) {
 }
 
 /**
- * Implements hook_nodeapi().
+ * Implements hook_nodeapi.
  */
 function woolman_website_nodeapi(&$node, $op, $teaser, $page) {
   // Sync CiviCRM events to drupal event nodes and rsvp webform
@@ -262,7 +262,7 @@ function woolman_website_nodeapi(&$node, $op, $teaser, $page) {
 }
 
 /**
- * Implements hook_cron().
+ * Implements hook_cron.
  * Refresh events list in RSVP form once a day (or manually during event crud)
  */
 function woolman_website_cron($force = FALSE) {
@@ -281,7 +281,7 @@ function woolman_website_cron($force = FALSE) {
 }
 
 /**
- * Implements hook_civicrm_buildForm().
+ * Implements hook_civicrm_buildForm.
  */
 function woolman_website_civicrm_buildForm($formName, &$form) {
 
@@ -325,7 +325,7 @@ function woolman_website_civicrm_buildForm($formName, &$form) {
 }
 
 /**
- * Implements hook_civicrm_pre().
+ * Implements hook_civicrm_pre.
  */
 function woolman_website_civicrm_pre($op, $type, $id, &$p) {
   $access = user_access('access CiviCRM');
@@ -424,7 +424,7 @@ function woolman_website_civicrm_pre($op, $type, $id, &$p) {
 
 
 /**
- * Implements hook_civicrm_post().
+ * Implements hook_civicrm_post.
  * Ignore $object because this hook is often passed an incomplete object
  * Instead we use $object to prevent recursion when updating spouse
  */
@@ -532,7 +532,7 @@ function woolman_website_civicrm_post($op, $type, $id, $object) {
 
 
 /**
- * Implements hook_civicrm_searchColumns().
+ * Implements hook_civicrm_searchColumns.
  */
 function woolman_website_civicrm_searchColumns($type, &$headers, &$rows, &$selector) {
 
@@ -570,7 +570,10 @@ function woolman_website_civicrm_searchColumns($type, &$headers, &$rows, &$selec
 
 
 /**
- * Implmentation of hook_civicrm_postProcess
+ * Implements hook_civicrm_postProcess.
+ *
+ * @param string $formName
+ * @param CRM_Core_Form $form
  */
 function woolman_website_civicrm_postProcess($formName, &$form) {
   // Record contribution submissions by IP address for flood control, set to expire in 2 hours
@@ -582,11 +585,16 @@ function woolman_website_civicrm_postProcess($formName, &$form) {
     }
     cache_set('civicontribute_flood_' . $n . '_' . $ip, 1, 'cache', strtotime('+2 hours'));
   }
+
+  // Reload name when editing contact inline
+  if ($formName == 'CRM_Contact_Form_Inline_ContactInfo') {
+    $form->ajaxResponse['reloadBlocks'][] = '#crm-contactname-content';
+  }
 }
 
 
 /**
- * Implmentation of hook_civicrm_validate
+ * Implements hook_civicrm_validate.
  */
 function woolman_website_civicrm_validate($formName, &$fields, &$files, &$form) {
   // Validate contribution pages for flood control
@@ -604,7 +612,7 @@ function woolman_website_civicrm_validate($formName, &$fields, &$files, &$form) 
 
 
 /**
- * Implements hook_civicrm_dupeQuery().
+ * Implements hook_civicrm_dupeQuery.
  */
 function woolman_website_civicrm_dupeQuery($obj, $type, &$query) {
   if ($type == 'table' && empty($obj->noRules)) {
@@ -615,7 +623,7 @@ function woolman_website_civicrm_dupeQuery($obj, $type, &$query) {
 
 
 /**
- * Implements hook_civicrm_tokens().
+ * Implements hook_civicrm_tokens.
  */
 function woolman_website_civicrm_tokens(&$tokens) {
   $tokens['date'] = array(
@@ -651,7 +659,7 @@ function woolman_website_civicrm_tokens(&$tokens) {
 
 
 /**
- * Implements hook_civicrm_tokenValues().
+ * Implements hook_civicrm_tokenValues.
  */
 function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = array(), $context = null) {
   $contacts = implode(',', $cids);
@@ -1015,7 +1023,7 @@ function woolman_format_address($obj, $sep = "<br />\n") {
 
 
 /**
- * Implements hook_civicrm_caseSummary().
+ * Implements hook_civicrm_caseSummary.
  */
 function woolman_website_civicrm_caseSummary($id) {
   drupal_add_css(drupal_get_path('theme', 'woolman') . '/css/civicase.css', 'module', 'all', FALSE);
@@ -1032,7 +1040,7 @@ function woolman_website_civicrm_caseSummary($id) {
     ),
     'grad-date' => array(
       'label' => '<strong>HS Graduation:</strong>',
-      'value' => 'not specified ' . woolman_contact_link('<span class="icon edit-icon"></span>', $cid, array('html' => TRUE, 'op' => 'update', 'attributes' => array('class' => 'icon edit-icon'))),
+      'value' => '<em>not specified</em>',
     ),
   );
   //semester preference
@@ -1056,7 +1064,7 @@ function woolman_website_civicrm_caseSummary($id) {
     $title = 'specify semester preference(s)';
     $etc = '&amp;action=add&amp;selectedChild=activity&amp;atype=47';
   }
-  $summary['semester-pref']['value'] .= ' <a title="' . $title.'" href="/civicrm/case/activity?reset=1&amp;cid=' . $cid.'&amp;caseid=' . $id . $etc.'#Semester_Choices"><span class="icon edit-icon"></span></a>';
+  $summary['semester-pref']['value'] .= ' <a class="crm-hover-button crm-popup" title="' . $title.'" href="/civicrm/case/activity?reset=1&amp;cid=' . $cid.'&amp;caseid=' . $id . $etc.'"><span class="icon ui-icon-pencil"></span></a>';
 
   //graduation date
   $resource = db_query("SELECT hs_graduation_date_4 AS grad
@@ -1067,39 +1075,6 @@ function woolman_website_civicrm_caseSummary($id) {
     $summary['grad-date']['value'] = date('M, Y', strtotime($data['grad']));
   }
 
-  //outreach trip
-  $resource = db_query("SELECT  con.first_name, con.display_name, con.id AS contact_id,
-                                act.subject, act.activity_date_time, act.details, act.id AS activity_id
-                        FROM  {civicrm_contact} con
-                        INNER JOIN {civicrm_activity_contact} ac ON ac.contact_id = con.id AND ac.record_type_id = 2
-                        INNER JOIN {civicrm_activity} act ON act.id = ac.activity_id
-                        WHERE act.activity_type_id = 33 AND act.id IN
-                          (SELECT tar.activity_id FROM {civicrm_activity_contact} tar WHERE tar.contact_id = $cid AND tar.record_type_id = 3)
-                        ");
-  $i = 1;
-  while ($data = db_fetch_array($resource)) {
-    $summary['trip-' . $i++] = array('value' => 'Met ' . $data['display_name'] . ' at <a title="' . $data['details'] . '" href="/civicrm/contact/view/activity?atype=33&action=view&reset=1&id=' . $data['activity_id'] . '&cid=' . $data['contact_id'] . '">' . $data['subject'] . '</a> on '.date('m/d/Y', strtotime($data['activity_date_time']))
-                     );
-  }
-
-  //latest note
-  $summary['latest-note'] = array('label' => '<strong>Latest Activity Note:</strong>',
-                                  'value' => 'No notes in this case.',
-                                 );
-  $resource = db_query("SELECT act.id, act.activity_date_time, act.details, act.subject, con.display_name
-                        FROM  {civicrm_activity} act
-                        INNER JOIN {civicrm_activity_contact} ac ON ac.activity_id = act.id AND ac.record_type_id = 2
-                        INNER JOIN  {civicrm_contact} con ON ac.contact_id = con.id
-                        WHERE act.id IN (SELECT ca.activity_id FROM {civicrm_case_activity} ca WHERE ca.case_id = $id)
-                        AND act.is_current_revision = 1 AND act.is_deleted = 0 AND act.details IS NOT NULL
-                        ORDER BY act.activity_date_time DESC
-                        LIMIT 0, 1
-                        ");
-
-  if ($act = db_fetch_array($resource)) {
-    $summary['latest-note']['label'] .= ' <a title="View this activity." href="javascript:viewActivity(' . $act['id'] . ', ' . $cid.',\'\');">' . $act['subject'] . '</a> (by ' . $act['display_name'] . ' on '.date('m/d/Y', strtotime($act['activity_date_time'])) . ')';
-    $summary['latest-note']['value'] = strlen($act['details']) > 200 ? _filter_htmlcorrector(substr($act['details'], 0, 190) . '... <a title="View this activity." href="javascript:viewActivity(' . $act['id'] . ', ' . $cid.',\'\');">(more)</a>') : $act['details'];
-  }
   return $summary;
 }
 
@@ -1149,7 +1124,7 @@ function woolman_civicrm_api($entity, $operation, $params, $to_return = NULL) {
 }
 
 /**
- * Implements hook_civicrm_tabs().
+ * Implements hook_civicrm_tabs.
  */
 function woolman_website_civicrm_tabs(&$tabs, $cid) {
   // Hide medform, alum and transcript tabs for most contacts

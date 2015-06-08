@@ -11,7 +11,7 @@ var wsStaff = function($, D, undefined) {
       else {
         $('.ui-dialog-buttonpane button').show();
         $('.button.cancel', dialog).remove();
-        $('a', dialog).click(function() {
+        $('a.open-inline-noreturn, a.open-inline a.action-item', dialog).click(function() {
           reloadDialog(dialog, this.href + '&snippet=4');
           return false;
         });

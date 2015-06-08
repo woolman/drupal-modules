@@ -2,7 +2,7 @@
 // $Id$ ws_apply_online.module
 
 /**
- * Implementation of hook_menu()
+ * Implements hook_menu.
  */
 
 function woolman_semester_menu() {
@@ -94,7 +94,7 @@ function woolman_semester_menu() {
 }
 
 /**
- * Implementation of hook_civicrm_post().
+ * Implements hook_civicrm_post.
  * Create relationship when case is closed
  */
 function woolman_semester_civicrm_post($op, $type, $id, $obj) {
@@ -116,7 +116,7 @@ function woolman_semester_civicrm_post($op, $type, $id, $obj) {
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter.
  */
 function woolman_semester_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'user_register' && woolman_aval($_GET, 'destination') == 'semester/admissions/apply') {
@@ -126,7 +126,7 @@ function woolman_semester_form_alter(&$form, $form_state, $form_id) {
 }
 
 /**
- * Implementation of hook_user().
+ * Implements hook_user.
  * Show link to student application forms
  */
 function woolman_semester_user($type, &$edit, &$account) {
@@ -152,7 +152,7 @@ function woolman_semester_user($type, &$edit, &$account) {
 }
 
 /**
- * Implementation of hook_theme().
+ * Implements hook_theme.
  */
 function woolman_semester_theme() {
   return array(
