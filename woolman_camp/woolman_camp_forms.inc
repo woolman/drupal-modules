@@ -183,7 +183,7 @@ function woolman_camp_family_form(&$form_state) {
       '#title' => 'Nickname',
       '#description' => 'Name ' . ($p=='self'? 'you':'they') . ' go by (if different)',
       '#default_value' => woolman_aval($person, 'nick_name') == woolman_aval($person, 'first_name') ? '' : $person['nick_name'],
-      '#size' => 15,
+      '#size' => 14,
     );
     $form[$p . '_wrapper'][$p][$p . '_middle'] = array(
       '#type' => 'textfield',
@@ -199,10 +199,10 @@ function woolman_camp_family_form(&$form_state) {
       '#req' => 1,
     );
     $form[$p . '_wrapper'][$p][$p . '_gender'] = array(
-      '#type' => 'radios',
+      '#type' => 'textfield',
+      '#size' => 16,
       '#title' => 'Gender',
-      '#default_value' => woolman_aval($person, 'gender_id'),
-      '#options' => array(1 => 'Female', 2 => 'Male'),
+      '#default_value' => woolman_aval($person, 'gender'),
       '#req' => 1,
       '#suffix' => ($p == 'e_contact' ? '</div>' : ''),
     );

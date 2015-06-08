@@ -151,10 +151,10 @@ function _ws_apply_form_type_form($form_state) {
       '#req' => 1,
     );
     $form['self']['self_gender'] = array(
-      '#type' => 'radios',
+      '#type' => 'textfield',
+      '#size' => 25,
       '#title' => 'Gender',
-      '#default_value' => woolman_aval($self, 'gender_id'),
-      '#options' => array(1 => 'Female', 2 => 'Male'),
+      '#default_value' => woolman_aval($self, 'gender'),
       '#req' => 1,
       '#suffix' => '</div>',
     );
@@ -285,10 +285,10 @@ function _ws_apply_form_type_form($form_state) {
       '#suffix' => '</div>',
     );
     $form['parent' . $i]['parent' . $i . '_gender'] = array(
-      '#type' => 'radios',
+      '#type' => 'textfield',
+      '#size' => 25,
       '#title' => 'Gender',
-      '#default_value' => woolman_aval($parent, "$i:gender_id"),
-      '#options' => array(1=> 'Female', 2=> 'Male'),
+      '#default_value' => woolman_aval($parent, "$i:gender"),
       '#req' => ($i==1),
       '#prefix' => '<div class="subset">',
     );
@@ -669,10 +669,10 @@ function _ws_apply_form_type_school($form_state) {
       '#default_value' => woolman_aval($saved, 'teacher' . $i . '_employer_other'),
     );
     $form['teacher' . $i]['teacher' . $i . '_gender'] = array(
-      '#type' => 'radios',
+      '#type' => 'textfield',
+      '#size' => 25,
       '#title' => 'Gender',
       '#default_value' => woolman_aval($saved, 'teacher' . $i . '_gender'),
-      '#options' => array(1=> 'Female', 2=> 'Male'),
       '#req' => 1,
       '#prefix' => '<div class="subset">',
     );
