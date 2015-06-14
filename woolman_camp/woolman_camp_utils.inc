@@ -311,6 +311,10 @@ function woolman_camp_get_payments($cid, $year) {
     else {
       $row['method'] = $row['type'];
     }
+    // FIXME: Find a better way to compensate for surcharge
+    if ($row['type'] == 'Credit Card' && $row['receive_date'] >= 2015) {
+      $row['total_amount'] = $row['total_amount'] * (100/103);
+    }
     $payments[] = $row;
   }
   return $payments;
