@@ -731,7 +731,7 @@ function woolman_camp_update_totals($reg, $amount) {
           $new_amount = $sess['fee_amount'] + $portion;
           $payout -= $portion;
         }
-        db_query("UPDATE {civicrm_participant} SET fee_amount = $new_amount WHERE id = " . $sess['pid']);
+        CRM_Core_DAO::executeQuery("UPDATE civicrm_participant SET fee_amount = $new_amount WHERE id = " . $sess['pid']);
       }
     }
   }
@@ -749,7 +749,7 @@ function woolman_camp_update_totals($reg, $amount) {
           $new_amount = $rates['shuttle_price'];
         }
         $payout -= $portion;
-        db_query("UPDATE {civicrm_participant} SET fee_amount = $new_amount WHERE id = " . $shut['pid']);
+        CRM_Core_DAO::executeQuery("UPDATE civicrm_participant SET fee_amount = $new_amount WHERE id = " . $shut['pid']);
       }
     }
   }
@@ -761,30 +761,30 @@ function woolman_camp_update_totals($reg, $amount) {
  * Cron was necessary because CiviCRM hooks do not fire for recurring contributions.
  */
 function woolman_camp_process_payments($cron) {
-  $db = db_query("SELECT c.id, c.contact_id, s.contact_id AS soft_credit_to, c.contribution_page_id, c.total_amount
-    FROM {civicrm_contribution} c
-    LEFT JOIN {civicrm_contribution_soft} s ON c.id = s.contribution_id
+  $db = CRM_Core_DAO::executeQuery("SELECT c.id, c.contact_id, s.contact_id AS soft_credit_to, c.contribution_page_id, c.total_amount
+    FROM civicrm_contribution c
+    LEFT JOIN civicrm_contribution_soft s ON c.id = s.contribution_id
     WHERE c.financial_type_id = 5 AND c.contribution_status_id = 1 AND (c.source IS NULL OR c.source NOT LIKE '20%')");
-  while ($info = db_fetch_object($db)) {
+  while ($db->fetch()) {
     $year = woolman_camp_next_year();
-    $cid = empty($info->soft_credit_to) ? $info->contact_id : $info->soft_credit_to;
+    $cid = empty($db->soft_credit_to) ? $db->contact_id : $db->soft_credit_to;
     if ($reg = woolman_camp_calc_fees($cid, $year)) {
-      if (!$cron && $info->contribution_page_id == 7 && woolman_user_cid() == $info->contact_id) {
+      if (!$cron && $db->contribution_page_id == 7 && woolman_user_cid() == $db->contact_id) {
         drupal_set_message('Thank you for your payment. ' . l('Click here to return to your camp registration page.', '~camp/register/status', array('alias' => TRUE)));
       }
-      woolman_camp_update_totals($reg, $info->total_amount);
+      woolman_camp_update_totals($reg, $db->total_amount);
     }
     else {
       // Couldn't figure out what to do with this payment - need manual intervention
       $message = array(
         'subject' => 'Unprocessed Camp Payment - Please Review',
-        'body' => "A payment of \${$info->total_amount} was recieved from " . woolman_name('display', $info->contact_id) .
-        ".\nHowever this person does not have any registered campers. Please edit this payment and give soft-credit to the person who registered for camp.\n\n" . woolman_contact_url($info->contact_id, array('op' => 'contribution', 'query' => array('action' => 'update', 'id' => $info->id))),
+        'body' => "A payment of \${$db->total_amount} was recieved from " . woolman_name('display', $db->contact_id) .
+        ".\nHowever this person does not have any registered campers. Please edit this payment and give soft-credit to the person who registered for camp.\n\n" . woolman_contact_url($db->contact_id, array('op' => 'contribution', 'query' => array('action' => 'update', 'id' => $db->id))),
       );
       drupal_mail('woolman_website', 0, 'camp@woolman.org', language_default(), $message, 'info@woolman.org');
       $year = '20??';
     }
     // Set contribution source
-    db_query("UPDATE {civicrm_contribution} SET source = '$year' WHERE id = " . $info->id);
+    CRM_Core_DAO::executeQuery("UPDATE civicrm_contribution SET source = '$year' WHERE id = " . $db->id);
   }
 }

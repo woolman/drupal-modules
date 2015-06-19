@@ -118,9 +118,9 @@ function _ws_apply_form_admin() {
   drupal_add_js("jQuery('#edit-reset').click(function() {return confirm('This will erase ALL application questions and delete ALL introductory text from the application forms. Are you sure?');});", 'inline', 'footer');
 
   // Our staff
-  $resource = db_query("SELECT display_name, id FROM {civicrm_contact} WHERE employer_id = '" . WOOLMAN . "' ORDER BY sort_name");
-  while ($row = db_fetch_array($resource)) {
-    $employees[$row['id']] = $row['display_name'];
+  $employees = array();
+  foreach(woolman_civicrm_api('Contact', 'get', array('employer_id' => WOOLMAN, 'return' => 'display_name'), 'values') as $cid => $contact) {
+    $employees[$cid] = $contact['display_name'];
   }
   $form = array(
     'admin' => array(

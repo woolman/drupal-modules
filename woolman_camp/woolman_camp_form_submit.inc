@@ -291,9 +291,10 @@ function woolman_camp_family_form_submit($form, &$form_state) {
         $kids .= ',' . $kid;
       }
     }
-    db_query("UPDATE {civicrm_relationship} SET is_active = 0, end_date = CURDATE()
-              WHERE contact_id_a IN ($kids) AND contact_id_b = %d AND is_active = 1 AND relationship_type_id =
-                (SELECT id FROM {civicrm_relationship_type} WHERE name_a_b = 'Emergency Contact is')", $vals['e_contact_cid']);
+    CRM_Core_DAO::executeQuery("UPDATE civicrm_relationship SET is_active = 0, end_date = CURDATE()
+      WHERE contact_id_a IN ($kids) AND contact_id_b = %1 AND is_active = 1 AND relationship_type_id =
+      (SELECT id FROM {civicrm_relationship_type} WHERE name_a_b = 'Emergency Contact is')",
+      array(1 => array($vals['e_contact_cid'], 'Integer')));
   }
 
   // Add to camp mailing list
