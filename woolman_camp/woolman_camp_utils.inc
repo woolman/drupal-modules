@@ -171,6 +171,7 @@ function woolman_camp_age_limits($padding = 0) {
  */
 function woolman_camp_get_sessions($year, $get_campers = FALSE) {
   $programs = woolman_camp_event_types();
+  $event_types = implode(',', array_keys($programs));
   $sessions = array();
   $query = db_query(
     "SELECT ev.id, ev.title, ev.start_date, ev.end_date, ev.event_type_id, ev.max_participants, ps.price_set_id, COUNT(pa.id) AS campers, COUNT(boys.id) AS boys, COUNT(girls.id) AS girls, DATEDIFF(ev.end_date, ev.start_date) as days
@@ -179,7 +180,7 @@ function woolman_camp_get_sessions($year, $get_campers = FALSE) {
     LEFT JOIN {civicrm_participant} pa ON ev.id = pa.event_id AND pa.status_id IN (SELECT id FROM {civicrm_participant_status_type} WHERE is_counted = 1)
     LEFT JOIN {civicrm_contact} girls ON girls.id = pa.contact_id AND girls.gender_id = 1
     LEFT JOIN {civicrm_contact} boys ON boys.id = pa.contact_id AND boys.gender_id = 2
-    WHERE ev.event_type_id IN(" . implode(',', array_keys($programs)) . ") AND YEAR(ev.start_date) = %d AND ev.is_active = 1 AND ev.is_template <> 1
+    WHERE ev.event_type_id IN ($event_types) AND YEAR(ev.start_date) = %d AND ev.is_active = 1 AND ev.is_template <> 1
     GROUP BY ev.id
     ORDER BY ev.event_type_id, ev.start_date
     ", $year);
@@ -192,22 +193,26 @@ function woolman_camp_get_sessions($year, $get_campers = FALSE) {
     $sessions[$row['id']] = $row;
   }
   if ($get_campers && $sessions) {
+    $statuses = woolman_civicrm_api('ParticipantStatusType', 'get', array(), 'values');
     $query = db_query(
-      "SELECT st.name AS status, par.status_id, con.first_name, con.nick_name, con.last_name, con.middle_name, con.gender_id, con.birth_date, par.fee_amount, par.contact_id, ev.id AS event_id, par.id AS participant_id, st.class, addr.city, YEAR(latest.start_date) AS camper_since, med.date_form_submitted_38 AS medform_date
+      "SELECT par.status_id, con.first_name, con.nick_name, con.last_name, con.middle_name, con.gender_id, con.birth_date, par.fee_amount, par.contact_id, par.event_id, par.id AS participant_id, addr.city, YEAR(latest.start_date) AS camper_since, med.date_form_submitted_38 AS medform_date
       FROM {civicrm_participant} par
       INNER JOIN {civicrm_contact} con ON con.id = par.contact_id
-      INNER JOIN {civicrm_participant_status_type} st ON st.id = par.status_id
-      INNER JOIN {civicrm_event} ev ON par.event_id = ev.id
       LEFT JOIN {civicrm_value_medical_info_9} med ON med.entity_id = par.contact_id
-      LEFT JOIN {civicrm_event} latest ON latest.start_date =
-        (SELECT MIN(old.start_date) FROM {civicrm_event} old WHERE old.id IN
-          (SELECT op.event_id FROM {civicrm_participant} op WHERE op.contact_id = par.contact_id))
+      LEFT JOIN {civicrm_event} latest ON latest.id =
+        ( SELECT op.event_id
+          FROM {civicrm_participant} op, {civicrm_event} oe
+          WHERE op.contact_id = par.contact_id AND oe.id = op.event_id AND oe.event_type_id IN ($event_types)
+          ORDER BY oe.start_date
+          LIMIT 1 )
       LEFT JOIN {civicrm_address} addr ON addr.contact_id = par.contact_id AND addr.is_primary = 1
-      WHERE par.is_test <> 1 AND con.is_deleted <> 1 AND ev.id IN (".implode(',', array_keys($sessions)).")");
+      WHERE par.is_test <> 1 AND con.is_deleted <> 1 AND par.event_id IN (".implode(',', array_keys($sessions)).")");
     while($row = db_fetch_array($query)) {
       $id = $row['event_id'];
       unset($row['event_id']);
       $row['age'] = woolman_camp_age($row['birth_date'], $year);
+      $row['status'] = $statuses[$row['status_id']]['name'];
+      $row['class'] = $statuses[$row['status_id']]['class'];
       $sessions[$id]['campers'][$row['participant_id'] . '-' . $row['status_id']] = $row;
     }
   }
