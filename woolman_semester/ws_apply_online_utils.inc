@@ -382,9 +382,24 @@ function _ws_apply_send_reference($key, $student, $contact, $case) {
  * @return string
  */
 function _ws_apply_replace_tokens($str, $student, $contact, $link = '') {
-  $hisher = $student['gender_id'] == 1 ? 'her' : 'his';
-  $heshe = $student['gender_id'] == 1 ? 'she' : 'he';
-  $himher = $student['gender_id'] == 1 ? 'her' : 'him';
+  switch ($student['gender_id']) {
+    case 1:
+      $hisher = 'her';
+      $heshe = 'she';
+      $himher = 'her';
+      break;
+
+    case 2:
+      $hisher = 'his';
+      $heshe = 'he';
+      $himher = 'him';
+      break;
+
+    default:
+      $hisher = 'their';
+      $heshe = 'they';
+      $himher = 'them';
+  }
 
   $patterns = array('{student.first_name}', '{student.last_name}',
                     '{contact.first_name}', '{contact.last_name}',
