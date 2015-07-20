@@ -251,15 +251,11 @@ function woolman_student_relationship($cid, $op) {
       break;
 
     case 'delete':
-      /*
-      // TODO: This isn't working because of a CiviCRM api bug (relationship update crashes)
-      // Uncomment this code when fixed and remove direct query
       foreach (woolman_find_relations($cid, '10', FALSE) as $id => $rel) {
         if ($rel['contact_id'] == WOOLMAN) {
           woolman_civicrm_api('relationship', 'delete', array('id' => $id));
         }
-      }*/
-      db_query('DELETE FROM {civicrm_relationship} WHERE contact_id_a = %d AND contact_id_b = %d AND relationship_type_id = 10', $cid, WOOLMAN);
+      }
       break;
   }
 }
@@ -401,15 +397,17 @@ function _ws_apply_replace_tokens($str, $student, $contact, $link = '') {
       $himher = 'them';
   }
 
-  $patterns = array('{student.first_name}', '{student.last_name}',
-                    '{contact.first_name}', '{contact.last_name}',
-                    '{he/she}', '{she/he}', '{his/her}', '{her/his}', '{him/her}', '{her/him}',
-                    '{link}',
-                  );
-  $replacements = array($student['first_name'], $student['last_name'],
-                        $contact['first_name'], $contact['last_name'],
-                        $heshe, $heshe, $hisher, $hisher, $himher, $himher,
-                        $link,
-                      );
+  $patterns = array(
+    '{student.first_name}', '{student.last_name}',
+    '{contact.first_name}', '{contact.last_name}',
+    '{he/she}', '{she/he}', '{his/her}', '{her/his}', '{him/her}', '{her/him}',
+    '{link}',
+  );
+  $replacements = array(
+    $student['first_name'], $student['last_name'],
+    $contact['first_name'], $contact['last_name'],
+    $heshe, $heshe, $hisher, $hisher, $himher, $himher,
+    $link,
+  );
   return str_ireplace($patterns, $replacements, $str);
 }
