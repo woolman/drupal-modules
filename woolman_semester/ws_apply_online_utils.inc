@@ -4,6 +4,9 @@ civicrm_initialize();
 
 /**
  * Fetch semester label from option values
+ *
+ * @param int $id
+ * @return string
  */
 function woolman_get_semester($id) {
   static $semesters = array();
@@ -14,7 +17,10 @@ function woolman_get_semester($id) {
 }
 
 /**
- * Returns $n upcoming semsters
+ * Returns $n upcoming semesters
+ *
+ * @param int $n
+ * @return array
  */
 function woolman_upcoming_semesters($n = 0) {
   return woolman_get_civi_options(80, array('where' => 'is_active = 1 AND DATE(SUBSTR(value, 1, 10)) > CURDATE()', 'order' => 'value', 'limit' => $n));
@@ -24,6 +30,11 @@ function woolman_upcoming_semesters($n = 0) {
  * Stores default values for admin settings
  * Returns setting if set, default if not
  * Replaces linebreaks with HTML breaks, if desired
+ *
+ * @param $key
+ * @param bool $linebreaks
+ *
+ * @return string
  */
 function _ws_apply_settings($key, $linebreaks = FALSE) {
   $default = '';
@@ -125,6 +136,12 @@ function _ws_apply_settings($key, $linebreaks = FALSE) {
 /**
  * Pulls up the application case (or any type of case)
  * Will default to current user if no cid provided
+ *
+ * @param int $cid
+ * @param int $type
+ * @param bool $get_acts
+ *
+ * @return array
  */
 function _ws_apply_get_case($cid = NULL, $type = 2, $get_acts = TRUE) {
   if (!$cid) {
@@ -145,6 +162,9 @@ function _ws_apply_get_case($cid = NULL, $type = 2, $get_acts = TRUE) {
   }
 }
 
+/**
+ * @return array
+ */
 function ws_apply_case_status_options() {
   static $stats;
   if (!$stats) {
@@ -155,6 +175,9 @@ function ws_apply_case_status_options() {
   return $stats;
 }
 
+/**
+ * @return array
+ */
 function ws_application_steps() {
   return array(
     'Basic Form' => 35,
@@ -174,6 +197,9 @@ function ws_application_steps() {
 
 /**
  * Gets case id of an activity
+ *
+ * @param int $aid
+ * @return bool
  */
 function ws_activity_get_case($aid) {
   return db_result(db_query('SELECT case_id FROM {civicrm_case_activity} WHERE activity_id = %d', $aid));
@@ -181,6 +207,9 @@ function ws_activity_get_case($aid) {
 
 /**
  * Gets current revision of an activity
+ *
+ * @param int $aid
+ * @return array
  */
 function ws_admissions_fetch_current_act($aid) {
   if ($aid) {
@@ -195,6 +224,9 @@ function ws_admissions_fetch_current_act($aid) {
 
 /**
  * Create/remove student relationship to Woolman
+ *
+ * @param int $cid
+ * @param string $op
  */
 function woolman_student_relationship($cid, $op) {
   if ($op == 'create') {
@@ -234,6 +266,9 @@ function woolman_student_relationship($cid, $op) {
 
 /**
  * Gets semester preference for a student
+ *
+ * @param int $cid
+ * @return array
  */
 function woolman_semester_pref($cid) {
   $db = db_query("SELECT sc.semesters_5, act.id activity_id, cas.id case_id, cas.status_id
@@ -255,9 +290,14 @@ function woolman_semester_pref($cid) {
 
 /**
  * Make date look pretty
- * @param array/str: activity array fetched from civicrm activity api OR timestamp
- * @param bool: whether to return the time as well as the date
- * @return Month, Date (time, if desired) (year, if not this year)
+ *
+ * @param array|string $act
+ *   activity array fetched from civicrm activity api OR timestamp
+ * @param bool $time
+ *   whether to return the time as well as the date
+ *
+ * @return string
+ *   Month, Date (time, if desired) (year, if not this year)
  */
 function _ws_apply_act_date_format($act, $time = FALSE) {
   if (is_array($act)) {
@@ -285,10 +325,17 @@ function _ws_apply_act_date_format($act, $time = FALSE) {
 
 /**
  * Schedule activity and send request for reference to specified contact
- * @param $key: 'parent' or 'teacher'
- * @param $student full array of information about the student
- * @param $contact full array of information about the person writing the rec
- * @param $case as returned by _ws_apply_get_case
+ *
+ * @param string $key
+ *   'parent' or 'teacher'
+ * @param array $student
+ *   full array of information about the student
+ * @param array $contact
+ *   full array of information about the person writing the rec
+ * @param array $case
+ *   as returned by _ws_apply_get_case
+ *
+ * @return string
  */
 function _ws_apply_send_reference($key, $student, $contact, $case) {
   //Create new case activity
@@ -327,8 +374,14 @@ function _ws_apply_send_reference($key, $student, $contact, $case) {
 
 /**
  * Token replacement for emails and forms
+ *
+ * @param string $str
+ * @param array $student
+ * @param array $contact
+ * @param string $link
+ * @return string
  */
-function _ws_apply_replace_tokens($string, $student, $contact, $link = '') {
+function _ws_apply_replace_tokens($str, $student, $contact, $link = '') {
   $hisher = $student['gender_id'] == 1 ? 'her' : 'his';
   $heshe = $student['gender_id'] == 1 ? 'she' : 'he';
   $himher = $student['gender_id'] == 1 ? 'her' : 'him';
@@ -343,5 +396,5 @@ function _ws_apply_replace_tokens($string, $student, $contact, $link = '') {
                         $heshe, $heshe, $hisher, $hisher, $himher, $himher,
                         $link,
                       );
-  return str_ireplace($patterns, $replacements, $string);
+  return str_ireplace($patterns, $replacements, $str);
 }

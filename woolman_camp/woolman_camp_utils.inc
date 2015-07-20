@@ -10,6 +10,8 @@ define('WOOLMAN_CAMP_SHUTTLE', 10);
  * TODO: Eventually we will store this in the db and provide a UI
  * WARNING: Until that happens, be very careful to keep the 'name' listed here
  *  consistent with the label in the db for each event type
+ *
+ * @return array
  */
 function woolman_camp_event_types() {
   return array(
@@ -39,6 +41,8 @@ function woolman_camp_event_types() {
 /**
  * Find user's family members
  * Loads most recent camp attendance for each child
+ *
+ * @return array
  */
 function woolman_camp_fetch_relations() {
   static $found = array();
@@ -126,6 +130,12 @@ function woolman_camp_fetch_relations() {
 /**
  * Calculates the age of a camper as of July 1 of a given year
  * If a cid is provided, adjust for any age exception
+ *
+ * @param string $dob
+ * @param int $year
+ * @param int|null $cid
+ *
+ * @return int
  */
 function woolman_camp_age($dob, $year, $cid = NULL) {
   if ($cid && is_numeric($cid)) {
@@ -141,6 +151,12 @@ function woolman_camp_age($dob, $year, $cid = NULL) {
 
 /**
  * Check if a given age is within the limits of a particluar program
+ *
+ * @param int $age
+ * @param int $program_id
+ * @param int $padding
+ *
+ * @return bool
  */
 function woolman_camp_age_range($age, $program_id, $padding = 0) {
   $programs = woolman_camp_event_types();
@@ -151,6 +167,10 @@ function woolman_camp_age_range($age, $program_id, $padding = 0) {
 
 /**
  * Minimum and maximum ages for camp (all programs)
+ *
+ * @param int $padding
+ *
+ * @return array
  */
 function woolman_camp_age_limits($padding = 0) {
   $min = $max = NULL;
@@ -168,6 +188,10 @@ function woolman_camp_age_limits($padding = 0) {
 /**
  * Gets session dates and attendance numbers
  * Gets campers: by default a simple count, or optionally get details of each camper
+ *
+ * @param int $year
+ * @param bool $get_campers
+ * @return array
  */
 function woolman_camp_get_sessions($year, $get_campers = FALSE) {
   $programs = woolman_camp_event_types();
@@ -184,7 +208,7 @@ function woolman_camp_get_sessions($year, $get_campers = FALSE) {
     GROUP BY ev.id
     ORDER BY ev.event_type_id, ev.start_date
     ", $year);
-  while($row = db_fetch_array($query)) {
+  while ($row = db_fetch_array($query)) {
     $row['full'] = ($row['campers'] >= $row['max_participants']);
     $row['weeks'] = round($row['days'] * 2 / 7) / 2;
     if ($get_campers) {
@@ -207,7 +231,7 @@ function woolman_camp_get_sessions($year, $get_campers = FALSE) {
           LIMIT 1 )
       LEFT JOIN {civicrm_address} addr ON addr.contact_id = par.contact_id AND addr.is_primary = 1
       WHERE par.is_test <> 1 AND con.is_deleted <> 1 AND par.event_id IN (".implode(',', array_keys($sessions)).")");
-    while($row = db_fetch_array($query)) {
+    while ($row = db_fetch_array($query)) {
       $id = $row['event_id'];
       unset($row['event_id']);
       $row['age'] = woolman_camp_age($row['birth_date'], $year);
@@ -221,6 +245,9 @@ function woolman_camp_get_sessions($year, $get_campers = FALSE) {
 
 /**
  * Sort a flat array of events into a nested array sorted by program
+ *
+ * @param array $sessions
+ * @return array
  */
 function woolman_camp_sort_sessions($sessions) {
   $programs = woolman_camp_event_types();
@@ -233,6 +260,8 @@ function woolman_camp_sort_sessions($sessions) {
 
 /**
  * Gets registration activity from current user
+ *
+ * @return array
  */
 function woolman_camp_get_reg_act() {
   static $act = array();
@@ -255,6 +284,8 @@ function woolman_camp_get_reg_act() {
 /**
  * Updates registration activity status
  * Creates activity if it does not exist
+ *
+ * @param int $status
  */
 function woolman_camp_update_reg_act($status) {
   $act = woolman_camp_get_reg_act();
@@ -288,6 +319,9 @@ function woolman_camp_update_reg_act($status) {
 
 /**
  * Gets camp rates for a given year
+ *
+ * @param int $year
+ * @return array
  */
 function woolman_camp_get_rates($year) {
   static $rates = array();
@@ -301,6 +335,11 @@ function woolman_camp_get_rates($year) {
 
 /**
  * Retrieve payments for a family
+ *
+ * @param int $cid
+ * @param int $year
+ *
+ * @return array
  */
 function woolman_camp_get_payments($cid, $year) {
   $payments = array();
@@ -310,7 +349,7 @@ function woolman_camp_get_payments($cid, $year) {
     LEFT JOIN {civicrm_option_value} ov ON ov.option_group_id = 10 AND ov.value = pay.payment_instrument_id
     WHERE con.id = pay.contact_id AND pay.source = %d AND pay.financial_type_id = 5 AND pay.is_test = 0 AND (con.id = %d OR pay.id IN (SELECT sof.contribution_id FROM {civicrm_contribution_soft} sof WHERE sof.contact_id = %d)) AND pay.contribution_status_id = 1
     ORDER BY pay.receive_date", $year, $cid, $cid);
-  while($row = db_fetch_array($query)) {
+  while ($row = db_fetch_array($query)) {
     if ($row['check_number'] && $row['type'] == 'Check') {
       $row['method'] .= 'Check #' . $row['check_number'];
     }
@@ -328,6 +367,11 @@ function woolman_camp_get_payments($cid, $year) {
 
 /**
  * Calculates payments, fees and discounts for a family
+ *
+ * @param int $parent_cid
+ * @param int $year
+ *
+ * @return array
  */
 function woolman_camp_calc_fees($parent_cid, $year) {
   $programs = woolman_camp_event_types();
@@ -348,7 +392,6 @@ function woolman_camp_calc_fees($parent_cid, $year) {
     'campers' => array(),
     'payments' => woolman_camp_get_payments($parent_cid, $year),
   );
-  $discount = 0;
   $counted = array();
 
   // Add up total paid
@@ -491,9 +534,11 @@ function woolman_camp_calc_fees($parent_cid, $year) {
 
 /**
  * Format session dates
- * @param str: start date
- * @param str: end date
- * @return Weeks, Date(s)
+ *
+ * @param string $start
+ * @param string|null $end
+ *
+ * @return string
  */
 function woolman_camp_date_format($start, $end = NULL, $return_length = TRUE) {
   $start = strtotime($start);
@@ -522,6 +567,10 @@ function woolman_camp_date_format($start, $end = NULL, $return_length = TRUE) {
 
 /**
  * Loads a contact and parses dob & location info
+ *
+ * @param int|null $cid
+ *
+ * @return array
  */
 function woolman_camp_contact_get($cid = NULL) {
 
@@ -569,6 +618,8 @@ function woolman_camp_contact_get($cid = NULL) {
 
 /**
  * Returns selectable discount types
+ *
+ * @return array
  */
 function woolman_camp_discount_types() {
   return drupal_map_assoc(array(
@@ -585,7 +636,7 @@ function woolman_camp_discount_types() {
 /**
  * Fetch the price of an event
  *
- * @param array: $event
+ * @param array $event
  */
 function woolman_camp_event_price_get($event) {
   $field = woolman_camp_event_price_field_get($event);
@@ -602,8 +653,8 @@ function woolman_camp_event_price_get($event) {
 /**
  * Save the price of an event
  *
- * @param int: $event_id
- * @param int: $price
+ * @param int $event_id
+ * @param int $price
  */
 function woolman_camp_event_price_create($event_id, $price) {
   $params = array('amount' => $price);
@@ -648,7 +699,7 @@ function woolman_camp_event_price_create($event_id, $price) {
 /**
  * Fetch the price field of an event
  *
- * @param array : $event
+ * @param array $event
  * @return array
  */
 function woolman_camp_event_price_field_get($event) {
@@ -665,6 +716,11 @@ function woolman_camp_event_price_field_get($event) {
 
 /**
  * Get shuttle dates, info & attendance
+ *
+ * @param int $year
+ * @param bool $get_passengers
+ *
+ * @return array
  */
 function woolman_camp_get_shuttle($year, $get_passengers) {
   $select = 'ev.id AS event_id, ev.title, ev.description, ev.max_participants, ev.start_date, sh.direction_40 AS direction';
@@ -709,6 +765,9 @@ function woolman_camp_get_shuttle($year, $get_passengers) {
 /**
  * Update event fees to be in sync with actual payments
  * TODO: Has not been tested to work with negative amount (i.e. failed transaction or refund)
+ *
+ * @param array $reg
+ * @param int $amount
  */
 function woolman_camp_update_totals($reg, $amount) {
   // Distribute the payment among all events
@@ -764,6 +823,9 @@ function woolman_camp_update_totals($reg, $amount) {
  * Search for new camp payments that haven't been processed and, well... process them.
  * Called via cron as well as via hook_civicrm_post.
  * Cron was necessary because CiviCRM hooks do not fire for recurring contributions.
+ *
+ * @param bool $cron
+ *   is this running from cron?
  */
 function woolman_camp_process_payments($cron) {
   $db = CRM_Core_DAO::executeQuery("SELECT c.id, c.contact_id, s.contact_id AS soft_credit_to, c.contribution_page_id, c.total_amount

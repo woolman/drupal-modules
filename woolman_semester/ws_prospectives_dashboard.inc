@@ -39,7 +39,7 @@ function ws_admissions_db_by_rep($reps) {
     GROUP BY contact_id_b"
   );
   $total = 0;
-  while($row = db_fetch_array($db)) {
+  while ($row = db_fetch_array($db)) {
     $by_rep[] = (int)$row['students'];
     $by_rep_label[] = $reps[$row['id']]."\n" . $row['students'];
     $total += $row['students'];
@@ -173,7 +173,7 @@ function ws_admissions_db_new_cases() {
     FROM {civicrm_case}
     WHERE case_type_id = '1' AND start_date >= (date_sub(curdate(),interval 1 year)) AND is_deleted <> 1
     GROUP BY YEAR(start_date), MONTH(start_date)");
-  while($row = db_fetch_array($db)) {
+  while ($row = db_fetch_array($db)) {
     $new_cases_data[substr($row['start_date'], 0, 7)] = $row['students'];
   }
 
@@ -228,7 +228,7 @@ function ws_admissions_db_followups($reps) {
     WHERE ac.activity_id = act.id AND ac.record_type_id = 2 AND activity_date_time >= (date_sub(curdate(),interval 1 year)) AND is_current_revision = 1 AND status_id IN (2,3) AND is_deleted = 0 AND activity_type_id IN (14,29) AND act.id IN (SELECT activity_id FROM {civicrm_case_activity} ca, {civicrm_case} cas WHERE cas.id = ca.case_id AND cas.case_type_id = '1' AND cas.is_deleted = 0)
     GROUP BY YEAR(act.activity_date_time), MONTH(act.activity_date_time)");
   $reps[0] = 'Others';
-  while($row = db_fetch_array($db)) {
+  while ($row = db_fetch_array($db)) {
     foreach($reps as $rep_id => $rep_name) {
       $followups_data[substr($row['date'], 0, 7)][$rep_id] = $row['acts_' . $rep_id];
       $totals[$rep_id] += $row['acts_' . $rep_id];
@@ -305,7 +305,7 @@ function ws_admissions_db_student_acts() {
     FROM {civicrm_activity} act
     WHERE activity_date_time >= (date_sub(curdate(),interval 1 year)) AND is_current_revision = 1 AND status_id = 2 AND is_deleted = 0 AND activity_type_id IN (28,31) AND id IN (SELECT activity_id FROM {civicrm_case_activity} ca, {civicrm_case} cas WHERE cas.id = ca.case_id AND cas.case_type_id = '1' AND cas.is_deleted = 0 AND cas.status_id IN (1,3))
     GROUP BY YEAR(activity_date_time), MONTH(activity_date_time)");
-  while($row = db_fetch_array($db)) {
+  while ($row = db_fetch_array($db)) {
     $student_acts_data[substr($row['date'], 0, 7)] = $row['acts'];
   }
 

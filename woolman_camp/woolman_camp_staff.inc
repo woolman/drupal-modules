@@ -4,6 +4,8 @@ module_load_include('inc', 'woolman_camp', 'woolman_camp_utils');
 
 /**
  * Main page for camp management
+ *
+ * @return string
  */
 function woolman_camp_staff() {
   $path = drupal_get_path('module', 'woolman_camp');
@@ -826,7 +828,7 @@ function woolman_camp_manage_discount_submit($form, &$form_state) {
 }
 
 /**
- * Fee report
+ * Fee report page callback
  */
 function woolman_camp_fee_report($year) {
   $sessions = woolman_camp_get_sessions($year);
@@ -919,6 +921,8 @@ function woolman_camp_js() {
 
 /**
  * Bar Graph of campers by age
+ *
+ * @param array $session
  */
 function woolman_camp_staff_graph_session($session) {
   require_once DRUPAL_ROOT . '/sites/all/libraries/jpgraph/src/jpgraph.php';
@@ -975,6 +979,8 @@ function woolman_camp_staff_graph_session($session) {
 
 /**
  * Line Graph of campers by registration date
+ *
+ * @param int $year
  */
 function woolman_camp_staff_graph_registration($year) {
   require_once DRUPAL_ROOT . '/sites/all/libraries/jpgraph/src/jpgraph.php';

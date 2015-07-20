@@ -1052,11 +1052,14 @@ function woolman_website_civicrm_caseSummary($id) {
                         ");
   if ($data = db_fetch_array($resource)) {
     $dates = woolman_multivalue_arr($data['semesters']);
-    foreach ($dates as $count=> $date) {
+    $value = '';
+    foreach ($dates as $count => $date) {
       $value .= '<em>'.substr($date, 0, 4).(substr($date,5,2) < 4 ? ' Spring' : ' Fall') . '</em> or ';
       $summary['semester-pref']['value'] = trim($value, ' or ');
     }
-    if ($count) $summary['semester-pref']['label'] = '<strong>Semester Preferences:</strong>';
+    if (!empty($count)) {
+      $summary['semester-pref']['label'] = '<strong>Semester Preferences:</strong>';
+    }
     $title = 'change semester preference(s)';
     $etc = '&amp;action=update&amp;id=' . $data['id'];
   }
@@ -1081,6 +1084,13 @@ function woolman_website_civicrm_caseSummary($id) {
 /**
  * Wrapper for all CiviCRM API calls
  * For consistency, future-proofing, and error handling
+ *
+ * @param string $entity
+ * @param string $operation
+ * @param array $params
+ * @param string|null $to_return
+ *
+ * @return array
  */
 function woolman_civicrm_api($entity, $operation, $params, $to_return = NULL) {
   // Merge in defaults (these params are required by the api but almost never change)
@@ -1143,8 +1153,12 @@ function woolman_website_civicrm_tabs(&$tabs, $cid) {
 
 /**
  * Lookup a uf ID from contact ID or vice-versa
- * @param $id: uf or contact ID - defaults to current user
- * @param $type: what type of ID is supplied (uf or contact)
+ * @param int $id
+ *   uf or contact ID - defaults to current user
+ * @param string $type
+ *   what type of ID is supplied (uf or contact)
+ *
+ * @return int|null
  */
 function woolman_user_cid($id = NULL, $type = 'uf') {
   if (!$id) {
@@ -1161,6 +1175,13 @@ function woolman_user_cid($id = NULL, $type = 'uf') {
  * Quick way to retrieve a contact's name given their uid or cid
  * Cached as static for performance
  * A user's own name is cached in session for even better performance
+ *
+ * @param string $ret
+ *   name to return
+ * @param int $id
+ * @param string $id_type
+ *
+ * @return string
  */
 function woolman_name($ret, $id = NULL, $id_type = 'contact') {
   static $info = array();
@@ -1204,10 +1225,16 @@ function woolman_name($ret, $id = NULL, $id_type = 'contact') {
 
 /**
  * Convenience wrapper for civicrm_contact_get
- * @PARAM: Will default to current user if no cid provided
- * @PARAM: An array of fields or custom fields (by id) to return: i.e. array(2, 5, 'email') {
+ *
+ * @param int|null $cid
+ *   Will default to current user if no cid provided
+ * @param array $extra
+ *   An array of fields or custom fields (by id) to return: i.e. array(2, 5, 'email')
+ * @param bool $get_location
+ *
+ * @return array|null
  */
-function woolman_contact_get($cid=NULL, $extra=array(), $get_location=FALSE) {
+function woolman_contact_get($cid = NULL, $extra = array(), $get_location = FALSE) {
   if (!$cid) {
     if (!($cid = woolman_user_cid())) {
       return array();
@@ -1254,9 +1281,11 @@ function woolman_contact_get($cid=NULL, $extra=array(), $get_location=FALSE) {
 /**
  * Generate a link to a contact.
  *
- * @param string $text: link display text
+ * @param string $text
+ *   link display text
  * @param int $contact_id
- * @param array $options: to pass to the url function
+ * @param array $options
+ *   to pass to the url function
  *
  * @return string
  */
@@ -1348,10 +1377,17 @@ function woolman_contact_match($params, $write_mode='update_all', $return='retur
 
 /**
  * Get a contact's relations of certain types
- * @param cid: contact id
- * @param types: comma separated relationship_type_ids
+ *
+ * @param int $cid
+ *   contact id
+ * @param string $types
+ *   comma separated relationship_type_ids
+ * @param bool $current
+ *   filter out past & inactive?
+ *
+ * @return array
  */
-function woolman_find_relations($cid, $types, $current=TRUE) {
+function woolman_find_relations($cid, $types, $current = TRUE) {
   $query = "SELECT r.*, t.name_a_b, t.name_b_a , t.label_a_b, t.label_b_a FROM {civicrm_relationship} r, {civicrm_relationship_type} t
     WHERE r.relationship_type_id IN (%s) AND (r.contact_id_a = %d OR r.contact_id_b = %d) and t.id = r.relationship_type_id";
   if ($current) {
@@ -1376,9 +1412,12 @@ function woolman_find_relations($cid, $types, $current=TRUE) {
 
 
 /**
- * @param $params: array to be sent to Civi API
- * @param $update: whether to update the existing relationship, if found
- * @return new or existing relationship id
+ * @param array $params
+ *   Array to be sent to Civi API
+ * @param bool $update
+ *   whether to update the existing relationship, if found
+ * @return int
+ *   new or existing relationship id
  */
 function woolman_relationship_add_or_update($params, $update=FALSE) {
   $q = "SELECT * FROM {civicrm_relationship}
@@ -1418,11 +1457,18 @@ function woolman_relationship_add_or_update($params, $update=FALSE) {
 
 /**
  * Return a value from nested arrays or objects.
- * @param $haystack: the array to search
- * @param $keys: pass a single key, or multiple keys separated by : to get a nested value
- * @param $default: value to return if given array key does not exist
- * @param $strict: should we use empty or isset to determine if array key exists?
- * @return: found value or default
+ *
+ * @param array|object $haystack
+ *   the array to search
+ * @param string $keys
+ *   pass a single key, or multiple keys separated by : to get a nested value
+ * @param mixed $default
+ *   value to return if given array key does not exist
+ * @param bool $strict
+ *   should we use empty or isset to determine if array key exists?
+ *
+ * @return mixed
+ *   found value or default
  */
 function woolman_aval($haystack, $keys, $default = NULL, $strict = FALSE) {
   foreach (explode(':', $keys) as $key) {
@@ -1440,6 +1486,11 @@ function woolman_aval($haystack, $keys, $default = NULL, $strict = FALSE) {
 
 /**
  * Formats FAPI date array as big-endian string (yyyy-mm-dd)
+ *
+ * @param array $date_array
+ * @param string $sep
+ *
+ * @return string
  */
 function woolman_date_array_to_string($date_array, $sep = '') {
   if (isset($date_array['year']) && isset($date_array['month']) && isset($date_array['day'])) {
@@ -1449,6 +1500,10 @@ function woolman_date_array_to_string($date_array, $sep = '') {
 
 /**
  * Formats a string as a FAPI date array
+ *
+ * @param string $date_str
+ *
+ * @return array
  */
 function woolman_date_string_to_array($date_str) {
   if ($date_str) {
@@ -1463,7 +1518,11 @@ function woolman_date_string_to_array($date_str) {
 
 /**
  * Returns a CiviCRM value-separated string
- * @param $keys: use array keys instead of values, unset empty values (for input from FAPI checkboxes)
+ *
+ * @param array $vals
+ * @param bool $keys
+ *   use array keys instead of values, unset empty values (for input from FAPI checkboxes)
+ *
  * @return string
  */
 function woolman_multivalue_str($vals, $keys = FALSE) {
@@ -1485,6 +1544,9 @@ function woolman_multivalue_str($vals, $keys = FALSE) {
 
 /**
  * Explodes a CiviCRM value-separated string
+ *
+ * @param string $str
+ *
  * @return array
  */
 function woolman_multivalue_arr($str) {
@@ -1499,8 +1561,11 @@ function woolman_multivalue_arr($str) {
 
 /**
  * Recursively set the default values for a form
- * @param $form: FAPI form array
- * @param $values: flat array of form values (i.e. from $form_state[values])
+ *
+ * @param array $form
+ *   FAPI form array
+ * @param array $values
+ *   flat array of form values (i.e. from $form_state[values])
  */
 function woolman_fill_form_values(&$form, $values) {
   foreach ($form as $key => &$element) {
@@ -1516,6 +1581,11 @@ function woolman_fill_form_values(&$form, $values) {
 
 /**
  * Gets options from civicrm
+ *
+ * @param string $group
+ * @param array $params
+ *
+ * @return array
  */
 function woolman_get_civi_options($group, $params = array()) {
   static $cache = array();
@@ -1587,6 +1657,8 @@ function woolman_get_civi_options($group, $params = array()) {
 
 /**
  * Returns latest timestamp from the log
+ *
+ * @return string
  */
 function woolman_civi_log_latest() {
   return db_result(db_query('SELECT MAX(modified_date) FROM {civicrm_log}'));
@@ -1594,7 +1666,10 @@ function woolman_civi_log_latest() {
 
 /**
  * Returns a number as an English string, rounded to the nearest quarter
- * @param $num: number, will be rounded to the nearest quarter
+ *
+ * @param number $num
+ *
+ * @return number rounded to the nearest quarter
  */
 function woolman_num_to_words($num) {
   module_load_include('inc', 'woolman_website', 'woolman_website_utils');
@@ -1618,6 +1693,10 @@ function woolman_num_to_words($num) {
 
 /**
  * Creates an array with name and id from the string produced by autocomplete
+ *
+ * @param string $params
+ *
+ * @return array
  */
 function woolman_split_name_id($params) {
   $split = explode('(ID#', $params);
@@ -1627,4 +1706,3 @@ function woolman_split_name_id($params) {
   }
   return $contact;
 }
-
