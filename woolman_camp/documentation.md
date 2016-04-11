@@ -24,7 +24,7 @@ How it Works
 * Camp sessions and shuttle trips are CiviEvents
 * Campers and parents are Civi Contacts
 * Families are tracked via Civi relationships (we don't use Households)
-* Enrollment forms are hard-coded with drupal FAPI and push Civi date using the api
+* Enrollment forms are hard-coded with drupal FAPI and push Civi data using the api
 * Medical form is an activity
 * Staff graphs are generated using an old php library - could update this to something modern & javascripty
 * Uses hooks to alter [CiviContribute page](http://woolman.org/civicrm/contribute/transact?id=7) and inject camp registration details (amount owed, etc)
