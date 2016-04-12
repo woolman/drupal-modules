@@ -22,6 +22,7 @@ How it Works
 
 * Camps and shuttles are CiviEvent Types
 * Camp sessions and shuttle trips are CiviEvents
+* Fees are calculated using custom code, not Civi price sets
 * Campers and parents are Civi Contacts
 * Families are tracked via Civi relationships (we don't use Households)
 * Enrollment forms are hard-coded with drupal FAPI and push Civi data using the api
@@ -46,7 +47,7 @@ Understanding and respecting the workflow this module follows is important for k
 Registration Workflow
 ---------------------
 
-The workflow followed by registering parents is controlled by the function woolman_camp_page() in the file woolman_camp_pages.inc. Read that code and you will see the following steps (coded in reverse order since we want it to take people to the latest point in their process, not the earliest):
+The workflow followed by registering parents is controlled by the function woolman_camp_page() in the file [woolman_camp_pages.inc](woolman_camp_pages.inc). Read that code and you will see the following steps (coded in reverse order since we want it to take people to the latest point in their process, not the earliest):
 
 1. Log in/register for a drupal account
 2. Complete a "how did you hear about us" activity (if you haven't done so already, AND you are new to camp).
