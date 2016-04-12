@@ -3,8 +3,8 @@ Woolman Custom Modules
 
 `sites/all/modules/woolman`
 
-Modules
--------
+Documentation
+-------------
 
 * [Woolman Semester](woolman_semester/readme.md)
 * [Woolman Camp](woolman_camp/readme.md)
