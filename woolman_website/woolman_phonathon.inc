@@ -58,7 +58,8 @@ function woolman_phonathon_submit($form, &$form_state) {
           drupal_goto('node/1379/submission/' . $s['sid'] . '/edit');
         }
         drupal_set_message('Please only use this form for ' . woolman_name('full', $cid) . '. <a href="/phone">Go back</a> to enter a different contact id.');
-        if ($rel = woolman_find_relations($vals['cid'], 2)) {
+        $rel = array_values(woolman_find_relations($cid, 2));
+        if ($rel) {
           $q2 = array('cid' => $rel[0]['contact_id']);
           $q2['cs'] = CRM_Contact_BAO_Contact_Utils::generateChecksum($q2['cid'], NULL, 3);
           drupal_set_message('Switch to ' . l(woolman_name('full', $q2['cid']), 'phone/call', array('query' => $q2)) . ' (spouse)');
