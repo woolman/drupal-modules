@@ -88,7 +88,8 @@ function _ws_apply_form_basic_submit($form, &$form_state) {
         'nick_name' => $vals['parent' . $i . '_nick'],
         'gender_id' => $vals['parent' . $i . '_gender'],
         'birth_date' => woolman_date_array_to_string($vals['parent' . $i . '_dob']),
-        'job_title' => $vals['parent' . $i . '_employer']
+        'job_title' => $vals['parent' . $i . '_employer'],
+        'source' => 'WS Application - Parent'
       ),
       'address' => array(array(
         'location_type_id' => 1,
@@ -315,6 +316,7 @@ function _ws_apply_form_school_submit($form, &$form_state) {
           'organization_name' => $vals['school_name'],
           'contact_type' => 'Organization',
           'contact_sub_type' => 'High_School',
+          'source' => 'WS Application'
         ),
       );
       //school address
@@ -360,20 +362,20 @@ function _ws_apply_form_school_submit($form, &$form_state) {
         'first_name' => $vals['teacher' . $i . '_first'],
         'last_name' => $vals['teacher' . $i . '_last'],
         'gender_id' => $vals['teacher' . $i . '_gender'],
-        'job_title' => 'Teacher'),
+        'job_title' => 'Teacher',
+        'source' => 'WS Application - Teacher Recommendation'
+      ),
       'email' => array(array(
         'email' => $vals['teacher' . $i . '_email'],
         'location_type_id' => 2,
         'is_primary' => 1
-        ),
-      ),
+      )),
       'phone' => array(array(
         'phone' => $vals['teacher' . $i . '_phone'],
         'location_type_id' => $vals['teacher' . $i . '_phone_location'],
         'phone_type_id' => 1,
         'is_primary' => 1
-        ),
-      ),
+      )),
     );
     if ($vals['teacher' . $i . '_relationship'] == 'school' && !empty($school_id)) {
       $params['contact']['employer_id'] = $school_id;
