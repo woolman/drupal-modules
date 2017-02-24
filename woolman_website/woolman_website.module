@@ -816,6 +816,7 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
   }
 
   // Transcript tokens
+  // <strong>Credits Earned:</strong> ' . $earned_credit . ' <br />' .
   if (!empty($tokens['transcript'])) {
     $dao = CRM_Core_DAO::executeQuery("
       SELECT *
@@ -844,7 +845,7 @@ function woolman_website_civicrm_tokenValues(&$values, $cids, $job = null, $toke
           <div>
             <h3>' . $dao->course_name_55 . '</h3>
             <strong>Grade:</strong> &nbsp; ' . $dao->grade_56 .'<br />
-            <strong>Credits Earned:</strong> ' . $earned_credit . ' <br />' .
+	    <strong>Credits Earned:</strong> ' . $earned_credit . ' <br />' .
           '</div>
           <div>' .
             $dao->evaluation_58 .
